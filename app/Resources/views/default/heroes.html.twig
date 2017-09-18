@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('build/base.css') }}">
+    <link rel="stylesheet" href="{{ asset('build/bootstrapStyle.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <h1>Hero League Winrates</h1>
+            </div>
+            <div class="col-md-6">
+                <h1>Most Played</h1>
+            </div>
+            <div class="col-md-6">
+                <h1>Top Bans</h1>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/jquery.js') }}"></script>
+    <script src="{{ asset('build/popper.js') }}"></script>
+    <script src="{{ asset('build/bootstrap.js') }}"></script>
+{% endblock %}
+
