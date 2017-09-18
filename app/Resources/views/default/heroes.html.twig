@@ -6,16 +6,16 @@
 {% endblock %}
 
 {% block body %}
-    <div class="container-fluid">
+    <div class="container-fluid bg-info">
         <div class="row">
-            <div class="col-md-6">
-                <h1>Hero League Winrates</h1>
+            <div class="col">
+                {% include ':snippets:heroes/top_role_winrates/table.html.twig' %}
             </div>
-            <div class="col-md-6">
-                <h1>Most Played</h1>
+            <div class="col">
+                {% include ':snippets:heroes/top_role_playrates/table.html.twig' %}
             </div>
-            <div class="col-md-6">
-                <h1>Top Bans</h1>
+            <div class="col">
+                {% include ':snippets:heroes/top_role_banrates/table.html.twig' %}
             </div>
         </div>
     </div>

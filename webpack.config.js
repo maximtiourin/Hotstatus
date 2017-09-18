@@ -25,6 +25,7 @@ Encore
 
     // will output as web/build/global.css
     //.addStyleEntry('global', './assets/css/global.scss')
+    .addStyleEntry('base', './assets/css/base.css')
     .addStyleEntry('bootstrapStyle', './assets/css/thirdparty/bootstrap.min.css')
 
     // allow sass/scss files to be processed

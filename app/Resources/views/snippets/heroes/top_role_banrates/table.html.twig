@@ -1,0 +1,23 @@
+<h4 class="text-center">Hero League Banrates</h4>
+<table class="table table-sm table-striped table-responsive table-bordered">
+    <thead class="thead-inverse">
+    <tr>
+        <th>
+            Role
+        </th>
+        <th class="text-center">
+            Highest
+        </th>
+        <th class="text-center">
+            Lowest
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    {% include ':snippets:heroes/top_role_banrates/row_entry.html.twig' with {'role_index': 1, 'hero_index': 'A', 'loser_index': 'F'} %}
+    {% include ':snippets:heroes/top_role_banrates/row_entry.html.twig' with {'role_index': 2, 'hero_index': 'B', 'loser_index': 'G'} %}
+    {% include ':snippets:heroes/top_role_banrates/row_entry.html.twig' with {'role_index': 3, 'hero_index': 'C', 'loser_index': 'H'} %}
+    {% include ':snippets:heroes/top_role_banrates/row_entry.html.twig' with {'role_index': 4, 'hero_index': 'D', 'loser_index': 'I'} %}
+    {% include ':snippets:heroes/top_role_banrates/row_entry.html.twig' with {'role_index': 5, 'hero_index': 'E', 'loser_index': 'J'} %}
+    </tbody>
+</table>
