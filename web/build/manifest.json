@@ -1,6 +1,6 @@
 {
-  "build/bootstrap.js": "/build/bootstrap.d8f682d2455376881180.js",
-  "build/bootstrapStyle.css": "/build/bootstrapStyle.e4848ea783a814874f9ec3a914bf6c8a.css",
-  "build/jquery.js": "/build/jquery.d2520ade73a1306073d9.js",
-  "build/popper.js": "/build/popper.fc72eb54624f66f6a807.js"
+  "build/bootstrap.js": "/hots_webapp/web/build/bootstrap.145f8e10eef73db8bdc8.js",
+  "build/bootstrapStyle.css": "/hots_webapp/web/build/bootstrapStyle.a3bf162e523ac2d9d4b269bd39d5cf4f.css",
+  "build/jquery.js": "/hots_webapp/web/build/jquery.d5ddc6ca3f0c9dbc2ec7.js",
+  "build/popper.js": "/hots_webapp/web/build/popper.d5f0f5497f2c9b3cc8cc.js"
 }

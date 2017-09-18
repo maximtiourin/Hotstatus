@@ -19,17 +19,17 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/Heroes", name="heroes")
+     * @Route("/heroes", name="heroes")
      */
     public function heroesAction(Request $request)
     {
         // replace this example code with whatever you need
-        return $this->render('default/index.html.twig', [
+        return $this->render('default/heroes.html.twig', [
         ]);
     }
 
     /**
-     * @Route("/Maps", name="maps")
+     * @Route("/maps", name="maps")
      */
     public function mapsAction(Request $request)
     {
@@ -39,7 +39,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/Talents", name="talents")
+     * @Route("/talents", name="talents")
      */
     public function talentsAction(Request $request)
     {
