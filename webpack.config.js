@@ -22,6 +22,7 @@ Encore
     .addEntry('jquery', './assets/js/thirdparty/jquery-3.2.1.min.js')
     .addEntry('popper', './assets/js/thirdparty/popper.min.js')
     .addEntry('bootstrap', './assets/js/thirdparty/bootstrap.min.js')
+    .addEntry('list', './assets/js/thirdparty/list.min.js')
 
     // will output as web/build/global.css
     //.addStyleEntry('global', './assets/css/global.scss')
