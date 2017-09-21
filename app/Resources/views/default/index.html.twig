@@ -1,9 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% include ':snippets:stdassets.html.twig' %}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
 
 {% block body %}
     <div class="container">
     </div>
 {% endblock %}
 
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+{% endblock %}

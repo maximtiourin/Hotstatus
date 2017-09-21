@@ -19,21 +19,17 @@ Encore
 
     // will output as web/build/app.js
     //.addEntry('app', './assets/js/main.js')
-    .addEntry('jquery', './assets/js/thirdparty/jquery-3.2.1.min.js')
-    .addEntry('popper', './assets/js/thirdparty/popper.min.js')
-    .addEntry('bootstrap', './assets/js/thirdparty/bootstrap.min.js')
-    .addEntry('list', './assets/js/thirdparty/list.min.js')
+    .addEntry('heroes-statslist', './assets/js/heroes-statslist.js')
 
     // will output as web/build/global.css
     //.addStyleEntry('global', './assets/css/global.scss')
     .addStyleEntry('base', './assets/css/base.css')
-    .addStyleEntry('bootstrapStyle', './assets/css/thirdparty/bootstrap.min.css')
 
     // allow sass/scss files to be processed
     .enableSassLoader()
 
     // allow legacy applications to use $/jQuery as a global variable
-    .autoProvidejQuery()
+    //.autoProvidejQuery()
 
     .enableSourceMaps(!Encore.isProduction())
 

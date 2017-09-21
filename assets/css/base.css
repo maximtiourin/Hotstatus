@@ -17,3 +17,7 @@
 .right {
     float: right;
 }
+
+#hsl-table {
+    border-spacing: 0px;
+}

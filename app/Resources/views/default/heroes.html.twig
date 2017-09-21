@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
-{% include ':snippets:stdassets.html.twig' %}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+{% use ':snippets/heroes:statslist.html.twig' with javascripts as hsljavascripts %}
 
 {% block body %}
     <div class="container-fluid bg-info">
@@ -15,6 +16,22 @@
                 {% include ':snippets:heroes/top_role_banrates/table.html.twig' %}
             </div>
         </div>
+        <div class="row">
+            <div class="col">
+                {% embed ':snippets:heroes/statslist.html.twig' %}
+                    {% block javascripts %}{% endblock %}
+                {% endembed %}
+            </div>
+        </div>
     </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+    {{ block('hsljavascripts') }}
 {% endblock %}
 
