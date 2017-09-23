@@ -16,5 +16,7 @@
 /vendor/
 /web/bundles/
 
+PSD/
+
 /node_modules/
 /.idea/
