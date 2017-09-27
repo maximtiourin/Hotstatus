@@ -9,6 +9,7 @@
 include 'includes/Credentials.php';
 include 'includes/Database.php';
 include 'includes/Hotsapi.php';
+include 'lib/AWS/aws-autoloader.php';
 
 set_time_limit(0);
 

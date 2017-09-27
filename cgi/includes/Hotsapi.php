@@ -30,17 +30,41 @@ class Hotsapi {
         curl_setopt($ch, CURLOPT_URL, $url); //Curl url
         $res = curl_exec($ch);
         $res_info = curl_getinfo($ch);
-
-        $code = $res_info['http_code'];
+        curl_close($ch);
 
         $ret = [];
-        $ret['code'] = $code;
+        $ret['code'] = $res_info['http_code'];
 
-        if ($code == Hotsapi::HTTP_OK) {
+        if ($ret['code'] == Hotsapi::HTTP_OK) {
             $ret['json'] = json_decode($res, true);
-
-            return $ret;
         }
+
+        return $ret;
+    }
+
+    /*
+     * Attempts to download a replay at the amazon s3 bucket url with the given credentials.
+     * Assumes the bucket uses request pays download model.
+     * Returns assoc array with relevant information about the operation (keys contingent on success are labelled with ?):
+     * ['code'] = http code of response
+     * ['success'] = true if file was downloaded without a hitch, false otherwise
+     * ['bytes_download'] = ? how many bytes were downloaded
+     * ['total_time'] = ? how long the transfer took
+     */
+    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, $credentials) {
+        $file = fopen($fileSaveLocation, "w+");
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $urlOfReplay);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("x-amz-request-payer: %REQUESTER%"));
+        curl_setopt($ch, CURLOPT_FILE, $file);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        $res = curl_exec($ch);
+        $res_info = curl_getinfo($ch);
+        fclose($file);
+        curl_close($ch);
+
+        $ret = [];
+        $ret['code'] = $res_info['http_code'];
 
         return $ret;
     }
