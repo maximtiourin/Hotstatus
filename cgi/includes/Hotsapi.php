@@ -46,9 +46,10 @@ class Hotsapi {
     }
 
     /*
-     * Takes and array $replays and returns a subarray that might be empty, and contains all replay objects
+     * Takes an array $replays and returns a subarray that might be empty, and contains all replay objects
      * that have a page index equal to or greater than $id. Optionally also filter for valid match types.
-     * Adds an extra key 'page_index' that is set to the replays original page index before the filtering occured
+     * Adds an extra key 'page_index' that is set to the replays original page index before the filtering occured.
+     * Note that the page index is the replay's index within the individual page, and not the # of the page itself.
      */
     public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = Hotsapi::MAX_REPLAY_AGE) {
         $arr = [];
