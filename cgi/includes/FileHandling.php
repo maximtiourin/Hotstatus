@@ -1,7 +1,7 @@
 <?php
 class FileHandling {
     public static function generateTempFileIdentifier($seed) {
-        return hash("sha256", "".$seed.Session::getIPAddress().time());
+        return hash("sha256", "".$seed.time());
     }
 
     /*
