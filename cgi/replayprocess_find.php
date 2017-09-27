@@ -4,9 +4,9 @@
  * In charge of checking hotsapi for unseen replays and inserting initial entries into the 'replays' table then queueing them.
  */
 
-include 'includes/credentials.php';
-include 'includes/database.php';
-include 'includes/hotsapi.php';
+include 'includes/Credentials.php';
+include 'includes/Database.php';
+include 'includes/Hotsapi.php';
 
 set_time_limit(0);
 

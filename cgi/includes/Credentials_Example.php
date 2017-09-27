@@ -1,7 +1,7 @@
 <?php
 /*
  * Example credentials configuration file for things such as cgi script connection strings.
- * To create own, rename to credentials.php and enter relevant info.
+ * To create own, rename to Credentials.php and enter relevant info.
  */
 class Credentials {
     const KEY_HOSTNAME = "host";
