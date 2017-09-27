@@ -20,13 +20,6 @@ class Database {
     }
 
     /*
-     * Default connection credentials for replay processes
-     */
-    public function connectDefaultReplayProcess() {
-        return $this->connect("localhost", "replayprocess", "changeme", "hotstatus");
-    }
-
-    /*
      * Prepares a query statement with the given name,
      * for the current connection, if there is one.
      * use ? for params
