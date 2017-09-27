@@ -6,16 +6,21 @@
  * storing too much at once.
  */
 
-include 'includes/Credentials.php';
-include 'includes/Database.php';
-include 'includes/Hotsapi.php';
-include 'lib/AWS/aws-autoloader.php';
+require_once 'includes/include.php';
 
 set_time_limit(0);
 
 $db = new Database();
 $creds = Credentials::getReplayProcessCredentials();
-$db->connect($creds[Credentials::KEY_HOSTNAME], $creds[Credentials::KEY_USER], $creds[Credentials::KEY_PASSWORD], $creds[Credentials::KEY_DATABASE]);
+$db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+
+//Aws
+$awsCreds = new Aws\Credentials\Credentials($creds[Credentials::KEY_AWS_KEY], $creds[Credentials::KEY_AWS_SECRET]);
+$sdk = new Aws\Sdk([
+    'region' => $creds[Credentials::KEY_AWS_REPLAYREGION],
+    'version' => 'latest',
+    'credentials' => $awsCreds
+]);
 
 //Prepare statements
 
@@ -49,7 +54,7 @@ echo 'Replay process <<DOWNLOAD>> has started'.$e
 
 //Look for replays to download and handle
 while (true) {
-
+    echo 'test'.$e;
 
     if ($dosleep) {
         smartSleep(SLEEP_DURATION, true);

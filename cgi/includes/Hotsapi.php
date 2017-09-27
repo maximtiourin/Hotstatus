@@ -1,4 +1,7 @@
 <?php
+/*
+ * Requires lib/AWS/aws-autoloader.php to have been included beforehand
+ */
 class Hotsapi {
     const API = 'http://hotsapi.net/api/v1';
     const REPLAYS_PER_PAGE = 100;
@@ -48,14 +51,12 @@ class Hotsapi {
      * Returns assoc array with relevant information about the operation (keys contingent on success are labelled with ?):
      * ['code'] = http code of response
      * ['success'] = true if file was downloaded without a hitch, false otherwise
-     * ['bytes_download'] = ? how many bytes were downloaded
-     * ['total_time'] = ? how long the transfer took
      */
-    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, $credentials) {
-        $file = fopen($fileSaveLocation, "w+");
+    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, $requestSigner, $credentials) {
+        /*$file = fopen($fileSaveLocation, "w+");
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $urlOfReplay);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("x-amz-request-payer: %REQUESTER%"));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("x-amz-request-payer: requester"));
         curl_setopt($ch, CURLOPT_FILE, $file);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         $res = curl_exec($ch);
@@ -65,6 +66,37 @@ class Hotsapi {
 
         $ret = [];
         $ret['code'] = $res_info['http_code'];
+
+        return $ret;*/
+
+        $client = new GuzzleHttp\Client();
+
+        $file = fopen($fileSaveLocation, "w+");
+
+        $request = new GuzzleHttp\Psr7\Request('GET', $urlOfReplay, [
+            'headers' => [
+                'x-amz-request-payer' => 'requester'
+            ],
+            'curl' => [
+                CURLOPT_FILE => $file
+            ],
+        ]);
+
+        $request = $requestSigner.signRequest($request, $credentials);
+
+        $response = $client->send($request);
+
+        fclose($file);
+
+        $ret = [];
+        $ret['code'] = $response->getStatusCode();
+
+        if ($ret['code'] == HTTP_OK) {
+            $ret['success'] = true;
+        }
+        else {
+            $ret['success'] = false;
+        }
 
         return $ret;
     }

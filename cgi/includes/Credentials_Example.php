@@ -16,12 +16,11 @@ class Credentials {
     //Replay Process AWS credentials
     const KEY_AWS_KEY = "aws_key";
     const KEY_AWS_SECRET = "aws_secret";
+    const KEY_AWS_REPLAYREGION = 'aws_replayregion';
     private static $replayProcess_aws_key = "%KEY%";
     private static $replayProcess_aws_secret = "%SECRET%";
+    private static $replayProcess_aws_replayregion = "%REPLAYREGION%"; //Ex: eu-west-1
 
-    /*
-     * Returns an object with const keys [KEY_HOSTNAME, KEY_USER, KEY_PASSWORD, KEY_DATABASE]
-     */
     public static function getReplayProcessCredentials() {
         $a = [];
 
@@ -32,6 +31,7 @@ class Credentials {
 
         $a[self::KEY_AWS_KEY] = self::$replayProcess_aws_key;
         $a[self::KEY_AWS_SECRET] = self::$replayProcess_aws_secret;
+        $a[self::KEY_AWS_REPLAYREGION] = self::$replayProcess_aws_replayregion;
 
         return $a;
     }

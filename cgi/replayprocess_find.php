@@ -4,15 +4,13 @@
  * In charge of checking hotsapi for unseen replays and inserting initial entries into the 'replays' table then queueing them.
  */
 
-include 'includes/Credentials.php';
-include 'includes/Database.php';
-include 'includes/Hotsapi.php';
+require_once 'includes/include.php';
 
 set_time_limit(0);
 
 $db = new Database();
 $creds = Credentials::getReplayProcessCredentials();
-$db->connect($creds[Credentials::KEY_HOSTNAME], $creds[Credentials::KEY_USER], $creds[Credentials::KEY_PASSWORD], $creds[Credentials::KEY_DATABASE]);
+$db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 
 //Prepare statements
 $db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
