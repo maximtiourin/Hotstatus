@@ -7,6 +7,7 @@
 require_once 'includes/include.php';
 
 set_time_limit(0);
+date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
 $db = new Database();
 $creds = Credentials::getReplayProcessCredentials();
@@ -23,8 +24,8 @@ $sleep = new SleepHandler();
 
 //Prepare statements
 $db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
-$db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, fingerprint, hotsapi_url, status) VALUES (?, ?, ?, ?, ?, ?)");
-$db->bind("InsertNewReplay", "iiisss", $r_id, $r_page, $r_idinpage, $r_fingerprint, $r_s3url, $r_status);
+$db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, fingerprint, hotsapi_url, status, lastused) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$db->bind("InsertNewReplay", "iiisssi", $r_id, $r_page, $r_idinpage, $r_fingerprint, $r_s3url, $r_status, $r_timestamp);
 
 //Helper functions
 function addToPageIndex($amount) {
@@ -43,7 +44,8 @@ function setPageIndex($amount) {
 }
 
 //Begin main script
-echo 'Replay process <<FIND>> has started'.$e
+echo '--------------------------------------'.$e
+    .'Replay process <<FIND>> has started'.$e
     .'--------------------------------------'.$e;
 
 //Get newest replay if there is one to determine where to start looking in hotsapi
@@ -83,6 +85,7 @@ while (true) {
                     $r_fingerprint = $replay['fingerprint'];
                     $r_s3url = $replay['url'];
                     $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
+                    $r_timestamp = time();
 
                     $db->execute("InsertNewReplay");
                 }

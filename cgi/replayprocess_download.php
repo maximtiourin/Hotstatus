@@ -9,6 +9,7 @@
 require_once 'includes/include.php';
 
 set_time_limit(0);
+date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
 $db = new Database();
 $creds = Credentials::getReplayProcessCredentials();
@@ -21,6 +22,7 @@ $sdk = new Aws\Sdk([
     'version' => 'latest',
     'credentials' => $awsCreds
 ]);
+$s3 = $sdk->createS3();
 
 //Constants and qol
 const DOWNLOADLIMIT_SLEEP_DURATION = 60; //seconds
@@ -48,7 +50,8 @@ $db->prepare("SelectQueuedReplay-Unlocked",
 //Helper functions
 
 //Begin main script
-echo 'Replay process <<DOWNLOAD>> has started'.$e
+echo '--------------------------------------'.$e
+    .'Replay process <<DOWNLOAD>> has started'.$e
     .'--------------------------------------'.$e;
 
 //Look for replays to download and handle
@@ -101,11 +104,11 @@ while (true) {
                 //Ensure directory
                 FileHandling::ensureDirectory(HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY);
 
-                //Create file
+                //Determine filepath
                 $r_filepath = HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
 
                 //Download
-                $api = Hotsapi::DownloadS3Replay($r_url, $r_filepath, $sigv4, $awsCreds);
+                $api = Hotsapi::DownloadS3Replay($r_url, $r_filepath, $s3);
 
                 if ($api['success'] == TRUE) {
                     //Replay downloaded successfully
@@ -125,7 +128,7 @@ while (true) {
             }
             else {
                 //No unlocked queued replays to download, sleep
-                echo 'No unlocked queued replays found...'.$e;
+                echo 'No unlocked queued replays found...'.time().$e;
 
                 $sleep->add(SLEEP_DURATION);
             }

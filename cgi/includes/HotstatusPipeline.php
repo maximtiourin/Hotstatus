@@ -1,5 +1,6 @@
 <?php
 class HotstatusPipeline {
+    const REPLAY_TIMEZONE = "UTC"; //Default timezone used for dating replays as well as process locks
     const REPLAY_DOWNLOAD_DIRECTORY = "replays/"; //Where the replays are downloaded relative to the replayprocess scripts
     const REPLAY_DOWNLOAD_EXTENSION = ".StormReplay"; //Extension of the replays downloaded
     const REPLAY_DOWNLOAD_LIMIT = 1; //How many replays can be downloaded to disk at any one time.

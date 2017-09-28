@@ -1,6 +1,7 @@
 <?php
 /*
  * Requires lib/AWS/aws-autoloader.php to have been included beforehand
+ * Requires HotstatusPipeline.php to have been included beforehand
  */
 class Hotsapi {
     const API = 'http://hotsapi.net/api/v1';
@@ -46,57 +47,40 @@ class Hotsapi {
     }
 
     /*
-     * Attempts to download a replay at the amazon s3 bucket url with the given credentials.
+     * Attempts to download a replay at the amazon s3 bucket url using the given s3 client
      * Assumes the bucket uses request pays download model.
-     * Returns assoc array with relevant information about the operation (keys contingent on success are labelled with ?):
-     * ['code'] = http code of response
+     * Returns assoc array with relevant information about the operation (keys contingent on success are labeled with ?):
      * ['success'] = true if file was downloaded without a hitch, false otherwise
+     * ['bytes_downloaded'] = ? the size of the file downloaded in bytes
+     * ['request_charged'] = ? string output from amazon describing if the request was charged to the requester
      */
-    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, $requestSigner, $credentials) {
-        /*$file = fopen($fileSaveLocation, "w+");
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $urlOfReplay);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("x-amz-request-payer: requester"));
-        curl_setopt($ch, CURLOPT_FILE, $file);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        $res = curl_exec($ch);
-        $res_info = curl_getinfo($ch);
-        fclose($file);
-        curl_close($ch);
-
+    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, Aws\S3\S3Client $s3Client) {
         $ret = [];
-        $ret['code'] = $res_info['http_code'];
+        $success = FALSE;
 
-        return $ret;*/
+        try {
+            $uriparser = new Aws\S3\S3UriParser();
+            $uriarr = $uriparser->parse($urlOfReplay);
 
-        $client = new GuzzleHttp\Client();
+            $result = $s3Client->getObject([
+                'Bucket' => $uriarr['bucket'],
+                'Key' => $uriarr['key'],
+                'RequestPayer' => 'requester',
+                'SaveAs' => $fileSaveLocation
+            ]);
 
-        $file = fopen($fileSaveLocation, "w+");
+            $ret['bytes_downloaded'] = $result['ContentLength'];
+            $ret['request_charged'] = $result['RequestCharged'];
 
-        $request = new GuzzleHttp\Psr7\Request('GET', $urlOfReplay, [
-            'headers' => [
-                'x-amz-request-payer' => 'requester'
-            ],
-            'curl' => [
-                CURLOPT_FILE => $file
-            ],
-        ]);
-
-        $request = $requestSigner.signRequest($request, $credentials);
-
-        $response = $client->send($request);
-
-        fclose($file);
-
-        $ret = [];
-        $ret['code'] = $response->getStatusCode();
-
-        if ($ret['code'] == self::HTTP_OK) {
-            $ret['success'] = true;
+            $success = true;
         }
-        else {
-            $ret['success'] = false;
+        catch (Aws\Exception\AwsException $e) {
+            echo $e->getAwsRequestId() . "\n";
+            echo $e->getAwsErrorType() . "\n";
+            echo $e->getAwsErrorCode() . "\n";
         }
+
+        $ret['success'] = $success;
 
         return $ret;
     }
@@ -136,7 +120,7 @@ class Hotsapi {
      * Takes the replay date string and returns the amount of days since it was created
      */
     public static function getReplayAgeInDays($str) {
-        date_default_timezone_set("UTC");
+        date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
         $replaydate = new DateTime($str);
         $nowdate = new DateTime("now");
         $interval = $replaydate->diff($nowdate);
