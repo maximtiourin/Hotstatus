@@ -19,7 +19,7 @@ const TOO_MANY_REQUEST_SLEEP_DURATION = 60; //seconds
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 $e = PHP_EOL;
-$dosleep = false;
+$sleep = new SleepHandler();
 
 //Prepare statements
 $db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
@@ -27,23 +27,6 @@ $db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, 
 $db->bind("InsertNewReplay", "iiisss", $r_id, $r_page, $r_idinpage, $r_fingerprint, $r_s3url, $r_status);
 
 //Helper functions
-function smartSleep($duration, $mainsleep = false, $mainsleepDuration = SLEEP_DURATION) {
-    global $dosleep;
-
-    if ($mainsleep) {
-        if ($dosleep) {
-            sleep($duration);
-
-            $dosleep = false;
-        }
-    }
-    else {
-        sleep($duration - $mainsleepDuration);
-
-        $dosleep = true;
-    }
-}
-
 function addToPageIndex($amount) {
     global $pageindex;
     setPageIndex($pageindex + $amount);
@@ -115,22 +98,20 @@ while (true) {
         else {
             //No more replay pages to process! Long sleep
             echo 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.$e;
-            smartSleep(OUT_OF_REPLAYS_SLEEP_DURATION);
+            $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
         }
     }
     else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
         //Error too many requests, wait awhile before trying again
         echo 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.$e;
-        smartSleep(TOO_MANY_REQUEST_SLEEP_DURATION);
+        $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
     }
     else {
         echo 'Error: HTTP Code ' . $api['code'].'.'.$e;
-        smartSleep(UNKNOWN_ERROR_CODE);
+        $sleep->add(UNKNOWN_ERROR_CODE);
     }
 
-    if ($dosleep) {
-        smartSleep(SLEEP_DURATION, true);
-    }
+    $sleep->execute();
 }
 
 ?>

@@ -29,12 +29,15 @@ const MINI_SLEEP_DURATION = 1; //seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
 const UNLOCK_DOWNLOADING_DURATION = 120; //Must be unlocked for atleast 2 minutes while downloading status
 $e = PHP_EOL;
-$dosleep = false;
+$sleep = new SleepHandler();
 
 //Prepare statements
 $db->prepare("UpdateReplayStatus",
 "UPDATE replays SET status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
+$db->prepare("UpdateReplayDownloaded",
+"UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
+$db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
 $db->prepare("SelectDownloadedReplays",
 "SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
 $db->prepare("SelectDownloadingReplay-Unlocked",
@@ -43,22 +46,6 @@ $db->prepare("SelectQueuedReplay-Unlocked",
 "SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_QUEUED . "' AND lastused <= " . (time() - UNLOCK_DEFAULT_DURATION) . " ORDER BY id ASC LIMIT 1");
 
 //Helper functions
-function smartSleep($duration, $mainsleep = false, $mainsleepDuration = SLEEP_DURATION) {
-    global $dosleep;
-
-    if ($mainsleep) {
-        if ($dosleep) {
-            sleep($duration);
-
-            $dosleep = false;
-        }
-    }
-    else {
-        sleep($duration - $mainsleepDuration);
-
-        $dosleep = true;
-    }
-}
 
 //Begin main script
 echo 'Replay process <<DOWNLOAD>> has started'.$e
@@ -70,8 +57,8 @@ while (true) {
     $resrows = $db->countResultRows($result);
     if ($resrows >= HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT) {
         //Reached download limit
-        echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for replays to be processed...'.$e;
-        smartSleep(DOWNLOADLIMIT_SLEEP_DURATION);
+        echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for downloaded replays to be processed...'.$e;
+        $sleep->add(DOWNLOADLIMIT_SLEEP_DURATION);
     }
     else {
         //Have not reached download limit yet, check for unlocked failed replay downloads
@@ -105,13 +92,42 @@ while (true) {
 
                 echo 'Downloading replay #' . $r_id . '...'.$e;
 
-                
+                //Init request signer
+                $sigv4 = new Aws\Signature\SignatureV4("S3", $creds[Credentials::KEY_AWS_REPLAYREGION]);
+
+                $r_fingerprint = $row['fingerprint'];
+                $r_url = $row['hotsapi_url'];
+
+                //Ensure directory
+                FileHandling::ensureDirectory(HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY);
+
+                //Create file
+                $r_filepath = HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
+
+                //Download
+                $api = Hotsapi::DownloadS3Replay($r_url, $r_filepath, $sigv4, $awsCreds);
+
+                if ($api['success'] == TRUE) {
+                    //Replay downloaded successfully
+                    echo 'Replay #' . $r_id . ' successfully downloaded to "' . $r_filepath . '"'.$e;
+
+                    $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
+                    $r_timestamp = time();
+
+                    $db->execute("UpdateReplayDownloaded");
+                }
+                else {
+                    //Error with downloading the replay
+                    echo 'Failed to download replay #' . $r_id . ', HTTP Code : ' . $api['code'] . '...'.$e;
+
+                    $sleep->add(MINI_SLEEP_DURATION);
+                }
             }
             else {
                 //No unlocked queued replays to download, sleep
                 echo 'No unlocked queued replays found...'.$e;
 
-                $dosleep = true;
+                $sleep->add(SLEEP_DURATION);
             }
 
             $db->freeResult($result3);
@@ -122,9 +138,7 @@ while (true) {
 
     $db->freeResult($result);
 
-    if ($dosleep) {
-        smartSleep(SLEEP_DURATION, true);
-    }
+    $sleep->execute();
 }
 
 ?>
