@@ -112,7 +112,7 @@ while (true) {
 
                 if ($api['success'] == TRUE) {
                     //Replay downloaded successfully
-                    echo 'Replay #' . $r_id . ' successfully downloaded to "' . $r_filepath . '"'.$e;
+                    echo 'Replay #' . $r_id . ' (' . round($api['bytes_downloaded'] / FileHandling::getBytesForMegabytes(1), 2) . ' MB) downloaded to "' . $r_filepath . '"'.$e;
 
                     $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
                     $r_timestamp = time();
