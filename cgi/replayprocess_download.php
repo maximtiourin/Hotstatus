@@ -95,9 +95,6 @@ while (true) {
 
                 echo 'Downloading replay #' . $r_id . '...'.$e;
 
-                //Init request signer
-                $sigv4 = new Aws\Signature\SignatureV4("S3", $creds[Credentials::KEY_AWS_REPLAYREGION]);
-
                 $r_fingerprint = $row['fingerprint'];
                 $r_url = $row['hotsapi_url'];
 
