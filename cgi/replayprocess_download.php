@@ -22,13 +22,14 @@ $sdk = new Aws\Sdk([
     'credentials' => $awsCreds
 ]);
 
-//Prepare statements
-
 //Constants and qol
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 $e = PHP_EOL;
 $dosleep = false;
+
+//Prepare statements
+$db->prepare("SelectQueuedReplays", "SELECT * FROM replays WHERE status = ");
 
 //Helper functions
 function smartSleep($duration, $mainsleep = false, $mainsleepDuration = SLEEP_DURATION) {

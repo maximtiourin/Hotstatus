@@ -12,11 +12,6 @@ $db = new Database();
 $creds = Credentials::getReplayProcessCredentials();
 $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 
-//Prepare statements
-$db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
-$db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, fingerprint, hotsapi_url, status) VALUES (?, ?, ?, ?, ?, ?)");
-$db->bind("InsertNewReplay", "iiisss", $r_id, $r_page, $r_idinpage, $r_fingerprint, $r_s3url, $r_status);
-
 //Constants and qol
 const OUT_OF_REPLAYS_SLEEP_DURATION = 3600; //seconds
 const UNKNOWN_ERROR_CODE = 300; //seconds
@@ -25,6 +20,11 @@ const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 $e = PHP_EOL;
 $dosleep = false;
+
+//Prepare statements
+$db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
+$db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, fingerprint, hotsapi_url, status) VALUES (?, ?, ?, ?, ?, ?)");
+$db->bind("InsertNewReplay", "iiisss", $r_id, $r_page, $r_idinpage, $r_fingerprint, $r_s3url, $r_status);
 
 //Helper functions
 function smartSleep($duration, $mainsleep = false, $mainsleepDuration = SLEEP_DURATION) {
@@ -99,7 +99,7 @@ while (true) {
                     $r_idinpage = $replay['page_index'];
                     $r_fingerprint = $replay['fingerprint'];
                     $r_s3url = $replay['url'];
-                    $r_status = "queued";
+                    $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
 
                     $db->execute("InsertNewReplay");
                 }

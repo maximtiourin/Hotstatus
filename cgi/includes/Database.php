@@ -1,6 +1,6 @@
 <?php
 /**
- * Base class for creating a Database object that handles connections
+ * Database object that handles mysqli connections
  */
 class Database {
     private $db = null;

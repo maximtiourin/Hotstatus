@@ -16,7 +16,7 @@ class Hotsapi {
      * ['json'] = assoc array of the json body object of the response
      */
     public static function getPagedReplays($page) {
-        return Hotsapi::ResponseHeadersAndJson(Hotsapi::API . '/replays/paged?page=' . $page);
+        return self::ResponseHeadersAndJson(self::API . '/replays/paged?page=' . $page);
     }
 
     /*
@@ -38,7 +38,7 @@ class Hotsapi {
         $ret = [];
         $ret['code'] = $res_info['http_code'];
 
-        if ($ret['code'] == Hotsapi::HTTP_OK) {
+        if ($ret['code'] == self::HTTP_OK) {
             $ret['json'] = json_decode($res, true);
         }
 
@@ -91,7 +91,7 @@ class Hotsapi {
         $ret = [];
         $ret['code'] = $response->getStatusCode();
 
-        if ($ret['code'] == HTTP_OK) {
+        if ($ret['code'] == self::HTTP_OK) {
             $ret['success'] = true;
         }
         else {
@@ -107,7 +107,7 @@ class Hotsapi {
      * Adds an extra key 'page_index' that is set to the replays original page index before the filtering occured.
      * Note that the page index is the replay's index within the individual page, and not the # of the page itself.
      */
-    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = Hotsapi::MAX_REPLAY_AGE) {
+    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = self::MAX_REPLAY_AGE) {
         $arr = [];
         $i = 1;
         foreach ($replays as $replay) {
@@ -119,7 +119,7 @@ class Hotsapi {
 
             if ($i >= $id && self::getReplayAgeInDays($replaydate) <= $filterByDays) {
                 if ($filterValidMatchTypes) {
-                    if (in_array($replaytype, Hotsapi::$validMatchTypes, true)) {
+                    if (in_array($replaytype, self::$validMatchTypes, true)) {
                         $arr[] = $modreplay;
                     }
                 }
