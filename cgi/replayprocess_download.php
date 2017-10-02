@@ -7,11 +7,12 @@
  */
 
 require_once 'includes/include.php';
+require_once 'includes/MySqlDatabase.php';
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
-$db = new Database();
+$db = new MysqlDatabase();
 $creds = Credentials::getReplayProcessCredentials();
 $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 

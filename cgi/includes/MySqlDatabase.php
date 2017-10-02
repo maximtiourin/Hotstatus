@@ -2,7 +2,7 @@
 /**
  * Database object that handles mysqli connections
  */
-class Database {
+class MySqlDatabase {
     private $db = null;
     private $pstate = []; //Map of : names => prepared statements
 
