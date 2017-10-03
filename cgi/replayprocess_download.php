@@ -6,6 +6,8 @@
  * storing too much at once.
  */
 
+namespace Fizzik;
+
 require_once 'includes/include.php';
 require_once 'includes/MySqlDatabase.php';
 
@@ -17,8 +19,8 @@ $creds = Credentials::getReplayProcessCredentials();
 $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 
 //Aws
-$awsCreds = new Aws\Credentials\Credentials($creds[Credentials::KEY_AWS_KEY], $creds[Credentials::KEY_AWS_SECRET]);
-$sdk = new Aws\Sdk([
+$awsCreds = new \Aws\Credentials\Credentials($creds[Credentials::KEY_AWS_KEY], $creds[Credentials::KEY_AWS_SECRET]);
+$sdk = new \Aws\Sdk([
     'region' => $creds[Credentials::KEY_AWS_REPLAYREGION],
     'version' => 'latest',
     'credentials' => $awsCreds

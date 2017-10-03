@@ -1,4 +1,7 @@
 <?php
+
+namespace Fizzik;
+
 class SleepHandler {
     private $duration;
 

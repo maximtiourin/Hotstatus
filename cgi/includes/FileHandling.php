@@ -1,4 +1,7 @@
 <?php
+
+namespace Fizzik;
+
 class FileHandling {
     public static function generateTempFileIdentifier($seed) {
         return hash("sha256", "".$seed.time());

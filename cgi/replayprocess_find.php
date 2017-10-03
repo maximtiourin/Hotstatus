@@ -4,6 +4,8 @@
  * In charge of checking hotsapi for unseen replays and inserting initial entries into the 'replays' table then queueing them.
  */
 
+namespace Fizzik;
+
 require_once 'includes/include.php';
 require_once 'includes/MySqlDatabase.php';
 

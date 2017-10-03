@@ -1,4 +1,7 @@
 <?php
+
+namespace Fizzik;
+
 /*
  * Requires lib/AWS/aws-autoloader.php to have been included beforehand
  * Requires HotstatusPipeline.php to have been included beforehand
@@ -54,12 +57,12 @@ class Hotsapi {
      * ['bytes_downloaded'] = ? the size of the file downloaded in bytes
      * ['request_charged'] = ? string output from amazon describing if the request was charged to the requester
      */
-    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, Aws\S3\S3Client $s3Client) {
+    public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, \Aws\S3\S3Client $s3Client) {
         $ret = [];
         $success = FALSE;
 
         try {
-            $uriparser = new Aws\S3\S3UriParser();
+            $uriparser = new \Aws\S3\S3UriParser();
             $uriarr = $uriparser->parse($urlOfReplay);
 
             $result = $s3Client->getObject([
@@ -74,7 +77,7 @@ class Hotsapi {
 
             $success = true;
         }
-        catch (Aws\Exception\AwsException $e) {
+        catch (\Aws\Exception\AwsException $e) {
             echo $e->getAwsRequestId() . "\n";
             echo $e->getAwsErrorType() . "\n";
             echo $e->getAwsErrorCode() . "\n";

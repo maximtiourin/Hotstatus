@@ -1,4 +1,7 @@
 <?php
+
+namespace Fizzik;
+
 /*
  * Example credentials configuration file for things such as cgi script connection strings.
  * To create own, rename to Credentials.php and enter relevant info.
