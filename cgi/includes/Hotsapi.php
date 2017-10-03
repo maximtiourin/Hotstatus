@@ -2,6 +2,8 @@
 
 namespace Fizzik;
 
+use \DateTime;
+
 class Hotsapi {
     const API = 'http://hotsapi.net/api/v1';
     const REPLAYS_PER_PAGE = 100;
