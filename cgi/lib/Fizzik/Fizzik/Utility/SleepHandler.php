@@ -1,6 +1,6 @@
 <?php
 
-namespace Fizzik;
+namespace Fizzik\Utility;
 
 class SleepHandler {
     private $duration;

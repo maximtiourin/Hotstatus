@@ -2,10 +2,6 @@
 
 namespace Fizzik;
 
-/*
- * Requires lib/AWS/aws-autoloader.php to have been included beforehand
- * Requires HotstatusPipeline.php to have been included beforehand
- */
 class Hotsapi {
     const API = 'http://hotsapi.net/api/v1';
     const REPLAYS_PER_PAGE = 100;

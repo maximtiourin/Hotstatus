@@ -1,6 +1,6 @@
 <?php
 
-namespace Fizzik;
+namespace Fizzik\Database;
 
 /**
  * Database object that handles mysqli connections

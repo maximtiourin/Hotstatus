@@ -1,6 +1,6 @@
 <?php
 
-namespace Fizzik;
+namespace Fizzik\Utility;
 
 class FileHandling {
     public static function generateTempFileIdentifier($seed) {

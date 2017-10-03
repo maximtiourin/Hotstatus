@@ -6,8 +6,10 @@
 
 namespace Fizzik;
 
+use Fizzik\Database\MySqlDatabase;
+use Fizzik\Utility\SleepHandler;
+
 require_once 'includes/include.php';
-require_once 'includes/MySqlDatabase.php';
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);

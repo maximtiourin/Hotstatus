@@ -1,6 +1,6 @@
 <?php
 
-namespace Fizzik;
+namespace Fizzik\Database;
 
 class MongoDBDatabase
 {
