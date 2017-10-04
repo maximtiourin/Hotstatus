@@ -131,7 +131,7 @@ while (true) {
             }
             else {
                 //No unlocked queued replays to download, sleep
-                echo 'No unlocked queued replays found...'.time().$e;
+                echo 'No unlocked queued replays found...'.$e;
 
                 $sleep->add(SLEEP_DURATION);
             }
