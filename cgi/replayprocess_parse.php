@@ -67,6 +67,18 @@ while (true) {
         $resrows2 = $db->countResultRows($result2);
         if ($resrows2 > 0) {
             //Found an unlocked downloaded replay, parse it
+            $row = $db->fetchArray($result2);
+
+            $r_id = $row['id'];
+            $r_status = HotstatusPipeline::REPLAY_STATUS_PARSING;
+            $r_timestamp = time();
+
+            $db->execute("UpdateReplayStatus");
+
+            echo 'Parsing replay #' . $r_id . '...'.$e;
+
+            $r_filepath = $row['file'];
+
 
         }
         else {
