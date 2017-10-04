@@ -9,6 +9,7 @@
 namespace Fizzik;
 
 require_once 'includes/include.php';
+require_once 'includes/Hotsapi.php';
 
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Utility\SleepHandler;
@@ -31,7 +32,7 @@ $sdk = new \Aws\Sdk([
 $s3 = $sdk->createS3();
 
 //Constants and qol
-const DOWNLOADLIMIT_SLEEP_DURATION = 60; //seconds
+const DOWNLOADLIMIT_SLEEP_DURATION = 5; //seconds
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
@@ -48,10 +49,9 @@ $db->prepare("UpdateReplayDownloaded",
 $db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
 $db->prepare("SelectDownloadedReplays",
 "SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
-$db->prepare("SelectDownloadingReplay-Unlocked",
-"SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADING . "' AND lastused <= " . (time() - UNLOCK_DOWNLOADING_DURATION) . " ORDER BY id ASC LIMIT 1");
-$db->prepare("SelectQueuedReplay-Unlocked",
-"SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_QUEUED . "' AND lastused <= " . (time() - UNLOCK_DEFAULT_DURATION) . " ORDER BY id ASC LIMIT 1");
+$db->prepare("SelectNextReplayWithStatus-Unlocked",
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY id ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 //Helper functions
 
@@ -71,7 +71,9 @@ while (true) {
     }
     else {
         //Have not reached download limit yet, check for unlocked failed replay downloads
-        $result2 = $db->execute("SelectDownloadingReplay-Unlocked");
+        $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADING;
+        $r_timestamp = time() - UNLOCK_DOWNLOADING_DURATION;
+        $result2 = $db->execute("SelectNextReplayWithStatus-Unlocked");
         $resrows2 = $db->countResultRows($result2);
         if ($resrows2 > 0) {
             //Found a failed replay download, reset it to queued
@@ -87,7 +89,9 @@ while (true) {
         }
         else {
             //No replay downloads previously failed, look for an unlocked queued replay to download
-            $result3 = $db->execute("SelectQueuedReplay-Unlocked");
+            $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
+            $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
+            $result3 = $db->execute("SelectNextReplayWithStatus-Unlocked");
             $resrows3 = $db->countResultRows($result3);
             if ($resrows3 > 0) {
                 //Found a queued unlocked replay, softlock for downloading and download it.

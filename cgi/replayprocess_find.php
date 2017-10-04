@@ -7,6 +7,7 @@
 namespace Fizzik;
 
 require_once 'includes/include.php';
+require_once 'includes/Hotsapi.php';
 
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Utility\SleepHandler;
