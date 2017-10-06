@@ -21,7 +21,7 @@ const ID = "id";
 const V = "value";
 
 //Data directory path constants
-const PATH_DATA = "/Data/";
+const PATH_DATA = "/data/";
 const PATH_STORMDATA = PATH_DATA . "mods/heroesdata.stormmod/base.stormdata/GameData/";
 const PATH_STORMDATA_HEROES = PATH_STORMDATA . "Heroes/";
 const PATHFRAG_STORMDATA_HERO_DIR = "Data/";
@@ -98,14 +98,16 @@ $heromodsDataNames = [
 //Blizzard developers are a mess, and a few hero data xml's do not follow any of the established patterns, so must insert special cases for them here
 $heromodsDataNamesExceptions = [
     "garrosh" => "Garrosh.xml",
-    "kelthuzad" => "KelThuzad.xml"
+    "kelthuzad" => "KelThuzad.xml",
+    "guldan" => "GuldanData.xml"
 ];
 
 //What internal hero names to ignore from the list
 $ignoreNames = [
     "Random" => TRUE,
     "TestHero" => TRUE,
-    "GreymaneWorgen" => TRUE
+    "GreymaneWorgen" => TRUE,
+    "ChoGallBundleProduct" => TRUE
 ];
 
 //What names to convert if encountered
@@ -123,32 +125,17 @@ $mapNames = [
     "LostVikings" => "The Lost Vikings",
     "Medic" => "Lt. Morales",
     "Monk" => "Kharazim",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
-    "" => "",
+    "Necromancer" => "Xul",
+    "SgtHammer" => "Sgt. Hammer",
+    "Tinker" => "Gazlowe",
+    "WitchDoctor" => "Nazeebo",
+    "Wizard" => "Li-Ming",
+    "Amazon" => "Cassia",
+    "DVa" => "D.Va",
+    "KelThuzad" => "Kel'Thuzad",
+    "Lucio" => "Lúcio",
+    "Zuljin" => "Zul'jin",
+    "Guldan" => "Gul'dan"
 ];
 
 function extractImageString($str) {
@@ -208,13 +195,24 @@ function extractHero_xmlToJson($filepath) {
                     if (key_exists('AttributeId', $j)) $hero['attribute'] = $j['AttributeId'][ATTR][V];
                     if (key_exists('Difficulty', $j)) $hero['difficulty'] = $j["Difficulty"][ATTR][V];
                     if (key_exists('ProductId', $j)) $hero['product_id'] = $j['ProductId'][ATTR][V];
-                    if (key_exists('Role', $j)) $hero['role'] = $j['Role'][ATTR][V];
+                    if (key_exists('Role', $j)) {
+                        $hero['role'] = $j['Role'][ATTR][V];
+                    }
+                    else if (key_exists('RolesMultiClass', $j) && key_exists(ATTR, $j['RolesMultiClass'])) {
+                        $hero['role'] = $j['RolesMultiClass'][ATTR][V];
+                    }
+                    else if (key_exists('CollectionCategory', $j)) {
+                        $hero['role'] = $j['CollectionCategory'][ATTR][V];
+                    }
+                    else {
+                        $hero['role'] = "Unknown";
+                    }
                     if (key_exists('RolesMultiClass', $j) && key_exists(ATTR, $j['RolesMultiClass'])) $hero['role_multiclass'] = $j['RolesMultiClass'][ATTR][V];
                     if (key_exists('CollectionCategory', $j)) $hero['role_collection'] = $j['CollectionCategory'][ATTR][V];
                     if (key_exists('Universe', $j)) $hero['universe'] = $j['Universe'][ATTR][V];
                     if (key_exists('SelectScreenButtonImage', $j)) $hero['image_heroselect'] = extractImageString($j['SelectScreenButtonImage'][ATTR][V]);
                     if (key_exists('UniverseIcon', $j)) $hero['image_universe'] = extractImageString($j['UniverseIcon'][ATTR][V]);
-                    if (key_exists('HyperlinkId', $j)) $hero['image_hyperlink'] = extractImageString($j['HyperlinkId'][ATTR][V]);
+                    if (key_exists('HyperlinkId', $j)) $hero['image_hyperlink'] = $j['HyperlinkId'][ATTR][V];
                     $hero['ratings'] = [];
                     if (key_exists('Ratings', $j)) {
                         if (key_exists('Damage', $j['Ratings'])) $hero['ratings']['damage'] = $j['Ratings']['Damage'][ATTR][V];
