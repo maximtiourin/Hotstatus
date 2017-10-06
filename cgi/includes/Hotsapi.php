@@ -9,7 +9,6 @@ class Hotsapi {
     const REPLAYS_PER_PAGE = 100;
     const HTTP_OK = 200;
     const HTTP_RATELIMITED = 429;
-    const MAX_REPLAY_AGE = 90; //90 days
     public static $validMatchTypes = array("QuickMatch", "HeroLeague", "TeamLeague", "UnrankedDraft");
 
     /*
@@ -92,7 +91,7 @@ class Hotsapi {
      * Adds an extra key 'page_index' that is set to the replays original page index before the filtering occured.
      * Note that the page index is the replay's index within the individual page, and not the # of the page itself.
      */
-    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = self::MAX_REPLAY_AGE) {
+    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = null) {
         $arr = [];
         $i = 1;
         foreach ($replays as $replay) {
@@ -102,7 +101,7 @@ class Hotsapi {
             $replaydate = $modreplay['game_date'];
 
 
-            if ($i >= $id && self::getReplayAgeInDays($replaydate) <= $filterByDays) {
+            if ($i >= $id && ($filterByDays == null || self::getReplayAgeInDays($replaydate) <= $filterByDays)) {
                 if ($filterValidMatchTypes) {
                     if (in_array($replaytype, self::$validMatchTypes, true)) {
                         $arr[] = $modreplay;
@@ -122,8 +121,8 @@ class Hotsapi {
      */
     public static function getReplayAgeInDays($str) {
         date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-        $replaydate = new DateTime($str);
-        $nowdate = new DateTime("now");
+        $replaydate = new \DateTime($str);
+        $nowdate = new \DateTime("now");
         $interval = $replaydate->diff($nowdate);
         return $interval->days;
     }

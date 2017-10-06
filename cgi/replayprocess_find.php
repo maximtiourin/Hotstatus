@@ -82,7 +82,7 @@ while (true) {
         $replays = $api['json']['replays'];
         $replaylen = count($replays);
         if ($replaylen > 0) {
-            $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex);
+            $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true, HotstatusPipeline::REPLAY_AGE_LIMIT);
             if (count($relevant_replays) > 0) {
                 foreach ($relevant_replays as $replay) {
                     $r_id = $replay['id'];

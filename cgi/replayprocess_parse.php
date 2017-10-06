@@ -99,8 +99,13 @@ while (true) {
 
             if (!key_exists('error', $parse)) {
                 //No parse error, add the match to the mongodb collection
-                $parse['_id'] = $r_id; //Set document id
+                $parse['_id'] = $r_id; //Set document id to be the match id
 
+                /* Update document with additional relevant data */
+                //Week Data
+                $parse['week_info'] = HotstatusPipeline::getWeekDataOfReplay($parse['date']);
+
+                //Begin inserting document
                 $clc = $mongo->selectCollection('matches');
 
                 $inserterror = FALSE;
