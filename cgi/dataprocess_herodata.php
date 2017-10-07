@@ -175,7 +175,9 @@ $talentExceptions = [
     "ArtanisShieldOverloadShieldSurge" => "ArtanisShieldOverloadShieldSurgeTalentNew",
     "ButcherHeroicAbilityButcherFurnaceBlast" => "ButcherFurnaceBlast",
     "ButcherMasteryFreshMeatBloodFrenzy" => "ButcherFreshBloodFrenzyMeatTalent",
-    "CrusaderHeroicMasteryIndestructable" => "CrusaderIndestructableTalent"
+    "CrusaderHeroicMasteryIndestructable" => "CrusaderIndestructableTalent",
+    "GreymaneWorgenFormQuicksilverBullets" => "GreymaneQuicksilverBulletsTalent",
+    "GreymaneWorgenFormAlphaKiller" => "GreymaneAlphaKillerTalent"
     //"" => "",
 ];
 
@@ -234,6 +236,9 @@ $talentHeroRotateExceptions = [
     ],
     "DemonHunter" => [
         "Vault", "HungeringArrow", "Hatred"
+    ],
+    "Greymane" => [
+        "GoForTheThroat"
     ]
 ];
 
