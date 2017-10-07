@@ -120,9 +120,22 @@ $ignoreNames = [
     "ChoGallBundleProduct" => TRUE
 ];
 
-//Blizzard really doesn't like consistent patterns when naming their stuff. Some old hero talents have absolutely no pattern to their mapping, so special cases required
+// Blizzard really doesn't like consistent patterns when naming their stuff. For the most part I was able to create a pattern match
+// for a large variety of egregious edge cases, but there were a few that were so incredibly stupid that it would just be easier
+// to explicitly account them.
 $talentExceptions = [
-    "GenericDampenMagic" => "TalentDampenMagic",
+    "AbathurMasteryEnvenomedNestsToxicNest" => "AbathurToxicNestEnvenomedNestTalent",
+    "AbathurMasteryVileNestsToxicNest" => "AbathurToxicNestVileNestTalent",
+    "GenericTalentCalldownMULE" => "GenericCalldownMule",
+    "AbathurCombatStyleLocustBrood" => "AbathurLocustSwarm",
+    "RehgarMasteryShamanHealingWard" => "RehgarHealingTotem",
+    "RehgarMasteryEarthGraspTotem" => "RehgarEarthbindTotemEarthgraspTotemTalent",
+    "RaynorMasteryGiveMeMoreAdrenalineRush" => "RaynorAdrenalineRushGiveMeMoreTalent",
+    "RaynorMasteryFightorFlightAdrenalineRush" => "RaynorAdrenalineRushFightOrFlightTalent",
+    "HeroGenericExecutionerPassive" => "GenericExecutionerTalent",
+    "RaynorMasteryClusterRoundPenetratingRound" => "RaynorPenetratingRoundClusterRoundTalent",
+    "RaynorMasteryBullseyePenetratingRound" => "RaynorPenetratingRoundBullseyeTalent",
+    "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent"
 ];
 
 //What names to convert if encountered
@@ -180,6 +193,8 @@ function extractURLFriendlyProperName($name) {
  * hero names are treated as one word.
  */
 function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $nameinternal = "") {
+    global $talentExceptions;
+
     $talent = 'Talent';
 
     $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@m';
@@ -192,10 +207,17 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtalent = [];
     $mtvalid = [];
     $mtex = [];
+    $mtex2 = [];
     $mtlimit = [];
     $mtwords = [];
     $tid = 0;
 
+    //Talent Exception shortcuts
+    if (key_exists($id, $talentExceptions)) {
+        $mtvalid[$tid] = TRUE;
+        $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@m';
+        $tid++;
+    }
     //$nameinternal shortcuts
     if (strlen($nameinternal) > 0) {
         // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
@@ -204,6 +226,24 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         $mtalent[$tid] = $id;
         $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
         $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+        $tid++;
+        // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "HeroicAbility";
+        $mtex2[$tid] = "Mastery";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@m';
+        $tid++;
+        // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "HeroicAbility";
+        $mtex2[$tid] = "Mastery";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@m';
         $tid++;
         // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
         $mtvalid[$tid] = FALSE;
@@ -233,6 +273,13 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtalent[$tid] = $id;
     $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
     $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@m';
+    $tid++;
+    // GenericTalentFooBar = GenericFooBarHotbar (SKIPS 'Talent'*)
+    $mtvalid[$tid] = TRUE;
+    $mtex[$tid] = "Talent";
+    $mtalent[$tid] = $id;
+    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@m';
     $tid++;
     // Firstword . Arbitraryword . Otherwords . 'Talent' (SKIPS Word 2)
     $mtvalid[$tid] = FALSE;
