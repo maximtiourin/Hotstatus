@@ -134,13 +134,25 @@ $talentExceptions = [
     "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent",
     "TassadarTemplarsWill" => "TassadarOracleTemplarsWillTalent",
     "TassadarKhalasCelerityPlasmaShield" => "TassadarKhalasCelerity",
-    "GenericTalentFlashoftheStorms" => "GenericBoltoftheStormTalent"
+    "GenericTalentFlashoftheStorms" => "GenericBoltoftheStormTalent",
+    "FalstadMasteryHammerangSecretWeapon" => "FalstadSecretWeaponTalent",
+    "FalstadMasteryFlightEpicMount" => "FalstadEpicMountTalent",
+    "BattleMomentumKerrigan" => "KerriganBladedMomentum",
+    "GenericTalentBlock" => "GenericBlockTalent"
+    //"BarbarianCombatStyleFerociousHealing" => "BarbarianFuryFerociousHealing"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
 $talentHeroWordExceptions = [
     "Tyrande" => [
         "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
+    ]
+];
+
+// Erroneous words in hero talent ids, ALL key means those words are irrelevant for any heroes that have them
+$talentHeroWordDeletionExceptions = [
+    "ALL" => [
+        "Mastery", "CombatStyle"
     ]
 ];
 
@@ -161,6 +173,12 @@ $talentHeroRotateExceptions = [
     "Falstad" => [
         "HinterlandBlast", "BarrelRoll", "Flight", "Hammerang", "Tailwind", "Thunderstorm"
     ],
+    "Kerrigan" => [
+        "SummonUltralisk"
+    ],
+    "Barbarian" => [
+        "SeismicSlam", "AncientSpear", "Fury", "Leap", "Whirlwind", "WrathoftheBerserker"
+    ]
 ];
 
 // To further add to the Blizzard lunacy, some talents have differing patterns for their proper name compared to their description
@@ -227,270 +245,16 @@ function extractURLFriendlyProperName($name) {
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
 function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
-    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions, $talentHeroRotateExceptions;
+    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions;
 
     $regex_match_flags = 'mi';
 
     $talent = 'Talent';
+    $deleteall = "ALL";
 
     $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@';
     $match = '@' . $prefix . $id . '=(.*)$@';
     $replacebbcode = '/<.*?>/';
-
-    /*
-     * Special exception talent match cases
-     */
-    $mtalent = [];
-    $mtvalid = [];
-    $mtex = [];
-    $mtex2 = [];
-    $mtlimit = [];
-    $mtwords = [];
-    $tid = 0;
-
-    $talentException = FALSE;
-
-    //Talent Exception shortcuts
-    if ($isTalentNameVariant && key_exists($id, $talentNameExceptions)) {
-        $talentException = TRUE;
-        $mtvalid[$tid] = TRUE;
-        $mtalent[$tid] = '@' . $prefix . $talentNameExceptions[$id] . '=(.*)$@';
-        $tid++;
-    }
-    if (key_exists($id, $talentExceptions)) {
-        $talentException = TRUE;
-        $mtvalid[$tid] = TRUE;
-        $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@';
-        $tid++;
-    }
-    //$nameinternal shortcuts
-    if (strlen($nameinternal) > 0) {
-        // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
-        $mtvalid[$tid] = TRUE;
-        $mtex[$tid] = "Mastery";
-        $mtalent[$tid] = $id;
-        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
-        $tid++;
-        // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
-        $mtvalid[$tid] = TRUE;
-        $mtex[$tid] = "HeroicAbility";
-        $mtex2[$tid] = "Mastery";
-        $mtalent[$tid] = $id;
-        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
-        $tid++;
-        // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
-        $mtvalid[$tid] = TRUE;
-        $mtex[$tid] = "HeroicAbility";
-        $mtex2[$tid] = "Mastery";
-        $mtalent[$tid] = $id;
-        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
-        $tid++;
-        // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
-        $mtvalid[$tid] = FALSE;
-        $mtlimit[$tid] = 4;
-        $mtalent[$tid] = str_replace($nameinternal, '', $id);
-        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-            $mtalent[$tid] = '@' . $prefix . $nameinternal;
-            for ($i = 3; $i < count($mtwords[$tid]); $i++) {
-                $mtalent[$tid] .= $mtwords[$tid][$i];
-            }
-            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-            $mtvalid[$tid] = TRUE;
-        }
-        $tid++;
-        // Looping experimental word map addition based on hero name {HERONAME} . $word . Otherwords . Talent (SKIPS 'Mastery'* READDS {HeroName})
-        if (key_exists($nameinternal, $talentHeroWordExceptions)) {
-            foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
-                $mtvalid[$tid] = TRUE;
-                $mtex[$tid] = "Mastery";
-                $mtalent[$tid] = $id;
-                $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
-                $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
-                $tid++;
-            }
-        }
-        // Looping experimental word map rotation based on hero name {HERONAME} . $word . Otherwords . Talent (SKIPS 'Mastery'* and $word READDS {HeroName})
-        if (key_exists($nameinternal, $talentHeroRotateExceptions)) {
-            foreach ($talentHeroRotateExceptions[$nameinternal] as $word) {
-                $mtvalid[$tid] = TRUE;
-                $mtex[$tid] = "Mastery";
-                $mtalent[$tid] = $id;
-                $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
-                $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-                $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
-                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
-                $tid++;
-            }
-        }
-    }
-    // GenericFooBar = TalentFooBar (SKIPS 'Generic'*)
-    $mtvalid[$tid] = TRUE;
-    $mtex[$tid] = "Generic";
-    $mtalent[$tid] = $id;
-    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $talent . $mtalent[$tid] . '=(.*)$@';
-    $tid++;
-    // GenericTalentFooBar = GenericFooBar (SKIPS 'Talent'*)
-    $mtvalid[$tid] = TRUE;
-    $mtex[$tid] = "Talent";
-    $mtalent[$tid] = $id;
-    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
-    $tid++;
-    // GenericTalentFooBar = GenericFooBarHotbar (SKIPS 'Talent'*)
-    $mtvalid[$tid] = TRUE;
-    $mtex[$tid] = "Talent";
-    $mtalent[$tid] = $id;
-    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
-    $tid++;
-    // Firstword . Arbitraryword . Otherwords . 'Talent' (SKIPS Word 2)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 3;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // Firstword . Other_words_except_second . 'Talent' (SKIPS Word 2)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 3;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
-        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // Firstword . Arbitraryword . Otherwords_except_last . 'Talent' (SKIPS Word 2, Last word)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 4;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mtwords[$tid]) - 1; $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2 and Word 3)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 4;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 3; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Nothing)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 2;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 1; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // GenericTalentFooBar = FooBarTalent (SKIPS 'GenericTalent'*)
-    $mtvalid[$tid] = TRUE;
-    $mtex[$tid] = "GenericTalent";
-    $mtalent[$tid] = $id;
-    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
-    $tid++;
-    // Firstword . Other_words_except_2_and_3 (SKIPS Word 2 and Word 3)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 4;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
-        for ($i = 3; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // Firstword . 3Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 3;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // FooBar = FooBarHotbar (SKIPS Nothing)
-    $mtvalid[$tid] = TRUE;
-    $mtex[$tid] = "Hotbar";
-    $mtalent[$tid] = $id;
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $mtex[$tid] . '=(.*)$@';
-    $tid++;
-    // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
-    $mtvalid[$tid] = FALSE;
-    $mtlimit[$tid] = 3;
-    $mtalent[$tid] = $id;
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
-    // 'Generic' . Otherwords_but_remove_plural . 'Talent' (SKIPS Word 1, REMOVES plurality [s, if it exists])
-    $mtvalid[$tid] = FALSE;
-    $mtex[$tid] = 'Generic';
-    $mtlimit[$tid] = 2;
-    $mtalent[$tid] = preg_replace('/(.*)s/', '$1', $id);
-    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-        $mtalent[$tid] = '@' . $prefix . $mtex[$tid];
-        for ($i = 1; $i < count($mtwords[$tid]); $i++) {
-            $mtalent[$tid] .= $mtwords[$tid][$i];
-        }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-        $mtvalid[$tid] = TRUE;
-    }
-    $tid++;
 
     $arr = [];
     $arr2 = [];
@@ -498,6 +262,310 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $ret = null;
 
     if ($isTalent) {
+        /*
+         * Special exception talent match cases
+         */
+        $mtalent = [];
+        $mtvalid = [];
+        $mtex = [];
+        $mtex2 = [];
+        $mtlimit = [];
+        $mtwords = [];
+        $tid = 0;
+
+        $talentException = FALSE;
+
+        //Talent Exception shortcuts
+        if ($isTalentNameVariant && key_exists($id, $talentNameExceptions)) {
+            $talentException = TRUE;
+            $mtvalid[$tid] = TRUE;
+            $mtalent[$tid] = '@' . $prefix . $talentNameExceptions[$id] . '=(.*)$@';
+            $tid++;
+        }
+        if (key_exists($id, $talentExceptions)) {
+            $talentException = TRUE;
+            $mtvalid[$tid] = TRUE;
+            $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@';
+            $tid++;
+        }
+        //$nameinternal shortcuts
+        if (strlen($nameinternal) > 0) {
+            // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
+            $mtvalid[$tid] = TRUE;
+            $mtex[$tid] = "Mastery";
+            $mtalent[$tid] = $id;
+            $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
+            $tid++;
+            // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
+            $mtvalid[$tid] = TRUE;
+            $mtex[$tid] = "HeroicAbility";
+            $mtex2[$tid] = "Mastery";
+            $mtalent[$tid] = $id;
+            $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+            $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
+            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
+            $tid++;
+            // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
+            $mtvalid[$tid] = TRUE;
+            $mtex[$tid] = "HeroicAbility";
+            $mtex2[$tid] = "Mastery";
+            $mtalent[$tid] = $id;
+            $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+            $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
+            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
+            $tid++;
+            // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
+            $mtvalid[$tid] = FALSE;
+            $mtlimit[$tid] = 4;
+            $mtalent[$tid] = str_replace($nameinternal, '', $id);
+            $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+            if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+                $mtalent[$tid] = '@' . $prefix . $nameinternal;
+                for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+                    $mtalent[$tid] .= $mtwords[$tid][$i];
+                }
+                $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+                $mtvalid[$tid] = TRUE;
+            }
+            $tid++;
+            // Looping experimental word map addition based on hero name {HERONAME} . $word . Otherwords . (Talent?) (SKIPS 'Mastery'* READDS {HeroName})
+            if (key_exists($nameinternal, $talentHeroWordExceptions)) {
+                foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
+                    $tid++;
+
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . '=(.*)$@';
+                    $tid++;
+                }
+            }
+            // Looping experimental word map rotation based on hero name {HERONAME} . $word . Otherwords . (Talent?) (SKIPS 'Mastery'* and $word READDS {HeroName})
+            if (key_exists($nameinternal, $talentHeroRotateExceptions)) {
+                foreach ($talentHeroRotateExceptions[$nameinternal] as $word) {
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+                    $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
+                    $tid++;
+
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+                    $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . '=(.*)$@';
+                    $tid++;
+                }
+            }
+        }
+        // GenericFooBar = TalentFooBar (SKIPS 'Generic'*)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "Generic";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $talent . $mtalent[$tid] . '=(.*)$@';
+        $tid++;
+        // GenericTalentFooBar = GenericFooBar (SKIPS 'Talent'*)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "Talent";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
+        $tid++;
+        // GenericTalentFooBar = GenericFooBarHotbar (SKIPS 'Talent'*)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "Talent";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
+        $tid++;
+        // Firstword . Arbitraryword . Otherwords . 'Talent' (SKIPS Word 2)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 3;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
+            for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // Firstword . Other_words_except_second . 'Talent' (SKIPS Word 2)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 3;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
+            for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // Firstword . Arbitraryword . Otherwords_except_last . 'Talent' (SKIPS Word 2, Last word)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 4;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
+            for ($i = 2; $i < count($mtwords[$tid]) - 1; $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2 and Word 3)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 4;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+            for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Nothing)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 2;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+            for ($i = 1; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // GenericTalentFooBar = FooBarTalent (SKIPS 'GenericTalent'*)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "GenericTalent";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
+        $tid++;
+        // Firstword . Other_words_except_2_and_3 (SKIPS Word 2 and Word 3)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 4;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
+            for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // Firstword . 3Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 3;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+            for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // FooBar = FooBarHotbar (SKIPS Nothing)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "Hotbar";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $mtex[$tid] . '=(.*)$@';
+        $tid++;
+        // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 3;
+        $mtalent[$tid] = $id;
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+            for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+        // 'Generic' . Otherwords_but_remove_plural . 'Talent' (SKIPS Word 1, REMOVES plurality [s, if it exists])
+        $mtvalid[$tid] = FALSE;
+        $mtex[$tid] = 'Generic';
+        $mtlimit[$tid] = 2;
+        $mtalent[$tid] = preg_replace('/(.*)s/', '$1', $id);
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $mtex[$tid];
+            for ($i = 1; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
+
         //matchTalent
         if (!$talentException) $ret = preg_match($matchtalent . $regex_match_flags, $linesepstring, $arr);
 
