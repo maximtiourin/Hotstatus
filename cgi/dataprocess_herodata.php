@@ -142,7 +142,14 @@ $talentExceptions = [
     "NovaMasteryExplosiveShot" => "NovaSnipeExplosiveRoundTalent",
     "NovaMasteryPerfectShotSnipe" => "NovaPerfectShotTalent",
     "TyraelHeroicAbilityJudgement" => "TyraelJudgment",
-    "GenericTalentNullificationShield" => "NullificationShieldTalent"
+    "GenericTalentNullificationShield" => "NullificationShieldTalent",
+    "ETCMasteryGuitarHero" => "L90ETCGuitarSoloGuitarHeroTalent",
+    "L90ETCMasteryFaceMeltPinballWizard" => "ETCPinballWizardTalent",
+    "ETCCombatStyleEchoPedal" => "L90ETCRockstarEchoPedalTalent",
+    "ETCHeroicAbilityMoshPit" => "L90ETCMoshPit",
+    "ETCHeroicAbilityStageDive" => "L90ETCStageDive",
+    "ETCMasteryFaceSmelt" => "L90ETCFaceMeltFaceSmeltTalent",
+    "L90ETCMasteryStageDiveCrowdPleaser" => "ETCStageDiveCrowdPleaserTalent"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
