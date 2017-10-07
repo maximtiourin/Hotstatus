@@ -184,7 +184,7 @@ $talentExceptions = [
 // Erroneous words in hero talent ids, ALL key means those words are irrelevant for any heroes that have them
 $talentHeroWordDeletionExceptions = [
     "ALL" => [
-        "Mastery", "CombatStyle", "HeroicAbility"
+        "Mastery", "CombatStyle", "HeroicAbility", "Heroic"
     ]
 ];
 
