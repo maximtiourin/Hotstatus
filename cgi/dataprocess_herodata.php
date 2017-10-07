@@ -179,7 +179,7 @@ function extractURLFriendlyProperName($name) {
  * If name internal is set to a hero's internal name, then the regex parsing can be sped up while also making sure that
  * hero names are treated as one word.
  */
-function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $nameinternal = NULL) {
+function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $nameinternal = "") {
     $talent = 'Talent';
 
     $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@m';
@@ -195,155 +195,185 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtlimit = [];
     $mtwords = [];
     $tid = 0;
-    // {HERONAME}MasteryFooBar = HERONAMEFooBarTalent (SKIPS 'Mastery'*)
-    $mt15valid = ($nameinternal != NULL);
-    if ($nameinternal != NULL) {
-        $mt15ex = "Mastery";
-        $mtalent15 = $id;
-        $mtalent15 = str_replace($mt15ex, '', $mtalent15);
-        $mtalent15 = '@' . $prefix . $nameinternal . $mtalent15 . $talent . '=(.*)$@m';
+
+    //$nameinternal shortcuts
+    if (strlen($nameinternal) > 0) {
+        // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
+        $mtvalid[$tid] = TRUE;
+        $mtex[$tid] = "Mastery";
+        $mtalent[$tid] = $id;
+        $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+        $tid++;
+        // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
+        $mtvalid[$tid] = FALSE;
+        $mtlimit[$tid] = 4;
+        $mtalent[$tid] = str_replace($nameinternal, '', $id);
+        $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+        if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+            $mtalent[$tid] = '@' . $prefix . $nameinternal;
+            for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+                $mtalent[$tid] .= $mtwords[$tid][$i];
+            }
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+            $mtvalid[$tid] = TRUE;
+        }
+        $tid++;
     }
     // GenericFooBar = TalentFooBar (SKIPS 'Generic'*)
-    $mt2valid = TRUE;
-    $mt2ex = "Generic";
-    $mtalent2 = $id;
-    $mtalent2 = str_replace($mt2ex, '', $mtalent2);
-    $mtalent2 = '@' . $prefix . $talent . $mtalent2 . '=(.*)$@m';
+    $mtvalid[$tid] = TRUE;
+    $mtex[$tid] = "Generic";
+    $mtalent[$tid] = $id;
+    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+    $mtalent[$tid] = '@' . $prefix . $talent . $mtalent[$tid] . '=(.*)$@m';
+    $tid++;
     // GenericTalentFooBar = GenericFooBar (SKIPS 'Talent'*)
-    $mt8valid = TRUE;
-    $mt8ex = "Talent";
-    $mtalent8 = $id;
-    $mtalent8 = str_replace($mt8ex, '', $mtalent8);
-    $mtalent8 = '@' . $prefix . $mtalent8 . '=(.*)$@m';
+    $mtvalid[$tid] = TRUE;
+    $mtex[$tid] = "Talent";
+    $mtalent[$tid] = $id;
+    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@m';
+    $tid++;
     // Firstword . Arbitraryword . Otherwords . 'Talent' (SKIPS Word 2)
-    $mt3valid = FALSE;
-    $mt3limit = 3;
-    $mtalent3 = $id;
-    $mt3words = preg_split('/(?=[A-Z])/', $mtalent3, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt3words) >= $mt3limit) {
-        $mtalent3 = '@' . $prefix . $mt3words[0] . '[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mt3words); $i++) {
-            $mtalent3 .= $mt3words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 3;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
+        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent3 = $mtalent3 . $talent . '=(.*)$@m';
-        $mt3valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // Firstword . Other_words_except_second . 'Talent' (SKIPS Word 2)
-    $mt4valid = FALSE;
-    $mt4limit = 3;
-    $mtalent4 = $id;
-    $mt4words = preg_split('/(?=[A-Z])/', $mtalent4, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt4words) >= $mt4limit) {
-        $mtalent4 = '@' . $prefix . $mt4words[0];
-        for ($i = 2; $i < count($mt4words); $i++) {
-            $mtalent4 .= $mt4words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 3;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
+        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent4 = $mtalent4 . $talent . '=(.*)$@m';
-        $mt4valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // Firstword . Arbitraryword . Otherwords_except_last . 'Talent' (SKIPS Word 2, Last word)
-    $mt5valid = FALSE;
-    $mt5limit = 4;
-    $mtalent5 = $id;
-    $mt5words = preg_split('/(?=[A-Z])/', $mtalent5, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt5words) >= $mt5limit) {
-        $mtalent5 = '@' . $prefix . $mt5words[0] . '[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mt5words) - 1; $i++) {
-            $mtalent5 .= $mt5words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 4;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*';
+        for ($i = 2; $i < count($mtwords[$tid]) - 1; $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent5 = $mtalent5 . $talent . '=(.*)$@m';
-        $mt5valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2 and Word 3)
-    $mt6valid = FALSE;
-    $mt6limit = 4;
-    $mtalent6 = $id;
-    $mt6words = preg_split('/(?=[A-Z])/', $mtalent6, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt6words) >= $mt6limit) {
-        $mtalent6 = '@' . $prefix . $mt6words[0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 3; $i < count($mt6words); $i++) {
-            $mtalent6 .= $mt6words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 4;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+        for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent6 = $mtalent6 . $talent . '=(.*)$@m';
-        $mt6valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Nothing)
-    $mt7valid = FALSE;
-    $mt7limit = 2;
-    $mtalent7 = $id;
-    $mt7words = preg_split('/(?=[A-Z])/', $mtalent7, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt7words) >= $mt7limit) {
-        $mtalent7 = '@' . $prefix . $mt7words[0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 1; $i < count($mt7words); $i++) {
-            $mtalent7 .= $mt7words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 2;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+        for ($i = 1; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent7 = $mtalent7 . $talent . '=(.*)$@m';
-        $mt7valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // GenericTalentFooBar = FooBarTalent (SKIPS 'GenericTalent'*)
-    $mt9valid = TRUE;
-    $mt9ex = "GenericTalent";
-    $mtalent9 = $id;
-    $mtalent9 = str_replace($mt9ex, '', $mtalent9);
-    $mtalent9 = '@' . $prefix . $mtalent9 . $talent . '=(.*)$@m';
+    $mtvalid[$tid] = TRUE;
+    $mtex[$tid] = "GenericTalent";
+    $mtalent[$tid] = $id;
+    $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+    $tid++;
     // Firstword . Other_words_except_2_and_3 (SKIPS Word 2 and Word 3)
-    $mt10valid = FALSE;
-    $mt10limit = 4;
-    $mtalent10 = $id;
-    $mt10words = preg_split('/(?=[A-Z])/', $mtalent10, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt10words) >= $mt10limit) {
-        $mtalent10 = '@' . $prefix . $mt10words[0];
-        for ($i = 3; $i < count($mt10words); $i++) {
-            $mtalent10 .= $mt10words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 4;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0];
+        for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent10 = $mtalent10 . '=(.*)$@m';
-        $mt10valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // Firstword . 3Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
-    $mt11valid = FALSE;
-    $mt11limit = 3;
-    $mtalent11 = $id;
-    $mt11words = preg_split('/(?=[A-Z])/', $mtalent11, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt11words) >= $mt11limit) {
-        $mtalent11 = '@' . $prefix . $mt11words[0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mt11words); $i++) {
-            $mtalent11 .= $mt11words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 3;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent11 = $mtalent11 . $talent . '=(.*)$@m';
-        $mt11valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // FooBar = FooBarHotbar (SKIPS Nothing)
-    $mt12valid = TRUE;
-    $mt12ex = "Hotbar";
-    $mtalent12 = $id;
-    $mtalent12 = '@' . $prefix . $mtalent12 . $mt12ex . '=(.*)$@m';
+    $mtvalid[$tid] = TRUE;
+    $mtex[$tid] = "Hotbar";
+    $mtalent[$tid] = $id;
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $mtex[$tid] . '=(.*)$@m';
+    $tid++;
     // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
-    $mt13valid = FALSE;
-    $mt13limit = 3;
-    $mtalent13 = $id;
-    $mt13words = preg_split('/(?=[A-Z])/', $mtalent13, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt13words) >= $mt13limit) {
-        $mtalent13 = '@' . $prefix . $mt13words[0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
-        for ($i = 2; $i < count($mt13words); $i++) {
-            $mtalent13 .= $mt13words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtlimit[$tid] = 3;
+    $mtalent[$tid] = $id;
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtwords[$tid][0] . '[A-Z]+[a-z0-9]*[A-Z]+[a-z0-9]*';
+        for ($i = 2; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent13 = $mtalent13 . $talent . '=(.*)$@m';
-        $mt13valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
     // 'Generic' . Otherwords_but_remove_plural . 'Talent' (SKIPS Word 1, REMOVES plurality [s, if it exists])
-    $mt14valid = FALSE;
-    $mt14ex = 'Generic';
-    $mt14limit = 2;
-    $mtalent14 = preg_replace('/(.*)s/', '$1', $id);
-    $mt14words = preg_split('/(?=[A-Z])/', $mtalent14, NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-    if (count($mt14words) >= $mt14limit) {
-        $mtalent14 = '@' . $prefix . $mt14ex;
-        for ($i = 1; $i < count($mt14words); $i++) {
-            $mtalent14 .= $mt14words[$i];
+    $mtvalid[$tid] = FALSE;
+    $mtex[$tid] = 'Generic';
+    $mtlimit[$tid] = 2;
+    $mtalent[$tid] = preg_replace('/(.*)s/', '$1', $id);
+    $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+    if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+        $mtalent[$tid] = '@' . $prefix . $mtex[$tid];
+        for ($i = 1; $i < count($mtwords[$tid]); $i++) {
+            $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent14 = $mtalent14 . $talent . '=(.*)$@m';
-        $mt14valid = TRUE;
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtvalid[$tid] = TRUE;
     }
+    $tid++;
 
     $arr = [];
     $arr2 = [];
@@ -367,120 +397,18 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                 return trim(preg_replace($replacebbcode, '', $str));
             }
             else {
-                //mtalent15
-                if ($mt15valid) $ret = preg_match($mtalent15, $linesepstring, $arr);
+                //mtalent Talent Exceptions
+                for ($i = 0; $i < $tid; $i++) {
+                    if ($mtvalid[$i]) $ret = preg_match($mtalent[$i], $linesepstring, $arr);
 
-                if ($mt15valid && $ret == 1) {
-                    $str = $arr[1];
-                    return trim(preg_replace($replacebbcode, '', $str));
-                }
-                else {
-                    //mtalent2
-                    if ($mt2valid) $ret = preg_match($mtalent2, $linesepstring, $arr);
-
-                    if ($mt2valid && $ret == 1) {
+                    if ($mtvalid[$i] && $ret == 1) {
                         $str = $arr[1];
                         return trim(preg_replace($replacebbcode, '', $str));
-                    } else {
-                        //mtalent8
-                        if ($mt8valid) $ret = preg_match($mtalent8, $linesepstring, $arr);
-
-                        if ($mt8valid && $ret == 1) {
-                            $str = $arr[1];
-                            return trim(preg_replace($replacebbcode, '', $str));
-                        } else {
-                            //mtalent3
-                            if ($mt3valid) $ret = preg_match($mtalent3, $linesepstring, $arr);
-
-                            if ($mt3valid && $ret == 1) {
-                                $str = $arr[1];
-                                return trim(preg_replace($replacebbcode, '', $str));
-                            } else {
-                                //mtalent4
-                                if ($mt4valid) $ret = preg_match($mtalent4, $linesepstring, $arr);
-
-                                if ($mt4valid && $ret == 1) {
-                                    $str = $arr[1];
-                                    return trim(preg_replace($replacebbcode, '', $str));
-                                } else {
-                                    //mtalent5
-                                    if ($mt5valid) $ret = preg_match($mtalent5, $linesepstring, $arr);
-
-                                    if ($mt5valid && $ret == 1) {
-                                        $str = $arr[1];
-                                        return trim(preg_replace($replacebbcode, '', $str));
-                                    } else {
-                                        //mtalent6
-                                        if ($mt6valid) $ret = preg_match($mtalent6, $linesepstring, $arr);
-
-                                        if ($mt6valid && $ret == 1) {
-                                            $str = $arr[1];
-                                            return trim(preg_replace($replacebbcode, '', $str));
-                                        } else {
-                                            //mtalent7
-                                            if ($mt7valid) $ret = preg_match($mtalent7, $linesepstring, $arr);
-
-                                            if ($mt7valid && $ret == 1) {
-                                                $str = $arr[1];
-                                                return trim(preg_replace($replacebbcode, '', $str));
-                                            } else {
-                                                //mtalent9
-                                                if ($mt9valid) $ret = preg_match($mtalent9, $linesepstring, $arr);
-
-                                                if ($mt9valid && $ret == 1) {
-                                                    $str = $arr[1];
-                                                    return trim(preg_replace($replacebbcode, '', $str));
-                                                } else {
-                                                    //mtalent10
-                                                    if ($mt10valid) $ret = preg_match($mtalent10, $linesepstring, $arr);
-
-                                                    if ($mt10valid && $ret == 1) {
-                                                        $str = $arr[1];
-                                                        return trim(preg_replace($replacebbcode, '', $str));
-                                                    } else {
-                                                        //mtalent11
-                                                        if ($mt11valid) $ret = preg_match($mtalent11, $linesepstring, $arr);
-
-                                                        if ($mt11valid && $ret == 1) {
-                                                            $str = $arr[1];
-                                                            return trim(preg_replace($replacebbcode, '', $str));
-                                                        } else {
-                                                            //mtalent12
-                                                            if ($mt12valid) $ret = preg_match($mtalent12, $linesepstring, $arr);
-
-                                                            if ($mt12valid && $ret == 1) {
-                                                                $str = $arr[1];
-                                                                return trim(preg_replace($replacebbcode, '', $str));
-                                                            } else {
-                                                                //mtalent13
-                                                                if ($mt13valid) $ret = preg_match($mtalent13, $linesepstring, $arr);
-
-                                                                if ($mt13valid && $ret == 1) {
-                                                                    $str = $arr[1];
-                                                                    return trim(preg_replace($replacebbcode, '', $str));
-                                                                } else {
-                                                                    //mtalent14
-                                                                    if ($mt14valid) $ret = preg_match($mtalent14, $linesepstring, $arr);
-
-                                                                    if ($mt14valid && $ret == 1) {
-                                                                        $str = $arr[1];
-                                                                        return trim(preg_replace($replacebbcode, '', $str));
-                                                                    } else {
-                                                                        return $defaultValue;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
+
+                //Exhausted all possibilities, just return default value
+                return $defaultValue;
             }
         }
     }
@@ -638,9 +566,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         foreach ($j['TalentTreeArray'] as $talent) {
                             $t = [];
                             $tname_internal = $talent[ATTR]['Talent'];
-                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true);
+                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, $name_internal);
                             $t['name_internal'] = $tname_internal;
-                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true);
+                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, $name_internal);
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
                             $hero['talents'][] = $t;
