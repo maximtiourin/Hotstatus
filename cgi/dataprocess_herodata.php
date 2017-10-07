@@ -138,8 +138,11 @@ $talentExceptions = [
     "FalstadMasteryHammerangSecretWeapon" => "FalstadSecretWeaponTalent",
     "FalstadMasteryFlightEpicMount" => "FalstadEpicMountTalent",
     "BattleMomentumKerrigan" => "KerriganBladedMomentum",
-    "GenericTalentBlock" => "GenericBlockTalent"
-    //"BarbarianCombatStyleFerociousHealing" => "BarbarianFuryFerociousHealing"
+    "GenericTalentBlock" => "GenericBlockTalent",
+    "NovaMasteryExplosiveShot" => "NovaSnipeExplosiveRoundTalent",
+    "NovaMasteryPerfectShotSnipe" => "NovaPerfectShotTalent",
+    "TyraelHeroicAbilityJudgement" => "TyraelJudgment",
+    "GenericTalentNullificationShield" => "NullificationShieldTalent"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
@@ -152,7 +155,7 @@ $talentHeroWordExceptions = [
 // Erroneous words in hero talent ids, ALL key means those words are irrelevant for any heroes that have them
 $talentHeroWordDeletionExceptions = [
     "ALL" => [
-        "Mastery", "CombatStyle"
+        "Mastery", "CombatStyle", "HeroicAbility"
     ]
 ];
 
@@ -178,6 +181,9 @@ $talentHeroRotateExceptions = [
     ],
     "Barbarian" => [
         "SeismicSlam", "AncientSpear", "Fury", "Leap", "Whirlwind", "WrathoftheBerserker"
+    ],
+    "Malfurion" => [
+        "EntanglingRoots"
     ]
 ];
 
@@ -290,6 +296,22 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         }
         //$nameinternal shortcuts
         if (strlen($nameinternal) > 0) {
+            // {HERONAME}{IGNOREALL}FooBar = {HERONAME}FooBar(Talent?) (SKIPS {IGNOREALL} IGNORES $nameinternal)
+            $mtvalid[$tid] = TRUE;
+            $mtalent[$tid] = $id;
+            foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+            }
+            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
+            $tid++;
+
+            $mtvalid[$tid] = TRUE;
+            $mtalent[$tid] = $id;
+            foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+            }
+            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
+            $tid++;
             // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
             $mtvalid[$tid] = TRUE;
             $mtex[$tid] = "Mastery";
@@ -336,10 +358,10 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                     $mtalent[$tid] = $id;
                     $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
 
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
                     if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
-                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
-                        }
                         foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
                             $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
                         }
@@ -352,10 +374,10 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                     $mtalent[$tid] = $id;
                     $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
 
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
                     if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
-                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
-                        }
                         foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
                             $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
                         }
@@ -373,10 +395,10 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                     $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
                     $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
 
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
                     if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
-                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
-                        }
                         foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
                             $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
                         }
@@ -390,10 +412,10 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                     $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
                     $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
 
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
                     if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
-                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
-                        }
                         foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
                             $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
                         }
