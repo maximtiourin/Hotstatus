@@ -156,18 +156,27 @@ $talentExceptions = [
     "BattleMomentumDiablo" => "DiabloDiabolicalMomentum",
     "MuradinGiveEmTheAxeExecutioner60DamageBonus" => "MuradinGiveEmTheAxeTalent",
     "GenericTalentHardenedShield" => "HardenedShieldTalent",
-    "BrightwingPixieCharm" => "HeroGenericBribeToken"
-    //"FaerieDragonMasteryPhaseShield" => "BrightwingPhaseShiftPhaseShieldTalent",
-    //"FaerieDragonHeroicAbilityBlinkHeal" => "BrightwingBlinkHealAllyDash",
-    //"FaerieDragonHeroicAbilityEmeraldWind" => "BrightwingEmeraldWind",
-    //"FaerieDragonMasteryStickyFlare" => "BrightwingArcaneFlareStickyFlareTalent",
-];
-
-// Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
-$talentHeroWordExceptions = [
-    "Tyrande" => [
-        "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
-    ]
+    "BrightwingManicPixiePixieDust" => "BrightwingManicPixieTalent",
+    "BrightwingPixieCharm" => "FaerieDragonPixieCharmTalent",
+    "FaerieDragonMasteryPhaseShield" => "BrightwingPhaseShiftPhaseShieldTalent",
+    "FaerieDragonHeroicAbilityBlinkHeal" => "BrightwingBlinkHealAllyDash",
+    "FaerieDragonHeroicAbilityEmeraldWind" => "BrightwingEmeraldWind",
+    "FaerieDragonMasteryStickyFlare" => "BrightwingArcaneFlareStickyFlareTalent",
+    "FaerieDragonMasteryShieldDust" => "BrightwingPixieDustShieldDustTalent",
+    "FaerieDragonMasteryCritterize" => "BrightwingPolymorphCritterizeTalent",
+    "FaerieDragonHardenedFocus" => "GenericHardenedFocusTalent",
+    "BrightwingDoubleWyrmholeBlinkHeal" => "BrightwingDoubleWyrmholeTalent",
+    "FaerieDragonMasteryContinuousWinds" => "BrightwingEmeraldWindContinuousWindsTalent",
+    "AnubarakMasteryShedExoskeletonHardenCarapace" => "AnubarakRegeneratingCarapaceShedExoskeletonTalent",
+    "AnubarakMasteryLeechingScarabs" => "AnubarakLeechingMandiblesTalent",
+    "AnubarakScarabHostBeetleJuiced" => "AnubarakBeetleSpitBeetleJuiceTalent",
+    "AnubarakCocoonCryptweave" => "AnubarakCryptweaveCocoonTalent",
+    "TalentNullificationShield" => "NullificationShieldTalent",
+    "ArtanisShieldOverloadShieldSurge" => "ArtanisShieldOverloadShieldSurgeTalentNew",
+    "ButcherHeroicAbilityButcherFurnaceBlast" => "ButcherFurnaceBlast",
+    "ButcherMasteryFreshMeatBloodFrenzy" => "ButcherFreshBloodFrenzyMeatTalent",
+    "CrusaderHeroicMasteryIndestructable" => "CrusaderIndestructableTalent"
+    //"" => "",
 ];
 
 // Erroneous words in hero talent ids, ALL key means those words are irrelevant for any heroes that have them
@@ -177,8 +186,16 @@ $talentHeroWordDeletionExceptions = [
     ]
 ];
 
+$talentHeroAlernateExceptions = [
+    "L90ETC" => "ETC",
+    "FaerieDragon" => "Brightwing"
+];
+
 // Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
 $talentHeroRotateExceptions = [
+    "Tyrande" => [
+        "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
+    ],
     "Raynor" => [
         "AdrenalineRush", "PenetratingRound", "RaynorsBanshees"
     ],
@@ -210,7 +227,10 @@ $talentHeroRotateExceptions = [
         "FrostmourneHungers"
     ],
     "FaerieDragon" => [
-        "ArcaneFlare", "PhaseShift", "PixieDust", "SoothingMist"
+        "ArcaneFlare", "PhaseShift", "PixieDust", "SoothingMist", "BlinkHeal"
+    ],
+    "Crusader" => [
+        "Condemn", "Punish"
     ]
 ];
 
@@ -279,13 +299,18 @@ function extractURLFriendlyProperName($name) {
  * $isTalentNameVariant is a bool that if true means we're extracting specifically a Talent name, made necessary in order to properly
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
-function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "", $namesort = "") {
-    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions;
+function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
+    global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions;
 
     $regex_match_flags = 'mi';
 
     $talent = 'Talent';
     $deleteall = "ALL";
+
+    $namesort = "";
+    if (key_exists($nameinternal, $talentHeroAlernateExceptions)) {
+        $namesort = $talentHeroAlernateExceptions[$nameinternal];
+    }
 
     $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@';
     $match = '@' . $prefix . $id . '=(.*)$@';
@@ -388,23 +413,89 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
             $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
             $tid++;
-            // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
-            $mtvalid[$tid] = FALSE;
-            $mtlimit[$tid] = 4;
-            $mtalent[$tid] = str_replace($nameinternal, '', $id);
-            $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
-            if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
-                $mtalent[$tid] = '@' . $prefix . $nameinternal;
-                for ($i = 3; $i < count($mtwords[$tid]); $i++) {
-                    $mtalent[$tid] .= $mtwords[$tid][$i];
+            // Looping experimental word map deletion based on hero name {HERONAME} . Otherwords . (Talent?) (SKIPS $word READDS {HeroName})
+            if (key_exists($nameinternal, $talentHeroRotateExceptions)) {
+                foreach ($talentHeroRotateExceptions[$nameinternal] as $word) {
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+
+                    $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $mtalent[$tid] . $talent . '=(.*)$@';
+                    $tid++;
+
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+
+                    $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
+                    if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                        foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                    }
+
+                    $mtalent[$tid] = '@' . $prefix . $nameinternal . $mtalent[$tid] . '=(.*)$@';
+                    $tid++;
+
+                    //-------------------------------------------
+
+                    if (strlen($namesort) > 0) {
+                        $mtvalid[$tid] = TRUE;
+                        $mtalent[$tid] = $id;
+                        $mtalent[$tid] = str_replace($namesort, '', $mtalent[$tid]);
+
+                        $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                            foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                            }
+                        }
+
+                        $mtalent[$tid] = '@' . $prefix . $namesort . $mtalent[$tid] . $talent . '=(.*)$@';
+                        $tid++;
+
+                        $mtvalid[$tid] = TRUE;
+                        $mtalent[$tid] = $id;
+                        $mtalent[$tid] = str_replace($namesort, '', $mtalent[$tid]);
+
+                        $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+
+                        foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                            $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                        }
+                        if (key_exists($nameinternal, $talentHeroWordDeletionExceptions)) {
+                            foreach ($talentHeroWordDeletionExceptions[$nameinternal] as $deleteword) {
+                                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                            }
+                        }
+
+                        $mtalent[$tid] = '@' . $prefix . $namesort . $mtalent[$tid] . '=(.*)$@';
+                        $tid++;
+                    }
                 }
-                $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
-                $mtvalid[$tid] = TRUE;
             }
-            $tid++;
             // Looping experimental word map addition based on hero name {HERONAME} . $word . Otherwords . (Talent?) (SKIPS 'Mastery'* READDS {HeroName})
-            if (key_exists($nameinternal, $talentHeroWordExceptions)) {
-                foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
+            if (key_exists($nameinternal, $talentHeroRotateExceptions)) {
+                foreach ($talentHeroRotateExceptions[$nameinternal] as $word) {
                     $mtvalid[$tid] = TRUE;
                     $mtalent[$tid] = $id;
                     $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
@@ -550,6 +641,20 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                     }
                 }
             }
+            // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
+            $mtvalid[$tid] = FALSE;
+            $mtlimit[$tid] = 4;
+            $mtalent[$tid] = str_replace($nameinternal, '', $id);
+            $mtwords[$tid] = preg_split('/(?=[A-Z])/', $mtalent[$tid], NULL, PREG_SPLIT_NO_EMPTY); //Splits into array of words, where every word past [0] is gauranteed capitalized on the first letter
+            if (count($mtwords[$tid]) >= $mtlimit[$tid]) {
+                $mtalent[$tid] = '@' . $prefix . $nameinternal;
+                for ($i = 3; $i < count($mtwords[$tid]); $i++) {
+                    $mtalent[$tid] .= $mtwords[$tid][$i];
+                }
+                $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
+                $mtvalid[$tid] = TRUE;
+            }
+            $tid++;
         }
         // GenericFooBar = TalentFooBar (SKIPS 'Generic'*)
         $mtvalid[$tid] = TRUE;
@@ -898,9 +1003,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         foreach ($j['TalentTreeArray'] as $talent) {
                             $t = [];
                             $tname_internal = $talent[ATTR]['Talent'];
-                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, true, $name_internal, $hero['name_sort']);
+                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, true, $name_internal);
                             $t['name_internal'] = $tname_internal;
-                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal, $hero['name_sort']);
+                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal);
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
                             $hero['talents'][] = $t;
