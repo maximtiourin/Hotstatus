@@ -242,6 +242,9 @@ $talentHeroRotateExceptions = [
     ],
     "Leoric" => [
         "SkeletalSwing", "Undying", "DrainHope", "WraithWalk", "Entomb", "MarchoftheBlackKing"
+    ],
+    "Monk" => [
+        "RadiantDash", "DeadlyReach", "BreathofHeaven", "DivinePalm", "SevenSidedStrike"
     ]
 ];
 
