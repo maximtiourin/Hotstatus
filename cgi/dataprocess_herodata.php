@@ -122,7 +122,7 @@ $ignoreNames = [
 
 // Blizzard really doesn't like consistent patterns when naming their stuff. For the most part I was able to create a pattern match
 // for a large variety of egregious edge cases, but there were a few that were so incredibly stupid that it would just be easier
-// to explicitly account them.
+// to explicitly map them.
 $talentExceptions = [
     "AbathurMasteryEnvenomedNestsToxicNest" => "AbathurToxicNestEnvenomedNestTalent",
     "AbathurMasteryVileNestsToxicNest" => "AbathurToxicNestVileNestTalent",
@@ -135,7 +135,24 @@ $talentExceptions = [
     "HeroGenericExecutionerPassive" => "GenericExecutionerTalent",
     "RaynorMasteryClusterRoundPenetratingRound" => "RaynorPenetratingRoundClusterRoundTalent",
     "RaynorMasteryBullseyePenetratingRound" => "RaynorPenetratingRoundBullseyeTalent",
-    "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent"
+    "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent",
+    "TassadarTemplarsWill" => "TassadarOracleTemplarsWillTalent",
+    "TassadarKhalasCelerityPlasmaShield" => "TassadarKhalasCelerity",
+    //"TyrandeRanger" => "TyrandeSentinelRangerTalent",
+    //"TyrandeCelestialAttunement" => "TyrandeLightOfEluneCelestialAttunementTalent"
+];
+
+// Experimental map of words that heroes might have as filler for their talent names, remove these words to try to find a talent
+$talentHeroWordExceptions = [
+    "Tyrande" => [
+        "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
+    ]
+];
+
+// To further add to the Blizzard lunacy, some talents have differing patterns for their proper name compared to their description
+$talentNameExceptions = [
+    "TassadarHeroicAbilityArchon" => "TassadarArchonSelectButton",
+    "TassadarMasteryTwilightArchon" => "TassadarArchonTwilightArchonTalentSelectButton"
 ];
 
 //What names to convert if encountered
@@ -191,9 +208,12 @@ function extractURLFriendlyProperName($name) {
  *
  * If name internal is set to a hero's internal name, then the regex parsing can be sped up while also making sure that
  * hero names are treated as one word.
+ *
+ * $isTalentNameVariant is a bool that if true means we're extracting specifically a Talent name, made necessary in order to properly
+ * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
-function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $nameinternal = "") {
-    global $talentExceptions;
+function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
+    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions;
 
     $talent = 'Talent';
 
@@ -212,8 +232,17 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtwords = [];
     $tid = 0;
 
+    $talentException = FALSE;
+
     //Talent Exception shortcuts
+    if ($isTalentNameVariant && key_exists($id, $talentNameExceptions)) {
+        $talentException = TRUE;
+        $mtvalid[$tid] = TRUE;
+        $mtalent[$tid] = '@' . $prefix . $talentNameExceptions[$id] . '=(.*)$@m';
+        $tid++;
+    }
     if (key_exists($id, $talentExceptions)) {
+        $talentException = TRUE;
         $mtvalid[$tid] = TRUE;
         $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@m';
         $tid++;
@@ -259,6 +288,16 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             $mtvalid[$tid] = TRUE;
         }
         $tid++;
+        // Looping experimental word map removal based on hero name {HERONAME} . Otherwords_Except_Removed . Talent
+        if (key_exists($nameinternal, $talentHeroWordExceptions)) {
+            foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
+                $mtvalid[$tid] = TRUE;
+                $mtalent[$tid] = $id;
+                $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
+                $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+                $tid++;
+            }
+        }
     }
     // GenericFooBar = TalentFooBar (SKIPS 'Generic'*)
     $mtvalid[$tid] = TRUE;
@@ -429,17 +468,17 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
 
     if ($isTalent) {
         //matchTalent
-        $ret = preg_match($matchtalent, $linesepstring, $arr);
+        if (!$talentException) $ret = preg_match($matchtalent, $linesepstring, $arr);
 
-        if ($ret == 1) {
+        if (!$talentException && $ret == 1) {
             $str = $arr[1];
             return trim(preg_replace($replacebbcode, '', $str));
         }
         else {
             //match
-            $ret = preg_match($match, $linesepstring, $arr2);
+            if (!$talentException) $ret = preg_match($match, $linesepstring, $arr2);
 
-            if ($ret == 1) {
+            if (!$talentException && $ret == 1) {
                 $str = $arr2[1];
                 return trim(preg_replace($replacebbcode, '', $str));
             }
@@ -613,9 +652,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         foreach ($j['TalentTreeArray'] as $talent) {
                             $t = [];
                             $tname_internal = $talent[ATTR]['Talent'];
-                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, $name_internal);
+                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, true, $name_internal);
                             $t['name_internal'] = $tname_internal;
-                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, $name_internal);
+                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal);
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
                             $hero['talents'][] = $t;
