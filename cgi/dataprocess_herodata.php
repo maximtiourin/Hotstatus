@@ -239,6 +239,9 @@ $talentHeroRotateExceptions = [
     ],
     "Greymane" => [
         "GoForTheThroat"
+    ],
+    "Leoric" => [
+        "SkeletalSwing", "Undying", "DrainHope", "WraithWalk", "Entomb", "MarchoftheBlackKing"
     ]
 ];
 
