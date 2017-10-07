@@ -130,14 +130,11 @@ $talentExceptions = [
     "AbathurCombatStyleLocustBrood" => "AbathurLocustSwarm",
     "RehgarMasteryShamanHealingWard" => "RehgarHealingTotem",
     "RehgarMasteryEarthGraspTotem" => "RehgarEarthbindTotemEarthgraspTotemTalent",
-    "RaynorMasteryGiveMeMoreAdrenalineRush" => "RaynorAdrenalineRushGiveMeMoreTalent",
-    "RaynorMasteryFightorFlightAdrenalineRush" => "RaynorAdrenalineRushFightOrFlightTalent",
     "HeroGenericExecutionerPassive" => "GenericExecutionerTalent",
-    "RaynorMasteryClusterRoundPenetratingRound" => "RaynorPenetratingRoundClusterRoundTalent",
-    "RaynorMasteryBullseyePenetratingRound" => "RaynorPenetratingRoundBullseyeTalent",
     "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent",
     "TassadarTemplarsWill" => "TassadarOracleTemplarsWillTalent",
     "TassadarKhalasCelerityPlasmaShield" => "TassadarKhalasCelerity",
+    "GenericTalentFlashoftheStorms" => "GenericBoltoftheStormTalent"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
@@ -149,9 +146,21 @@ $talentHeroWordExceptions = [
 
 // Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
 $talentHeroRotateExceptions = [
+    "Raynor" => [
+        "AdrenalineRush", "PenetratingRound", "RaynorsBanshees"
+    ],
     "Uther" => [
         "DivineStorm", "DivineShield", "HolyRadiance"
-    ]
+    ],
+    "Illidan" => [
+        "SweepingStrike", "Metamorphosis", "Evasion", "Dive", "BetrayersThirst", "TheHunt"
+    ],
+    "Anubarak" => [
+        "BurrowCharge", "CarrionSwarm", "Cocoon", "HardenCarapace", "Impale", "RegeneratingCarapace"
+    ],
+    "Falstad" => [
+        "HinterlandBlast", "BarrelRoll", "Flight", "Hammerang", "Tailwind", "Thunderstorm"
+    ],
 ];
 
 // To further add to the Blizzard lunacy, some talents have differing patterns for their proper name compared to their description
@@ -220,10 +229,12 @@ function extractURLFriendlyProperName($name) {
 function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
     global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions, $talentHeroRotateExceptions;
 
+    $regex_match_flags = 'mi';
+
     $talent = 'Talent';
 
-    $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@m';
-    $match = '@' . $prefix . $id . '=(.*)$@m';
+    $matchtalent = '@' . $prefix . $id . $talent . '=(.*)$@';
+    $match = '@' . $prefix . $id . '=(.*)$@';
     $replacebbcode = '/<.*?>/';
 
     /*
@@ -243,13 +254,13 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     if ($isTalentNameVariant && key_exists($id, $talentNameExceptions)) {
         $talentException = TRUE;
         $mtvalid[$tid] = TRUE;
-        $mtalent[$tid] = '@' . $prefix . $talentNameExceptions[$id] . '=(.*)$@m';
+        $mtalent[$tid] = '@' . $prefix . $talentNameExceptions[$id] . '=(.*)$@';
         $tid++;
     }
     if (key_exists($id, $talentExceptions)) {
         $talentException = TRUE;
         $mtvalid[$tid] = TRUE;
-        $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@m';
+        $mtalent[$tid] = '@' . $prefix . $talentExceptions[$id] . '=(.*)$@';
         $tid++;
     }
     //$nameinternal shortcuts
@@ -259,7 +270,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         $mtex[$tid] = "Mastery";
         $mtalent[$tid] = $id;
         $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
         $tid++;
         // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
         $mtvalid[$tid] = TRUE;
@@ -268,7 +279,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         $mtalent[$tid] = $id;
         $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
         $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@m';
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
         $tid++;
         // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
         $mtvalid[$tid] = TRUE;
@@ -277,7 +288,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         $mtalent[$tid] = $id;
         $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
         $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
-        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@m';
+        $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
         $tid++;
         // {HERONAME} . Otherwords_Except_Word2_Word3_Word4 . 'Talent' (SKIPS {HeroName} and Word 2 and Word 3 and Word 4, READDS {HeroName})
         $mtvalid[$tid] = FALSE;
@@ -289,7 +300,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             for ($i = 3; $i < count($mtwords[$tid]); $i++) {
                 $mtalent[$tid] .= $mtwords[$tid][$i];
             }
-            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+            $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
             $mtvalid[$tid] = TRUE;
         }
         $tid++;
@@ -301,7 +312,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                 $mtalent[$tid] = $id;
                 $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
                 $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@m';
+                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
                 $tid++;
             }
         }
@@ -314,7 +325,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
                 $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
                 $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
                 $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
-                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@m';
+                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@';
                 $tid++;
             }
         }
@@ -324,21 +335,21 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtex[$tid] = "Generic";
     $mtalent[$tid] = $id;
     $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $talent . $mtalent[$tid] . '=(.*)$@m';
+    $mtalent[$tid] = '@' . $prefix . $talent . $mtalent[$tid] . '=(.*)$@';
     $tid++;
     // GenericTalentFooBar = GenericFooBar (SKIPS 'Talent'*)
     $mtvalid[$tid] = TRUE;
     $mtex[$tid] = "Talent";
     $mtalent[$tid] = $id;
     $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@m';
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
     $tid++;
     // GenericTalentFooBar = GenericFooBarHotbar (SKIPS 'Talent'*)
     $mtvalid[$tid] = TRUE;
     $mtex[$tid] = "Talent";
     $mtalent[$tid] = $id;
     $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@m';
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . 'Hotbar' . '=(.*)$@';
     $tid++;
     // Firstword . Arbitraryword . Otherwords . 'Talent' (SKIPS Word 2)
     $mtvalid[$tid] = FALSE;
@@ -350,7 +361,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 2; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -364,7 +375,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 2; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -378,7 +389,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 2; $i < count($mtwords[$tid]) - 1; $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -392,7 +403,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 3; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -406,7 +417,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 1; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -415,7 +426,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtex[$tid] = "GenericTalent";
     $mtalent[$tid] = $id;
     $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
     $tid++;
     // Firstword . Other_words_except_2_and_3 (SKIPS Word 2 and Word 3)
     $mtvalid[$tid] = FALSE;
@@ -427,7 +438,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 3; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -441,7 +452,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 2; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -449,7 +460,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
     $mtvalid[$tid] = TRUE;
     $mtex[$tid] = "Hotbar";
     $mtalent[$tid] = $id;
-    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $mtex[$tid] . '=(.*)$@m';
+    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $mtex[$tid] . '=(.*)$@';
     $tid++;
     // Firstword . 2_Arbitrarywords . Otherwords . 'Talent' (SKIPS Word 2)
     $mtvalid[$tid] = FALSE;
@@ -461,7 +472,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 2; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -476,7 +487,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         for ($i = 1; $i < count($mtwords[$tid]); $i++) {
             $mtalent[$tid] .= $mtwords[$tid][$i];
         }
-        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@m';
+        $mtalent[$tid] = $mtalent[$tid] . $talent . '=(.*)$@';
         $mtvalid[$tid] = TRUE;
     }
     $tid++;
@@ -488,7 +499,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
 
     if ($isTalent) {
         //matchTalent
-        if (!$talentException) $ret = preg_match($matchtalent, $linesepstring, $arr);
+        if (!$talentException) $ret = preg_match($matchtalent . $regex_match_flags, $linesepstring, $arr);
 
         if (!$talentException && $ret == 1) {
             $str = $arr[1];
@@ -496,7 +507,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         }
         else {
             //match
-            if (!$talentException) $ret = preg_match($match, $linesepstring, $arr2);
+            if (!$talentException) $ret = preg_match($match . $regex_match_flags, $linesepstring, $arr2);
 
             if (!$talentException && $ret == 1) {
                 $str = $arr2[1];
@@ -505,7 +516,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             else {
                 //mtalent Talent Exceptions
                 for ($i = 0; $i < $tid; $i++) {
-                    if ($mtvalid[$i]) $ret = preg_match($mtalent[$i], $linesepstring, $arr);
+                    if ($mtvalid[$i]) $ret = preg_match($mtalent[$i] . $regex_match_flags, $linesepstring, $arr);
 
                     if ($mtvalid[$i] && $ret == 1) {
                         $str = $arr[1];
@@ -519,7 +530,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
         }
     }
     else {
-        $ret = preg_match($match, $linesepstring, $arr);
+        $ret = preg_match($match . $regex_match_flags, $linesepstring, $arr);
 
         if ($ret == 1) {
             $str = $arr[1];
