@@ -138,14 +138,19 @@ $talentExceptions = [
     "RaynorMasteryHelsAngelsRaynorsBanshees" => "RaynorRaynorsRaidersHelsAngelsTalent",
     "TassadarTemplarsWill" => "TassadarOracleTemplarsWillTalent",
     "TassadarKhalasCelerityPlasmaShield" => "TassadarKhalasCelerity",
-    //"TyrandeRanger" => "TyrandeSentinelRangerTalent",
-    //"TyrandeCelestialAttunement" => "TyrandeLightOfEluneCelestialAttunementTalent"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
 $talentHeroWordExceptions = [
     "Tyrande" => [
         "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
+    ]
+];
+
+// Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
+$talentHeroRotateExceptions = [
+    "Uther" => [
+        "DivineStorm", "DivineShield", "HolyRadiance"
     ]
 ];
 
@@ -213,7 +218,7 @@ function extractURLFriendlyProperName($name) {
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
 function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
-    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions;
+    global $talentExceptions, $talentNameExceptions, $talentHeroWordExceptions, $talentHeroRotateExceptions;
 
     $talent = 'Talent';
 
@@ -288,12 +293,27 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             $mtvalid[$tid] = TRUE;
         }
         $tid++;
-        // Looping experimental word map addition based on hero name {HERONAME} . Otherwords_Except_Removed . Talent (READDS {HeroName})
+        // Looping experimental word map addition based on hero name {HERONAME} . $word . Otherwords . Talent (SKIPS 'Mastery'* READDS {HeroName})
         if (key_exists($nameinternal, $talentHeroWordExceptions)) {
             foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
                 $mtvalid[$tid] = TRUE;
+                $mtex[$tid] = "Mastery";
                 $mtalent[$tid] = $id;
                 $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+                $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@m';
+                $tid++;
+            }
+        }
+        // Looping experimental word map rotation based on hero name {HERONAME} . $word . Otherwords . Talent (SKIPS 'Mastery'* and $word READDS {HeroName})
+        if (key_exists($nameinternal, $talentHeroRotateExceptions)) {
+            foreach ($talentHeroRotateExceptions[$nameinternal] as $word) {
+                $mtvalid[$tid] = TRUE;
+                $mtex[$tid] = "Mastery";
+                $mtalent[$tid] = $id;
+                $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+                $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
+                $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
                 $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@m';
                 $tid++;
             }
