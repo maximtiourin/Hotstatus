@@ -177,7 +177,9 @@ $talentExceptions = [
     "ButcherMasteryFreshMeatBloodFrenzy" => "ButcherFreshBloodFrenzyMeatTalent",
     "CrusaderHeroicMasteryIndestructable" => "CrusaderIndestructableTalent",
     "GreymaneWorgenFormQuicksilverBullets" => "GreymaneQuicksilverBulletsTalent",
-    "GreymaneWorgenFormAlphaKiller" => "GreymaneAlphaKillerTalent"
+    "GreymaneWorgenFormAlphaKiller" => "GreymaneAlphaKillerTalent",
+    "NecromancerTalentGrimScythe" => "NecromancerCursedStrikesGrimScythe",
+    "NecromancerTalentRapidHarvest" => "NecromancerCursedStrikesRapidHarvest"
     //"" => "",
 ];
 
@@ -245,6 +247,9 @@ $talentHeroRotateExceptions = [
     ],
     "Monk" => [
         "RadiantDash", "DeadlyReach", "BreathofHeaven", "DivinePalm", "SevenSidedStrike"
+    ],
+    "Rexxar" => [
+        "SpiritSwoop"
     ]
 ];
 
