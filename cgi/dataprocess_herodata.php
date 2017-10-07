@@ -231,6 +231,9 @@ $talentHeroRotateExceptions = [
     ],
     "Crusader" => [
         "Condemn", "Punish"
+    ],
+    "DemonHunter" => [
+        "Vault", "HungeringArrow", "Hatred"
     ]
 ];
 
