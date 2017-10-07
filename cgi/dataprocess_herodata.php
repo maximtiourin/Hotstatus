@@ -149,7 +149,11 @@ $talentExceptions = [
     "ETCHeroicAbilityMoshPit" => "L90ETCMoshPit",
     "ETCHeroicAbilityStageDive" => "L90ETCStageDive",
     "ETCMasteryFaceSmelt" => "L90ETCFaceMeltFaceSmeltTalent",
-    "L90ETCMasteryStageDiveCrowdPleaser" => "ETCStageDiveCrowdPleaserTalent"
+    "L90ETCMasteryStageDiveCrowdPleaser" => "ETCStageDiveCrowdPleaserTalent",
+    "BattleMomentumMuradin" => "MuradinIronforgedMomentum",
+    "BattleMomentumCrusader" => "JohannaBlessedMomentum",
+    "BattleMomentumTyrael" => "TyraelAngelicMomentum",
+    "BattleMomentumDiablo" => "DiabloDiabolicalMomentum"
 ];
 
 // Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
@@ -191,6 +195,9 @@ $talentHeroRotateExceptions = [
     ],
     "Malfurion" => [
         "EntanglingRoots"
+    ],
+    "Diablo" => [
+        "BlackSoulstone", "ShadowCharge", "FireStomp"
     ]
 ];
 
