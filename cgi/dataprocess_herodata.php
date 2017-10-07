@@ -142,7 +142,7 @@ $talentExceptions = [
     //"TyrandeCelestialAttunement" => "TyrandeLightOfEluneCelestialAttunementTalent"
 ];
 
-// Experimental map of words that heroes might have as filler for their talent names, remove these words to try to find a talent
+// Experimental map of words that heroes might have as filler for their talent names, adds these words to try to find a talent
 $talentHeroWordExceptions = [
     "Tyrande" => [
         "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
@@ -288,13 +288,13 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
             $mtvalid[$tid] = TRUE;
         }
         $tid++;
-        // Looping experimental word map removal based on hero name {HERONAME} . Otherwords_Except_Removed . Talent
+        // Looping experimental word map addition based on hero name {HERONAME} . Otherwords_Except_Removed . Talent (READDS {HeroName})
         if (key_exists($nameinternal, $talentHeroWordExceptions)) {
             foreach ($talentHeroWordExceptions[$nameinternal] as $word) {
                 $mtvalid[$tid] = TRUE;
                 $mtalent[$tid] = $id;
-                $mtalent[$tid] = str_replace($word, '', $mtalent[$tid]);
-                $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@m';
+                $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+                $mtalent[$tid] = '@' . $prefix . $nameinternal . $word . $mtalent[$tid] . $talent . '=(.*)$@m';
                 $tid++;
             }
         }
