@@ -1082,17 +1082,17 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                 $heroic = FALSE;
                                 $trait = FALSE;
                                 foreach ($ability['Flags'] as $aflag) {
-                                    if (key_exists(ATTR, $ability['Flags'])
-                                    && key_exists(IDX, $ability['Flags'][ATTR])
-                                    && key_exists(V, $ability['Flags'][ATTR])
-                                    && intval($ability['Flags'][ATTR][V]) == 1) {
-                                        if ($ability['Flags'][ATTR][IDX] == "ShowInHeroSelect") {
+                                    if (key_exists(ATTR, $aflag)
+                                    && key_exists(IDX, $aflag[ATTR])
+                                    && key_exists(V, $aflag[ATTR])
+                                    && intval($aflag[ATTR][V]) == 1) {
+                                        if ($aflag[ATTR][IDX] == "ShowInHeroSelect") {
                                             $isValidAbility = TRUE;
                                         }
-                                        else if ($ability['Flags'][ATTR][IDX] == "Heroic") {
+                                        else if ($aflag[ATTR][IDX] == "Heroic") {
                                             $heroic = TRUE;
                                         }
-                                        else if ($ability['Flags'][ATTR][IDX] == "Trait") {
+                                        else if ($aflag[ATTR][IDX] == "Trait") {
                                             $trait = TRUE;
                                         }
                                     }
