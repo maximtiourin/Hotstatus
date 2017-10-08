@@ -380,13 +380,31 @@ function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
  * $isTalentNameVariant is a bool that if true means we're extracting specifically a Talent name, made necessary in order to properly
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
-function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
+function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
     global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions;
 
     $regex_match_flags = 'mi';
 
     $talent = 'Talent';
     $deleteall = "ALL";
+
+    //Build prefix options
+    $prefix = "";
+    $prefixarrlen = count($prefixarr);
+    if ($prefixarrlen > 0) {
+        $pc = 0;
+        $prefix = '(?:';
+        foreach ($prefixarr as $pref) {
+            $prefix .= $pref;
+
+            if ($pc < $prefixarrlen - 1) {
+                $prefix .= '|';
+            }
+
+            $pc++;
+        }
+        $prefix .= ')';
+    }
 
     $namesort = "";
     if (key_exists($nameinternal, $talentHeroAlernateExceptions)) {
@@ -983,7 +1001,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     $hero = [];
 
                     //Proper name
-                    $hero['name'] = extractLine("Hero/Name/", $name_internal, $str2, $name_internal);
+                    $hero['name'] = extractLine(array("Hero/Name/"), $name_internal, $str2, $name_internal);
                     /*if (key_exists($name_internal, $mapNames)) {
                         //Map hero name
                         $hero['name'] = $mapNames[$name_internal];
@@ -997,7 +1015,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     $hero['name_internal'] = $name_internal;
 
                     //Sort name
-                    $hero['name_sort'] = extractLine("Hero/SortName/", $name_internal, $str2, extractURLFriendlyProperName($hero['name']));
+                    $hero['name_sort'] = extractLine(array("Hero/SortName/"), $name_internal, $str2, extractURLFriendlyProperName($hero['name']));
 
                     //Attribute name
                     if (key_exists('AttributeId', $j)) {
@@ -1033,10 +1051,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     }
 
                     //Description Tagline
-                    $hero['desc_tagline'] = extractLine("Hero/Description/", $name_internal, $str2, "None");
+                    $hero['desc_tagline'] = extractLine(array("Hero/Description/"), $name_internal, $str2, "None");
 
                     //Description Bio
-                    $hero['desc_bio'] = extractLine("Hero/Info/", $name_internal, $str2, "None");
+                    $hero['desc_bio'] = extractLine(array("Hero/Info/"), $name_internal, $str2, "None");
 
                     //Image name
                     $hero['image_name'] = extractURLFriendlyProperName($hero['name']);
@@ -1147,17 +1165,17 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                         $backupDefault = $searchDefault;
                                         /*if ($haveButton && $haveAbil) {
                                             //Some older heroes don't have ability name keys and just have button name keys, account for that while still prefer ability key > button key
-                                            $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
+                                            $backupDefault = extractLine(array("Button/Name/"), $aname_button, $str2, $searchDefault);
                                         }*/
 
                                         if (key_exists($searchStr, $abilityNameExceptions)) {
                                             $a['name'] = $abilityNameExceptions[$searchStr];
                                         }
                                         else {
-                                            $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
+                                            $a['name'] = extractLine(array($searchPrefix), $searchStr, $str2, $backupDefault);
                                         }
                                         $a['name_internal'] = $searchDefault;
-                                        $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
+                                        $a['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/"), $searchStr, $str2, "None");
                                     }
 
                                     //Add condensed name to talentHeroRotate map if the hero key doesnt exist yet
@@ -1195,9 +1213,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         foreach ($j['TalentTreeArray'] as $talent) {
                             $t = [];
                             $tname_internal = $talent[ATTR]['Talent'];
-                            $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, true, $name_internal);
+                            $t['name'] = extractLine(array("Button/Name/"), $tname_internal, $str2, $tname_internal, true, true, $name_internal);
                             $t['name_internal'] = $tname_internal;
-                            $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal);
+                            $t['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/"), $tname_internal, $str2, "None", true, false, $name_internal);
 
                             //Add a period and a space between instances where the key 'Quest:' shows up right after a word with no spaces between them
                             $t['desc'] = preg_replace('/(.)Quest:/', '$1. Quest:', $t['desc']);
