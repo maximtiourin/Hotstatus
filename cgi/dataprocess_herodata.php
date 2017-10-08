@@ -360,15 +360,15 @@ $abilityNameExceptions = [
     "Guldan" => "Gul'dan"
 ];*/
 
-function extractImageString($str) {
+function extractImageString($str, $default = "") {
     $arr = [];
-    $ret = preg_match("@(?:\\|/)(.+)\.dds@", $str, $arr);
+    $ret = preg_match("@([a-zA-Z0-9_-]+)\.dds@", $str, $arr);
 
     if ($ret == 1) {
         return $arr[1];
     }
     else {
-        return "NoImage";
+        return $default;
     }
 }
 
@@ -1181,17 +1181,22 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     /*
                      * Image strings
                      */
+                    //$noimage = "NoImage";
                     //Image name
-                    //$hero['image_name'] = extractURLFriendlyProperName($hero['name']);
+                    $hero['image_name'] = extractURLFriendlyProperName($hero['name']);
 
                     //Image select screen button
-                    $imageid = 'SelectScreenButtonImage';
+                    /*$imageid = 'SelectScreenButtonImage';
+                    $imagekey = 'image_selectscreen';
                     if (key_exists($imageid, $j)
                         && key_exists(ATTR, $j[$imageid])
                         && key_exists(V, $j[$imageid][ATTR])) {
                         $imgstr = $j[$imageid][ATTR][V];
-                        $hero['image_selectscreen'] = extractImageString($imgstr);
+                        $hero[$imagekey] = extractImageString($imgstr, $noimage);
                     }
+                    else {
+                        $hero[$imagekey] = $noimage;
+                    }*/
 
                     //Ratings
                     $hero['ratings'] = [];
