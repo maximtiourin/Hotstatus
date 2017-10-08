@@ -1106,7 +1106,13 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                 $a['desc'] = "None";
                             }
                             else {
-                                $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $searchDefault);
+                                $backupDefault = $searchDefault;
+                                if ($haveButton && $haveAbil) {
+                                    //Some older heroes don't have ability name keys and just have button name keys, account for that while still prefer ability key > button key
+                                    $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
+                                }
+
+                                $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
                                 $a['name_internal'] = $searchDefault;
                                 $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
                             }
@@ -1119,6 +1125,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                 $talentHeroRotateExceptions[$name_internal][] = preg_replace('@[_]|[^\w]@', '', $a['name']);
                             }
 
+                            //Can't use this because some older heroes do not have a proper flags array
                             /*$heroic = 0;
                             foreach ($ability['Flags'] as $aflag) {
                                 if (key_exists(ATTR, $aflag)) {
