@@ -1076,67 +1076,96 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     $hero['abilities'] = [];
                     if (key_exists('HeroAbilArray', $j)) {
                         foreach ($j['HeroAbilArray'] as $ability) {
-                            $a = [];
-
-                            $aname_internal = "";
-                            $aname_button = "";
-                            $haveButton = FALSE;
-                            $haveAbil = FALSE;
-
-                            if (key_exists('Abil', $ability[ATTR])) {
-                                $aname_internal = $ability[ATTR]['Abil'];
-                                $haveAbil = TRUE;
-                            }
-                            if (key_exists('Button', $ability[ATTR])) {
-                                $aname_button = $ability[ATTR]['Button'];
-                                $haveButton = TRUE;
-                            }
-
-                            $searchStr = $aname_internal;
-                            $searchPrefix = "Abil/Name/";
-                            $searchDefault = $aname_internal;
-                            if ($haveButton && !$haveAbil) {
-                                $searchStr = $aname_button;
-                                $searchPrefix = "Button/Name/";
-                                if (strlen($searchDefault) == 0) $searchDefault = $aname_button;
-                            }
-                            if (!$haveButton && !$haveAbil) {
-                                $a['name'] = "Unknown";
-                                $a['name_internal'] = "Unknown";
-                                $a['desc'] = "None";
-                            }
-                            else {
-                                $backupDefault = $searchDefault;
-                                if ($haveButton && $haveAbil) {
-                                    //Some older heroes don't have ability name keys and just have button name keys, account for that while still prefer ability key > button key
-                                    $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
-                                }
-
-                                $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
-                                $a['name_internal'] = $searchDefault;
-                                $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
-                            }
-
-                            //Add condensed name to talentHeroRotate map if the hero key doesnt exist yet
-                            if ($addAbilityStringsToRotateMap) {
-                                if (!key_exists($name_internal, $talentHeroRotateExceptions)) {
-                                    $talentHeroRotateExceptions[$name_internal] = [];
-                                }
-                                $talentHeroRotateExceptions[$name_internal][] = preg_replace('@[_]|[^\w]@', '', $a['name']);
-                            }
-
-                            //Can't use this because some older heroes do not have a proper flags array
-                            /*$heroic = 0;
-                            foreach ($ability['Flags'] as $aflag) {
-                                if (key_exists(ATTR, $aflag)) {
-                                    if (key_exists(IDX, $aflag[ATTR]) && $aflag[ATTR][IDX] == 'Heroic') {
-                                        $heroic = intval($aflag[ATTR][V]);
+                            //Determine if valid ability
+                            if (key_exists('Flags', $ability)) {
+                                $isValidAbility = FALSE;
+                                $heroic = FALSE;
+                                $trait = FALSE;
+                                foreach ($ability['Flags'] as $aflag) {
+                                    if (key_exists(ATTR, $ability['Flags'])
+                                    && key_exists(IDX, $ability['Flags'][ATTR])
+                                    && key_exists(V, $ability['Flags'][ATTR])
+                                    && intval($ability['Flags'][ATTR][V]) == 1) {
+                                        if ($ability['Flags'][ATTR][IDX] == "ShowInHeroSelect") {
+                                            $isValidAbility = TRUE;
+                                        }
+                                        else if ($ability['Flags'][ATTR][IDX] == "Heroic") {
+                                            $heroic = TRUE;
+                                        }
+                                        else if ($ability['Flags'][ATTR][IDX] == "Trait") {
+                                            $trait = TRUE;
+                                        }
                                     }
                                 }
-                            }
-                            $a['heroic'] = $heroic;*/
 
-                            $hero['abilities'][] = $a;
+                                if ($isValidAbility) {
+                                    $a = [];
+
+                                    $aname_internal = "";
+                                    $aname_button = "";
+                                    $haveButton = FALSE;
+                                    $haveAbil = FALSE;
+
+                                    if (key_exists('Abil', $ability[ATTR])) {
+                                        $aname_internal = $ability[ATTR]['Abil'];
+                                        $haveAbil = TRUE;
+                                    }
+                                    if (key_exists('Button', $ability[ATTR])) {
+                                        $aname_button = $ability[ATTR]['Button'];
+                                        $haveButton = TRUE;
+                                    }
+
+                                    $searchStr = $aname_internal;
+                                    $searchPrefix = "Abil/Name/";
+                                    $searchDefault = $aname_internal;
+                                    if ($haveButton && !$haveAbil) {
+                                        $searchStr = $aname_button;
+                                        $searchPrefix = "Button/Name/";
+                                        if (strlen($searchDefault) == 0) $searchDefault = $aname_button;
+                                    }
+                                    if (!$haveButton && !$haveAbil) {
+                                        $a['name'] = "Unknown";
+                                        $a['name_internal'] = "Unknown";
+                                        $a['desc'] = "None";
+                                    }
+                                    else {
+                                        $backupDefault = $searchDefault;
+                                        if ($haveButton && $haveAbil) {
+                                            //Some older heroes don't have ability name keys and just have button name keys, account for that while still prefer ability key > button key
+                                            $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
+                                        }
+
+                                        $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
+                                        $a['name_internal'] = $searchDefault;
+                                        $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
+                                    }
+
+                                    //Add condensed name to talentHeroRotate map if the hero key doesnt exist yet
+                                    if ($addAbilityStringsToRotateMap) {
+                                        if (!key_exists($name_internal, $talentHeroRotateExceptions)) {
+                                            $talentHeroRotateExceptions[$name_internal] = [];
+                                        }
+                                        $talentHeroRotateExceptions[$name_internal][] = preg_replace('@[_]|[^\w]@', '', $a['name']);
+                                    }
+
+                                    //Set ability type
+                                    $abilityType = "";
+                                    if ($heroic || $trait) {
+                                        if ($heroic) {
+                                            $abilityType .= "Heroic";
+                                        }
+                                        if ($trait) {
+                                            $abilityType .= "Trait";
+                                        }
+                                    }
+                                    else {
+                                        $abilityType = "Normal";
+                                    }
+                                    $a['type'] = $abilityType;
+
+                                    $hero['abilities'][] = $a;
+                                }
+                            }
                         }
                     }
 
