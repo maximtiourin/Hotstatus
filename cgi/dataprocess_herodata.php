@@ -1127,11 +1127,24 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         $hero['attribute'] = $j['AttributeId'][ATTR][V];
                     }
                     else {
-                        $hero['attribute'] = "NONE";
+                        $hero['attribute'] = "None";
+                    }
+
+                    //Product id
+                    if (key_exists('ProductId', $j)) {
+                        $hero['product_id'] = intval($j["ProductId"][ATTR][V]);
+                    }
+                    else {
+                        $hero['product_id'] = -1;
                     }
 
                     //Difficulty
-                    if (key_exists('Difficulty', $j)) $hero['difficulty'] = $j["Difficulty"][ATTR][V];
+                    if (key_exists('Difficulty', $j)) {
+                        $hero['difficulty'] = $j["Difficulty"][ATTR][V];
+                    }
+                    else {
+                        $hero['difficulty'] = "Unknown";
+                    }
 
                     //Role
                     if (key_exists('Role', $j)) {
@@ -1175,12 +1188,18 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         if (key_exists('Damage', $j['Ratings'])) {
                             $hero['ratings']['damage'] = intval($j['Ratings']['Damage'][ATTR][V]);
                         }
+                        else if (key_exists(ATTR, $j['Ratings']) && key_exists('Damage', $j['Ratings'][ATTR])) {
+                            $hero['ratings']['damage'] = $j['Ratings'][ATTR]['Damage'];
+                        }
                         else {
                             $hero['ratings']['damage'] = 0;
                         }
                         //Utility
                         if (key_exists('Utility', $j['Ratings'])) {
                             $hero['ratings']['utility'] = intval($j['Ratings']['Utility'][ATTR][V]);
+                        }
+                        else if (key_exists(ATTR, $j['Ratings']) && key_exists('Utility', $j['Ratings'][ATTR])) {
+                            $hero['ratings']['utility'] = $j['Ratings'][ATTR]['Utility'];
                         }
                         else {
                             $hero['ratings']['utility'] = 0;
@@ -1189,6 +1208,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         if (key_exists('Survivability', $j['Ratings'])) {
                             $hero['ratings']['survivability'] = intval($j['Ratings']['Survivability'][ATTR][V]);
                         }
+                        else if (key_exists(ATTR, $j['Ratings']) && key_exists('Survivability', $j['Ratings'][ATTR])) {
+                            $hero['ratings']['survivability'] = $j['Ratings'][ATTR]['Survivability'];
+                        }
                         else {
                             $hero['ratings']['survivability'] = 0;
                         }
@@ -1196,9 +1218,19 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         if (key_exists('Complexity', $j['Ratings'])) {
                             $hero['ratings']['complexity'] = intval($j['Ratings']['Complexity'][ATTR][V]);
                         }
+                        else if (key_exists(ATTR, $j['Ratings']) && key_exists('Complexity', $j['Ratings'][ATTR])) {
+                            $hero['ratings']['complexity'] = $j['Ratings'][ATTR]['Complexity'];
+                        }
                         else {
                             $hero['ratings']['complexity'] = 0;
                         }
+                    }
+                    else {
+                        //Values are -1 during testing, should set to 0 for deployment
+                        $hero['ratings']['damage'] = -1;
+                        $hero['ratings']['utility'] = -1;
+                        $hero['ratings']['survivability'] = -1;
+                        $hero['ratings']['complexity'] = -1;
                     }
 
                     //Rarity
