@@ -187,7 +187,8 @@ $talentExceptions = [
     "WitchDoctorHeroicAbilityRavenousSpirits" => "WitchDoctorRavenousSpirit",
     "WitchDoctorAnnihilatingSpirits" => "WitchDoctorRavenousSpiritAnnihilatingSpiritTalent",
     "ZagaraHeroicAbilityNydusAssault" => "ZagaraNydusNetwork",
-    "ZagaraMasteryCorrosiveSaliva" => "ZagaraCorrosiveSalivaHunterKillerTalent"
+    "ZagaraMasteryCorrosiveSaliva" => "ZagaraCorrosiveSalivaHunterKillerTalent",
+    "ZeratulRendingCleave" => "ZeratulCleaveRendingCleaveTalent"
     //"" => "",
 ];
 
