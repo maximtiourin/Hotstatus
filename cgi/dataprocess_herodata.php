@@ -194,7 +194,10 @@ $talentExceptions = [
     "AlarakCounterStrikeItem" => "AlarakCounterStrike2ndHeroic",
     "AlarakDeadlyChargeItem" => "AlarakDeadlyCharge2ndHeroic",
     "AnaHeroicAbilityNanaBoost" => "AnaNanoBoost",
-    "LucioBoombox" => "LucioBoomboxBoombox"
+    "LucioBoombox" => "LucioBoomboxBoombox",
+    "SamuroPhantomPain" => "SamuroPhantomsStrikeTalent",
+    "SamuroWindwalkKawarimi" => "WindwalkKawarimiTalent",
+    "SamuroWhirlwindStorm" => "SamuroDanceOfDeathTalent"
     //"" => "",
 ];
 
