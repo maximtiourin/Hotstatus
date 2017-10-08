@@ -22,6 +22,7 @@ const E = PHP_EOL;
 const ATTR = "@attributes";
 const ID = "id";
 const V = "value";
+const IDX = "index";
 
 /*
  * Data directory path constants
@@ -333,6 +334,9 @@ function extractURLFriendlyProperName($name) {
     return preg_replace('/[^a-zA-Z0-9]/', '', $name);
 }
 
+/*
+ * @DEPRECATED - Functionality no longer needed, abilities extracted in the extractHero_xmlToJson function
+ */
 function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
     if (!key_exists($nameinternal, $map)) {
         $res = [];
@@ -1064,8 +1068,62 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         $hero['rarity'] = "Unknown";
                     }
 
-                    //Extract ability strings for use with talent parsing
-                    extractHeroAbilityStrings($name_internal, $str2, $talentHeroRotateExceptions);
+                    //Abilities
+                    $addAbilityStringsToRotateMap = FALSE;
+                    if (!key_exists($name_internal, $talentHeroRotateExceptions)) {
+                        $addAbilityStringsToRotateMap = TRUE;
+                    }
+                    $hero['abilities'] = [];
+                    if (key_exists('HeroAbilArray', $j)) {
+                        foreach ($j['HeroAbilArray'] as $ability) {
+                            $a = [];
+
+                            $aname_internal = "";
+                            $aname_button = "";
+                            $haveButton = FALSE;
+
+                            if (key_exists('Abil', $ability[ATTR])) {
+                                $aname_internal = $ability[ATTR]['Abil'];
+                            }
+                            if (key_exists('Button', $ability[ATTR])) {
+                                $aname_button = $ability[ATTR]['Button'];
+                                $haveButton = TRUE;
+                            }
+
+                            $searchStr = $aname_internal;
+                            $searchPrefix = "Abil/Name/";
+                            $searchDefault = $aname_internal;
+                            if ($haveButton) {
+                                $searchStr = $aname_button;
+                                $searchPrefix = "Button/Name/";
+                                if (strlen($searchDefault) == 0) $searchDefault = $aname_button;
+                            }
+
+                            $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $searchDefault);
+                            $a['name_internal'] = $searchDefault;
+                            $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
+
+                            //Add condensed name to talentHeroRotate map if the hero key doesnt exist yet
+                            if ($addAbilityStringsToRotateMap) {
+                                if (!key_exists($name_internal, $talentHeroRotateExceptions)) {
+                                    $talentHeroRotateExceptions[$name_internal] = [];
+                                }
+                                $talentHeroRotateExceptions[$name_internal][] = preg_replace('@[_]|[^\w]@', '', $a['name']);
+                            }
+
+                            /*$heroic = 0;
+                            foreach ($ability['Flags'] as $aflag) {
+                                if (key_exists(ATTR, $aflag)) {
+                                    if (key_exists(IDX, $aflag[ATTR]) && $aflag[ATTR][IDX] == 'Heroic') {
+                                        $heroic = intval($aflag[ATTR][V]);
+                                    }
+                                }
+                            }
+                            $a['heroic'] = $heroic;*/
+
+                            $hero['abilities'][] = $a;
+                        }
+                    }
 
                     //Talents
                     $hero['talents'] = [];
