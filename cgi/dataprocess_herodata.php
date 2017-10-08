@@ -1081,9 +1081,11 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $aname_internal = "";
                             $aname_button = "";
                             $haveButton = FALSE;
+                            $haveAbil = FALSE;
 
                             if (key_exists('Abil', $ability[ATTR])) {
                                 $aname_internal = $ability[ATTR]['Abil'];
+                                $haveAbil = TRUE;
                             }
                             if (key_exists('Button', $ability[ATTR])) {
                                 $aname_button = $ability[ATTR]['Button'];
@@ -1093,15 +1095,21 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $searchStr = $aname_internal;
                             $searchPrefix = "Abil/Name/";
                             $searchDefault = $aname_internal;
-                            if ($haveButton) {
+                            if ($haveButton && !$haveAbil) {
                                 $searchStr = $aname_button;
                                 $searchPrefix = "Button/Name/";
                                 if (strlen($searchDefault) == 0) $searchDefault = $aname_button;
                             }
-
-                            $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $searchDefault);
-                            $a['name_internal'] = $searchDefault;
-                            $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
+                            if (!$haveButton && !$haveAbil) {
+                                $a['name'] = "Unknown";
+                                $a['name_internal'] = "Unknown";
+                                $a['desc'] = "None";
+                            }
+                            else {
+                                $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $searchDefault);
+                                $a['name_internal'] = $searchDefault;
+                                $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
+                            }
 
                             //Add condensed name to talentHeroRotate map if the hero key doesnt exist yet
                             if ($addAbilityStringsToRotateMap) {
