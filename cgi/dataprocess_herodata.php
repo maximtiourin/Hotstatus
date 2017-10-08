@@ -206,12 +206,19 @@ $talentHeroWordDeletionExceptions = [
     ]
 ];
 
+// Experimental, map of words that should be appended to a talent key to try to find a match
+$talentAdditionExceptions = [
+    "Hotbar", "Talent", "Activate", "Targeted", "New"
+];
+
 $talentHeroAlernateExceptions = [
     "L90ETC" => "ETC",
     "FaerieDragon" => "Brightwing"
 ];
 
 // Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
+// Not as useful as it used to be, as ability names for heros are now parsed beforehand and this map is auto-populated, but won't remove already defined data
+// so as not not break anything that was already proven to work for talent parsing.
 $talentHeroRotateExceptions = [
     "Tyrande" => [
         "Sentinel", "LightOfElune", "HuntersMark", "LunarFlare"
@@ -278,10 +285,7 @@ $talentHeroRotateExceptions = [
     ],
     "Alarak" => [
         "DiscordStrike", "CounterStrike2ndHeroic", "DeadlyCharge2ndHeroic"
-    ],
-    /*"Amazon" => [
-        "Avoidance", "BallLightning", "BlindingLight", "Fend", "LightningFury", "Valkyrie"
-    ]*/
+    ]
 ];
 
 // To further add to the Blizzard lunacy, some talents have differing patterns for their proper name compared to their description
@@ -290,7 +294,12 @@ $talentNameExceptions = [
     "TassadarMasteryTwilightArchon" => "TassadarArchonTwilightArchonTalentSelectButton"
 ];
 
-//What names to convert if encountered
+//Some abilities have button keys that map to incorrect ability names, one easy example is 'TassadarArchon' mapping to 'Phase Shift', when it should be 'Archon'
+$abilityNameExceptions = [
+    "TassadarArchon" => "Archon"
+];
+
+//@DEPRECATED What names to convert if encountered
 /*$mapNames = [
     "LiLi" => "Li Li",
     "Barbarian" => "Sonya",
@@ -371,7 +380,7 @@ function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
 function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
-    global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions;
+    global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions;
 
     $regex_match_flags = 'mi';
 
@@ -421,14 +430,16 @@ function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalen
         }
         //$nameinternal shortcuts
         if (strlen($nameinternal) > 0) {
-            // {HERONAME}{IGNOREALL}FooBar = {HERONAME}FooBar(Talent?) (SKIPS {IGNOREALL} IGNORES $nameinternal)
-            $mtvalid[$tid] = TRUE;
-            $mtalent[$tid] = $id;
-            foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+            // {HERONAME}{IGNOREALL}FooBar = {HERONAME}FooBar{ADDWORD}? (SKIPS {IGNOREALL} IGNORES $nameinternal)
+            foreach ($talentAdditionExceptions as $appendword) {
+                $mtvalid[$tid] = TRUE;
+                $mtalent[$tid] = $id;
+                foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                    $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                }
+                $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $appendword . '=(.*)$@';
+                $tid++;
             }
-            $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
-            $tid++;
 
             $mtvalid[$tid] = TRUE;
             $mtalent[$tid] = $id;
@@ -441,14 +452,16 @@ function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalen
             //-------------------------------------------
 
             if (strlen($namesort) > 0) {
-                $mtvalid[$tid] = TRUE;
-                $mtalent[$tid] = $id;
-                $mtalent[$tid] = str_replace($nameinternal, $namesort, $mtalent[$tid]);
-                foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
-                    $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                foreach ($talentAdditionExceptions as $appendword) {
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, $namesort, $mtalent[$tid]);
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
+                    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $appendword . '=(.*)$@';
+                    $tid++;
                 }
-                $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
-                $tid++;
 
                 $mtvalid[$tid] = TRUE;
                 $mtalent[$tid] = $id;
@@ -459,14 +472,14 @@ function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalen
                 $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
                 $tid++;
             }
-            // {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
+            // @DEPRECATED - Kept around for compatibility {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
             $mtvalid[$tid] = TRUE;
             $mtex[$tid] = "Mastery";
             $mtalent[$tid] = $id;
             $mtalent[$tid] = str_replace($mtex[$tid], '', $mtalent[$tid]);
             $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $talent . '=(.*)$@';
             $tid++;
-            // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
+            // @DEPRECATED - Kept around for compatibility {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBar (SKIPS 'HeroicAbility'* and 'Mastery'* IGNORES $nameinternal)
             $mtvalid[$tid] = TRUE;
             $mtex[$tid] = "HeroicAbility";
             $mtex2[$tid] = "Mastery";
@@ -475,7 +488,7 @@ function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalen
             $mtalent[$tid] = str_replace($mtex2[$tid], '', $mtalent[$tid]);
             $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
             $tid++;
-            // {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
+            // @DEPRECATED - Kept around for compatibility {HERONAME}(HeroicAbility|Mastery)FooBar = {HERONAME}FooBarHotbar (SKIPS 'HeroicAbility'* and 'Mastery' IGNORES $nameinternal)
             $mtvalid[$tid] = TRUE;
             $mtex[$tid] = "HeroicAbility";
             $mtex2[$tid] = "Mastery";
@@ -934,7 +947,7 @@ function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalen
 }
 
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $mapNames, $global_json, $talentHeroRotateExceptions;
+    global $ignoreNames, $mapNames, $global_json, $talentHeroRotateExceptions, $abilityNameExceptions;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -1115,6 +1128,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                         $haveButton = TRUE;
                                     }
 
+                                    //Commented out lines below enable {ability key > button key} precidence when they are uncommented
                                     $searchStr = $aname_internal;
                                     $searchPrefix = "Abil/Name/";
                                     $searchDefault = $aname_internal;
@@ -1135,7 +1149,12 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                             $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
                                         }*/
 
-                                        $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
+                                        if (key_exists($searchStr, $abilityNameExceptions)) {
+                                            $a['name'] = $abilityNameExceptions[$searchStr];
+                                        }
+                                        else {
+                                            $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
+                                        }
                                         $a['name_internal'] = $searchDefault;
                                         $a['desc'] = extractLine("Button/SimpleDisplayText/", $searchStr, $str2, "None");
                                     }
