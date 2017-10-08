@@ -372,6 +372,25 @@ function extractImageString($str) {
     }
 }
 
+function extractUniverseNameFromUniverseIcon($str) {
+    $arr = [];
+    $ret = preg_match("@_([\w]+)\.dds@i", $str, $arr);
+
+    if ($ret == 1) {
+        $uname = $arr[1];
+        $uname = strtolower($uname);
+        switch ($uname) {
+            case "sc2":
+                return "Starcraft";
+            default:
+                return "Unknown";
+        }
+    }
+    else {
+        return "Unknown";
+    }
+}
+
 function extractURLFriendlyProperName($name) {
     return preg_replace('/[^a-zA-Z0-9]/', '', $name);
 }
@@ -1131,6 +1150,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     //Universe
                     if (key_exists('Universe', $j)) {
                         $hero['universe'] = $j['Universe'][ATTR][V];
+                    }
+                    else if (key_exists('UniverseIcon', $j)) {
+                        $ustr = $j['UniverseIcon'][ATTR][V];
+                        $hero['universe'] = extractUniverseNameFromUniverseIcon($ustr);
                     }
                     else {
                         $hero['universe'] = "Unknown";
