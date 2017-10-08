@@ -223,7 +223,7 @@ $talentHeroWordDeletionExceptions = [
 
 // Experimental, map of words that should be appended to a talent key to try to find a match
 $talentAdditionExceptions = [
-    "Hotbar", "Talent", "Targeted", "New"
+    "Hotbar", "Talent", "Targeted", "New", "Passive"
 ];
 
 // Like addition exceptions, except these should be matched after any similar matching has performed for the primary case,
