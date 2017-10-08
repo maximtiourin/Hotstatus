@@ -185,7 +185,9 @@ $talentExceptions = [
     "ThrallHeroicAbilitySundering" => "Sundering",
     "ThrallMasteryFrostwolfsGrace" => "ThrallFrostwolfResilienceSurgeOfHealing",
     "WitchDoctorHeroicAbilityRavenousSpirits" => "WitchDoctorRavenousSpirit",
-    "WitchDoctorAnnihilatingSpirits" => "WitchDoctorRavenousSpiritAnnihilatingSpiritTalent"
+    "WitchDoctorAnnihilatingSpirits" => "WitchDoctorRavenousSpiritAnnihilatingSpiritTalent",
+    "ZagaraHeroicAbilityNydusAssault" => "ZagaraNydusNetwork",
+    "ZagaraMasteryCorrosiveSaliva" => "ZagaraCorrosiveSalivaHunterKillerTalent"
     //"" => "",
 ];
 
@@ -265,6 +267,9 @@ $talentHeroRotateExceptions = [
     ],
     "Sylvanas" => [
         "WitheringFire", "HauntingWave"
+    ],
+    "Zagara" => [
+        "CreepTumor"
     ]
 ];
 
