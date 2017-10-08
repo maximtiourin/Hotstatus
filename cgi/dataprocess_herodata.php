@@ -1118,10 +1118,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                     $searchStr = $aname_internal;
                                     $searchPrefix = "Abil/Name/";
                                     $searchDefault = $aname_internal;
-                                    if ($haveButton && !$haveAbil) {
+                                    if ($haveButton /*&& !$haveAbil*/) {
                                         $searchStr = $aname_button;
                                         $searchPrefix = "Button/Name/";
-                                        if (strlen($searchDefault) == 0) $searchDefault = $aname_button;
+                                        /*if (strlen($searchDefault) == 0)*/ $searchDefault = $aname_button;
                                     }
                                     if (!$haveButton && !$haveAbil) {
                                         $a['name'] = "Unknown";
@@ -1130,10 +1130,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                     }
                                     else {
                                         $backupDefault = $searchDefault;
-                                        if ($haveButton && $haveAbil) {
+                                        /*if ($haveButton && $haveAbil) {
                                             //Some older heroes don't have ability name keys and just have button name keys, account for that while still prefer ability key > button key
                                             $backupDefault = extractLine("Button/Name/", $aname_button, $str2, $searchDefault);
-                                        }
+                                        }*/
 
                                         $a['name'] = extractLine($searchPrefix, $searchStr, $str2, $backupDefault);
                                         $a['name_internal'] = $searchDefault;
