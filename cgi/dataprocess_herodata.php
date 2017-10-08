@@ -958,6 +958,23 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
             $mtvalid[$tid] = TRUE;
         }
         $tid++;
+        /*
+         * Special last resort case dubbed: "The Guldan", if hero = "Guldan", a hero ability = "FelFlame",
+         * and the talent name = "PursuitOfFlame, then the resulting proper key is:
+         * 'GuldanFelFlameTalentPursuitOfFlame'
+         * where Talent is inserted in the middle by reconstructing the string based on the components above.
+         */
+        foreach ($talentHeroRotateExceptions[$nameinternal] as $ability) {
+            $mtvalid[$tid] = TRUE;
+            $mtalent[$tid] = $id;
+            $mtalent[$tid] = str_replace($nameinternal, '', $mtalent[$tid]);
+            $mtalent[$tid] = str_replace($ability, '', $mtalent[$tid]);
+            foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+            }
+            $mtalent[$tid] = '@' . $prefix . $nameinternal . $ability .  $talent . $mtalent[$tid] . '=(.*)$@';
+            $tid++;
+        }
 
         //matchTalent
         if (!$talentException) $ret = preg_match($matchtalent . $regex_match_flags, $linesepstring, $arr);
