@@ -179,7 +179,8 @@ $talentExceptions = [
     "GreymaneWorgenFormQuicksilverBullets" => "GreymaneQuicksilverBulletsTalent",
     "GreymaneWorgenFormAlphaKiller" => "GreymaneAlphaKillerTalent",
     "NecromancerTalentGrimScythe" => "NecromancerCursedStrikesGrimScythe",
-    "NecromancerTalentRapidHarvest" => "NecromancerCursedStrikesRapidHarvest"
+    "NecromancerTalentRapidHarvest" => "NecromancerCursedStrikesRapidHarvest",
+    "ArthasMasteryFrostmourneFeedsFrostmourneHungers" => "ArthasFrostmourneFeedsFrostmourneHungersTalents"
     //"" => "",
 ];
 
@@ -1025,6 +1026,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $t['name'] = extractLine("Button/Name/", $tname_internal, $str2, $tname_internal, true, true, $name_internal);
                             $t['name_internal'] = $tname_internal;
                             $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal);
+
+                            //Add a period and a space between instances where the key 'Quest:' shows up right after a word with no spaces between them
+                            $t['desc'] = preg_replace('/(.)Quest:/', '$1\. ', $t['desc']);
+
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
                             $hero['talents'][] = $t;
