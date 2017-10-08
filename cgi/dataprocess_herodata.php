@@ -374,7 +374,7 @@ function extractImageString($str) {
 
 function extractUniverseNameFromUniverseIcon($str) {
     $arr = [];
-    $ret = preg_match("@_([\w]+)\.dds@i", $str, $arr);
+    $ret = preg_match("@([a-zA-Z0-9]+)\.dds@", $str, $arr);
 
     if ($ret == 1) {
         $uname = $arr[1];
