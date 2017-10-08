@@ -197,7 +197,8 @@ $talentExceptions = [
     "LucioBoombox" => "LucioBoomboxBoombox",
     "SamuroPhantomPain" => "SamuroPhantomsStrikeTalent",
     "SamuroWindwalkKawarimi" => "WindwalkKawarimiTalent",
-    "SamuroWhirlwindStorm" => "SamuroDanceOfDeathTalent"
+    "SamuroWhirlwindStorm" => "SamuroDanceOfDeathTalent",
+    "KaelthasMasterOfFlames" => "KaelthasMasterOfFlamesLivingBomb"
     //"" => "",
 ];
 
@@ -234,6 +235,11 @@ $talentSecondaryAdditionExceptions = [
 $talentHeroAlernateExceptions = [
     "L90ETC" => "ETC",
     "FaerieDragon" => "Brightwing"
+];
+
+// Experimental if a hero's internal name is a key, then replace the prefix being used by the mapped value, should only be used if the line being extracted is a description
+$talentDescRemapPrefix = [
+    "Kaelthas" => "Button/Tooltip/"
 ];
 
 // Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
@@ -405,7 +411,7 @@ function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
 function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
     global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions,
            $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions,
-           $talentSecondaryAdditionExceptions;
+           $talentSecondaryAdditionExceptions, $talentDescRemapPrefix;
 
     $regex_match_flags = 'mi';
 
@@ -414,20 +420,25 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
 
     //Build prefix options
     $prefix = "";
-    $prefixarrlen = count($prefixarr);
-    if ($prefixarrlen > 0) {
-        $pc = 0;
-        $prefix = '(?:';
-        foreach ($prefixarr as $pref) {
-            $prefix .= $pref;
+    if ($isTalent && !$isTalentNameVariant && key_exists($nameinternal, $talentDescRemapPrefix)) {
+        $prefix = $talentDescRemapPrefix[$nameinternal];
+    }
+    else {
+        $prefixarrlen = count($prefixarr);
+        if ($prefixarrlen > 0) {
+            $pc = 0;
+            $prefix = '(?:';
+            foreach ($prefixarr as $pref) {
+                $prefix .= $pref;
 
-            if ($pc < $prefixarrlen - 1) {
-                $prefix .= '|';
+                if ($pc < $prefixarrlen - 1) {
+                    $prefix .= '|';
+                }
+
+                $pc++;
             }
-
-            $pc++;
+            $prefix .= ')';
         }
-        $prefix .= ')';
     }
 
     $namesort = "";
