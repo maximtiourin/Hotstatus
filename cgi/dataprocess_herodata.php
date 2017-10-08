@@ -188,7 +188,10 @@ $talentExceptions = [
     "WitchDoctorAnnihilatingSpirits" => "WitchDoctorRavenousSpiritAnnihilatingSpiritTalent",
     "ZagaraHeroicAbilityNydusAssault" => "ZagaraNydusNetwork",
     "ZagaraMasteryCorrosiveSaliva" => "ZagaraCorrosiveSalivaHunterKillerTalent",
-    "ZeratulRendingCleave" => "ZeratulCleaveRendingCleaveTalent"
+    "ZeratulRendingCleave" => "ZeratulCleaveRendingCleaveTalent",
+    "AlarakHeroicAbilityCounterStrike" => "AlarakCounterStrikeTargeted",
+    "AlarakCounterStrikeItem" => "AlarakCounterStrike2ndHeroic",
+    "AlarakDeadlyChargeItem" => "AlarakDeadlyCharge2ndHeroic"
     //"" => "",
 ];
 
@@ -271,6 +274,9 @@ $talentHeroRotateExceptions = [
     ],
     "Zagara" => [
         "CreepTumor"
+    ],
+    "Alarak" => [
+        "DiscordStrike", "CounterStrike2ndHeroic", "DeadlyCharge2ndHeroic"
     ]
 ];
 
