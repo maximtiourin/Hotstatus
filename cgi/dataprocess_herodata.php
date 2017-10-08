@@ -277,7 +277,10 @@ $talentHeroRotateExceptions = [
     ],
     "Alarak" => [
         "DiscordStrike", "CounterStrike2ndHeroic", "DeadlyCharge2ndHeroic"
-    ]
+    ],
+    /*"Amazon" => [
+        "Avoidance", "BallLightning", "BlindingLight", "Fend", "LightningFury", "Valkyrie"
+    ]*/
 ];
 
 // To further add to the Blizzard lunacy, some talents have differing patterns for their proper name compared to their description
@@ -330,6 +333,24 @@ function extractURLFriendlyProperName($name) {
     return preg_replace('/[^a-zA-Z0-9]/', '', $name);
 }
 
+function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
+    if (!key_exists($nameinternal, $map)) {
+        $res = [];
+        $ret = preg_match_all('@Abil/Name/' . $nameinternal . '.*=(.*)$@mi', $linesepstring, $res);
+
+        if ($ret !== FALSE) {
+            //Select the first captured group array
+            $results = $res[1];
+
+            foreach ($results as $ability) {
+                $str = $ability;
+                $str = preg_replace('@[_]|[^\w]@', '', $str);
+                $map[$nameinternal][] = $str;
+            }
+        }
+    }
+}
+
 /*
  * Extracts the value of the line with the given identifier in the line seperated file
  * Will also remove any html-like brackets inside of the value, leaving only the basic string
@@ -345,7 +366,7 @@ function extractURLFriendlyProperName($name) {
  * $isTalentNameVariant is a bool that if true means we're extracting specifically a Talent name, made necessary in order to properly
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
-function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
+function extractLine($prefix, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
     global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions;
 
     $regex_match_flags = 'mi';
@@ -909,7 +930,7 @@ function extractLine($prefix, $id, $linesepstring, $defaultValue = "", $isTalent
 }
 
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $mapNames, $global_json;
+    global $ignoreNames, $mapNames, $global_json, $talentHeroRotateExceptions;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -1042,6 +1063,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     else {
                         $hero['rarity'] = "Unknown";
                     }
+
+                    //Extract ability strings for use with talent parsing
+                    extractHeroAbilityStrings($name_internal, $str2, $talentHeroRotateExceptions);
 
                     //Talents
                     $hero['talents'] = [];
