@@ -183,7 +183,9 @@ $talentExceptions = [
     "ArthasMasteryFrostmourneFeedsFrostmourneHungers" => "ArthasFrostmourneFeedsFrostmourneHungersTalents",
     "SgtHammerMasteryFlakCannons" => "SgtHammerConcussiveBlastBarricadeTalent",
     "ThrallHeroicAbilitySundering" => "Sundering",
-    "ThrallMasteryFrostwolfsGrace" => "ThrallFrostwolfResilienceSurgeOfHealing"
+    "ThrallMasteryFrostwolfsGrace" => "ThrallFrostwolfResilienceSurgeOfHealing",
+    "WitchDoctorHeroicAbilityRavenousSpirits" => "WitchDoctorRavenousSpirit",
+    "WitchDoctorAnnihilatingSpirits" => "WitchDoctorRavenousSpiritAnnihilatingSpiritTalent"
     //"" => "",
 ];
 
