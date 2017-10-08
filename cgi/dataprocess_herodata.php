@@ -214,6 +214,9 @@ $talentHeroWordDeletionExceptions = [
     ],
     "Probius" => [
         "toRifts"
+    ],
+    "Valeera" => [
+        "Garrote", "Ambush", "CloakOfShadows"
     ]
 ];
 
