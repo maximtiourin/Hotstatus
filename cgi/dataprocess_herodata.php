@@ -192,7 +192,8 @@ $talentExceptions = [
     "ZeratulRendingCleave" => "ZeratulCleaveRendingCleaveTalent",
     "AlarakHeroicAbilityCounterStrike" => "AlarakCounterStrikeTargeted",
     "AlarakCounterStrikeItem" => "AlarakCounterStrike2ndHeroic",
-    "AlarakDeadlyChargeItem" => "AlarakDeadlyCharge2ndHeroic"
+    "AlarakDeadlyChargeItem" => "AlarakDeadlyCharge2ndHeroic",
+    "AnaHeroicAbilityNanaBoost" => "AnaNanoBoost"
     //"" => "",
 ];
 
