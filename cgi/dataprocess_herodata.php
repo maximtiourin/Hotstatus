@@ -362,13 +362,13 @@ $abilityNameExceptions = [
 
 function extractImageString($str) {
     $arr = [];
-    $ret = preg_match("/.*\\\\(.*).dds/", $str, $arr);
+    $ret = preg_match("@(?:\\|/)(.+)\.dds@", $str, $arr);
 
     if ($ret == 1) {
         return $arr[1];
     }
     else {
-        return "";
+        return "NoImage";
     }
 }
 
@@ -1131,12 +1131,12 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     }
 
                     //Product id
-                    if (key_exists('ProductId', $j)) {
+                    /*if (key_exists('ProductId', $j)) {
                         $hero['product_id'] = intval($j["ProductId"][ATTR][V]);
                     }
                     else {
                         $hero['product_id'] = -1;
-                    }
+                    }*/
 
                     //Difficulty
                     if (key_exists('Difficulty', $j)) {
@@ -1178,8 +1178,20 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     //Description Bio
                     $hero['desc_bio'] = extractLine(array("Hero/Info/"), $name_internal, $str2, "None");
 
+                    /*
+                     * Image strings
+                     */
                     //Image name
-                    $hero['image_name'] = extractURLFriendlyProperName($hero['name']);
+                    //$hero['image_name'] = extractURLFriendlyProperName($hero['name']);
+
+                    //Image select screen button
+                    $imageid = 'SelectScreenButtonImage';
+                    if (key_exists($imageid, $j)
+                        && key_exists(ATTR, $j[$imageid])
+                        && key_exists(V, $j[$imageid][ATTR])) {
+                        $imgstr = $j[$imageid][ATTR][V];
+                        $hero['image_selectscreen'] = extractImageString($imgstr);
+                    }
 
                     //Ratings
                     $hero['ratings'] = [];
@@ -1189,7 +1201,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $hero['ratings']['damage'] = intval($j['Ratings']['Damage'][ATTR][V]);
                         }
                         else if (key_exists(ATTR, $j['Ratings']) && key_exists('Damage', $j['Ratings'][ATTR])) {
-                            $hero['ratings']['damage'] = $j['Ratings'][ATTR]['Damage'];
+                            $hero['ratings']['damage'] = intval($j['Ratings'][ATTR]['Damage']);
                         }
                         else {
                             $hero['ratings']['damage'] = 0;
@@ -1199,7 +1211,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $hero['ratings']['utility'] = intval($j['Ratings']['Utility'][ATTR][V]);
                         }
                         else if (key_exists(ATTR, $j['Ratings']) && key_exists('Utility', $j['Ratings'][ATTR])) {
-                            $hero['ratings']['utility'] = $j['Ratings'][ATTR]['Utility'];
+                            $hero['ratings']['utility'] = intval($j['Ratings'][ATTR]['Utility']);
                         }
                         else {
                             $hero['ratings']['utility'] = 0;
@@ -1209,7 +1221,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $hero['ratings']['survivability'] = intval($j['Ratings']['Survivability'][ATTR][V]);
                         }
                         else if (key_exists(ATTR, $j['Ratings']) && key_exists('Survivability', $j['Ratings'][ATTR])) {
-                            $hero['ratings']['survivability'] = $j['Ratings'][ATTR]['Survivability'];
+                            $hero['ratings']['survivability'] = intval($j['Ratings'][ATTR]['Survivability']);
                         }
                         else {
                             $hero['ratings']['survivability'] = 0;
@@ -1219,7 +1231,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $hero['ratings']['complexity'] = intval($j['Ratings']['Complexity'][ATTR][V]);
                         }
                         else if (key_exists(ATTR, $j['Ratings']) && key_exists('Complexity', $j['Ratings'][ATTR])) {
-                            $hero['ratings']['complexity'] = $j['Ratings'][ATTR]['Complexity'];
+                            $hero['ratings']['complexity'] = intval($j['Ratings'][ATTR]['Complexity']);
                         }
                         else {
                             $hero['ratings']['complexity'] = 0;
