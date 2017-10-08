@@ -1028,7 +1028,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             $t['desc'] = extractLine("Button/SimpleDisplayText/", $tname_internal, $str2, "None", true, false, $name_internal);
 
                             //Add a period and a space between instances where the key 'Quest:' shows up right after a word with no spaces between them
-                            $t['desc'] = preg_replace('/(.)Quest:/', '$1\. ', $t['desc']);
+                            $t['desc'] = preg_replace('/(.)Quest:/', '$1. Quest:', $t['desc']);
 
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
