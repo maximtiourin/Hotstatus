@@ -180,7 +180,8 @@ $talentExceptions = [
     "GreymaneWorgenFormAlphaKiller" => "GreymaneAlphaKillerTalent",
     "NecromancerTalentGrimScythe" => "NecromancerCursedStrikesGrimScythe",
     "NecromancerTalentRapidHarvest" => "NecromancerCursedStrikesRapidHarvest",
-    "ArthasMasteryFrostmourneFeedsFrostmourneHungers" => "ArthasFrostmourneFeedsFrostmourneHungersTalents"
+    "ArthasMasteryFrostmourneFeedsFrostmourneHungers" => "ArthasFrostmourneFeedsFrostmourneHungersTalents",
+    "SgtHammerMasteryFlakCannons" => "SgtHammerConcussiveBlastBarricadeTalent"
     //"" => "",
 ];
 
@@ -251,6 +252,9 @@ $talentHeroRotateExceptions = [
     ],
     "Rexxar" => [
         "SpiritSwoop"
+    ],
+    "SgtHammer" => [
+        "ConcussiveBlast", "BluntForceGun", "NapalmStrike"
     ]
 ];
 
