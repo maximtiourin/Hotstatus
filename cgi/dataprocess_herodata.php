@@ -255,6 +255,9 @@ $talentHeroRotateExceptions = [
     ],
     "SgtHammer" => [
         "ConcussiveBlast", "BluntForceGun", "NapalmStrike"
+    ],
+    "Sylvanas" => [
+        "WitheringFire", "HauntingWave"
     ]
 ];
 
