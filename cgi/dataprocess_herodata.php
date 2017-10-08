@@ -242,6 +242,10 @@ $talentDescRemapPrefix = [
     "Kaelthas" => "Button/Tooltip/"
 ];
 
+$talentDescRemapTalent = [
+    "KaelthasMasterOfFlames" => TRUE
+];
+
 // Experimental map of words that heroes might have rotating as filler between both ids, so add and remove these words at various points to try to find a talent
 // Not as useful as it used to be, as ability names for heros are now parsed beforehand and this map is auto-populated, but won't remove already defined data
 // so as not not break anything that was already proven to work for talent parsing.
@@ -411,7 +415,7 @@ function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
 function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
     global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions,
            $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions,
-           $talentSecondaryAdditionExceptions, $talentDescRemapPrefix;
+           $talentSecondaryAdditionExceptions, $talentDescRemapPrefix, $talentDescRemapTalent;
 
     $regex_match_flags = 'mi';
 
@@ -420,7 +424,8 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
 
     //Build prefix options
     $prefix = "";
-    if ($isTalent && !$isTalentNameVariant && key_exists($nameinternal, $talentDescRemapPrefix)) {
+    if ($isTalent && !$isTalentNameVariant && key_exists($id, $talentDescRemapTalent) && key_exists($nameinternal, $talentDescRemapPrefix)) {
+        //Wacky edge case for using predefined prefixes for certain heroes, ex: Kaelthas MasterOfFlames talent, has no simpledescription so must use verbose tooltip desc
         $prefix = $talentDescRemapPrefix[$nameinternal];
     }
     else {
