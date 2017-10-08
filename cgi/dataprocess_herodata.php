@@ -209,7 +209,13 @@ $talentHeroWordDeletionExceptions = [
 
 // Experimental, map of words that should be appended to a talent key to try to find a match
 $talentAdditionExceptions = [
-    "Hotbar", "Talent", "Activate", "Targeted", "New"
+    "Hotbar", "Talent", "Targeted", "New"
+];
+
+// Like addition exceptions, except these should be matched after any similar matching has performed for the primary case,
+// followed by the empty case, so as to properly consume order of precidence as Primary > Empty > Secondary
+$talentSecondaryAdditionExceptions = [
+    "Activate"
 ];
 
 $talentHeroAlernateExceptions = [
@@ -381,7 +387,9 @@ function extractHeroAbilityStrings($nameinternal, &$linesepstring, &$map) {
  * map talent name vs. talent desc disparities caused by Blizzard's disparate naming conventions
  */
 function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTalent = FALSE, $isTalentNameVariant = FALSE, $nameinternal = "") {
-    global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions, $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions;
+    global $talentExceptions, $talentNameExceptions, $talentHeroRotateExceptions,
+           $talentHeroWordDeletionExceptions, $talentHeroAlernateExceptions, $talentAdditionExceptions,
+           $talentSecondaryAdditionExceptions;
 
     $regex_match_flags = 'mi';
 
@@ -450,6 +458,7 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
         //$nameinternal shortcuts
         if (strlen($nameinternal) > 0) {
             // {HERONAME}{IGNOREALL}FooBar = {HERONAME}FooBar{ADDWORD}? (SKIPS {IGNOREALL} IGNORES $nameinternal)
+            //Primary case
             foreach ($talentAdditionExceptions as $appendword) {
                 $mtvalid[$tid] = TRUE;
                 $mtalent[$tid] = $id;
@@ -460,6 +469,7 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
                 $tid++;
             }
 
+            //Empty case
             $mtvalid[$tid] = TRUE;
             $mtalent[$tid] = $id;
             foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
@@ -468,9 +478,21 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
             $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
             $tid++;
 
-            //-------------------------------------------
+            //Secondary case
+            foreach ($talentSecondaryAdditionExceptions as $appendword) {
+                $mtvalid[$tid] = TRUE;
+                $mtalent[$tid] = $id;
+                foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                    $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                }
+                $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $appendword . '=(.*)$@';
+                $tid++;
+            }
+
+            //----------Swap to namesort in case hero has different names in use ---------------------------------
 
             if (strlen($namesort) > 0) {
+                //Primary case
                 foreach ($talentAdditionExceptions as $appendword) {
                     $mtvalid[$tid] = TRUE;
                     $mtalent[$tid] = $id;
@@ -482,6 +504,7 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
                     $tid++;
                 }
 
+                //Empty case
                 $mtvalid[$tid] = TRUE;
                 $mtalent[$tid] = $id;
                 $mtalent[$tid] = str_replace($nameinternal, $namesort, $mtalent[$tid]);
@@ -490,6 +513,18 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
                 }
                 $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . '=(.*)$@';
                 $tid++;
+
+                //Secondary case
+                foreach ($talentSecondaryAdditionExceptions as $appendword) {
+                    $mtvalid[$tid] = TRUE;
+                    $mtalent[$tid] = $id;
+                    $mtalent[$tid] = str_replace($nameinternal, $namesort, $mtalent[$tid]);
+                    foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
+                        $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
+                    }
+                    $mtalent[$tid] = '@' . $prefix . $mtalent[$tid] . $appendword . '=(.*)$@';
+                    $tid++;
+                }
             }
             // @DEPRECATED - Kept around for compatibility {HERONAME}MasteryFooBar = {HERONAME}FooBarTalent (SKIPS 'Mastery'* IGNORES $nameinternal)
             $mtvalid[$tid] = TRUE;
