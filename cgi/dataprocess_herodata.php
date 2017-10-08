@@ -193,7 +193,8 @@ $talentExceptions = [
     "AlarakHeroicAbilityCounterStrike" => "AlarakCounterStrikeTargeted",
     "AlarakCounterStrikeItem" => "AlarakCounterStrike2ndHeroic",
     "AlarakDeadlyChargeItem" => "AlarakDeadlyCharge2ndHeroic",
-    "AnaHeroicAbilityNanaBoost" => "AnaNanoBoost"
+    "AnaHeroicAbilityNanaBoost" => "AnaNanoBoost",
+    "LucioBoombox" => "LucioBoomboxBoombox"
     //"" => "",
 ];
 
@@ -204,6 +205,9 @@ $talentHeroWordDeletionExceptions = [
     ],
     "Sylvanas" => [
         "Talent"
+    ],
+    "Lucio" => [
+        "Quest"
     ]
 ];
 
@@ -963,6 +967,8 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
          * and the talent name = "PursuitOfFlame, then the resulting proper key is:
          * 'GuldanFelFlameTalentPursuitOfFlame'
          * where Talent is inserted in the middle by reconstructing the string based on the components above.
+         * Has an optional non-captured group adding the ability name to the end in case it was removed more than once
+         * EX: DrainLifeGlyphofDrainLife => Glyphof
          */
         foreach ($talentHeroRotateExceptions[$nameinternal] as $ability) {
             $mtvalid[$tid] = TRUE;
@@ -972,7 +978,7 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
             foreach ($talentHeroWordDeletionExceptions[$deleteall] as $deleteword) {
                 $mtalent[$tid] = str_replace($deleteword, '', $mtalent[$tid]);
             }
-            $mtalent[$tid] = '@' . $prefix . $nameinternal . $ability .  $talent . $mtalent[$tid] . '=(.*)$@';
+            $mtalent[$tid] = '@' . $prefix . $nameinternal . $ability .  $talent . $mtalent[$tid] . '(?:' . $ability . ')?=(.*)$@';
             $tid++;
         }
 
