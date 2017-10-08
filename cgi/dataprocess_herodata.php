@@ -181,7 +181,9 @@ $talentExceptions = [
     "NecromancerTalentGrimScythe" => "NecromancerCursedStrikesGrimScythe",
     "NecromancerTalentRapidHarvest" => "NecromancerCursedStrikesRapidHarvest",
     "ArthasMasteryFrostmourneFeedsFrostmourneHungers" => "ArthasFrostmourneFeedsFrostmourneHungersTalents",
-    "SgtHammerMasteryFlakCannons" => "SgtHammerConcussiveBlastBarricadeTalent"
+    "SgtHammerMasteryFlakCannons" => "SgtHammerConcussiveBlastBarricadeTalent",
+    "ThrallHeroicAbilitySundering" => "Sundering",
+    "ThrallMasteryFrostwolfsGrace" => "ThrallFrostwolfResilienceSurgeOfHealing"
     //"" => "",
 ];
 
@@ -189,6 +191,9 @@ $talentExceptions = [
 $talentHeroWordDeletionExceptions = [
     "ALL" => [
         "Mastery", "CombatStyle", "HeroicAbility", "Heroic"
+    ],
+    "Sylvanas" => [
+        "Talent"
     ]
 ];
 
