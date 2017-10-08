@@ -215,7 +215,7 @@ $talentAdditionExceptions = [
 // Like addition exceptions, except these should be matched after any similar matching has performed for the primary case,
 // followed by the empty case, so as to properly consume order of precidence as Primary > Empty > Secondary
 $talentSecondaryAdditionExceptions = [
-    "Activate"
+    "Activate", "On"
 ];
 
 $talentHeroAlernateExceptions = [
@@ -292,6 +292,9 @@ $talentHeroRotateExceptions = [
     ],
     "Alarak" => [
         "DiscordStrike", "CounterStrike2ndHeroic", "DeadlyCharge2ndHeroic"
+    ],
+    "DVa" => [
+        "Pilot", "Mech"
     ]
 ];
 
