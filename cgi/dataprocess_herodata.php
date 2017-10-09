@@ -1240,7 +1240,8 @@ else if ($argc > 1) {
                     echo $varg['syntax'] . E;
                     echo $varg['desc'] . E;
                     die();
-                } else {
+                }
+                else {
                     $addargsarr[] = $argv[$argcursor];
                     $a++;
                 }
