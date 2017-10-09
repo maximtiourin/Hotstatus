@@ -40,6 +40,7 @@ const PATHFRAG_STORMDATA_HERO_DATA = "Data.xml";
 const FILE_STORMDATA_OLDHEROINDEX = PATH_STORMDATA . "HeroData.xml";
 const FILE_STORMDATA_OLDTALENTINDEX = PATH_STORMDATA . "TalentData.xml";
 const FILE_STORMDATA_OLDACTORINDEX = PATH_STORMDATA . "ActorData.xml";
+const FILE_STORMDATA_OLDBUTTONINDEX = PATH_STORMDATA . "ButtonData.xml";
 const FILE_STORMDATA_STRINGS_OLDHEROINDEX = PATH_STORMDATA_STRINGS . "GameStrings.txt";
 //Heromods
 const PATH_HEROMODS = PATH_DATA . "mods/heromods/";
@@ -160,6 +161,11 @@ $actorImageMappings = [
         "minimap" => "storm_ui_minimapicon_heros_erik"
     ]
 ];
+
+/*
+ * Map is populated of mappings of GameString button key => image name without extension
+ */
+$buttonImageMappings = [];
 
 //Extracts the image name withotu extension from a dds image string while converting it to lowercase, default value case is not touched
 function extractImageString($str, $default = "") {
@@ -341,8 +347,34 @@ function extractActorImages($filepath) {
     }
 }
 
+function extractButtonImages($filepath) {
+    global $buttonImageMappings;
+
+    $default = NOIMAGE;
+
+    $str = file_get_contents($filepath); //Xml string of actor data
+
+    $xml = simplexml_load_string($str);
+
+    if ($xml !== FALSE) {
+        foreach ($xml->CButton as $btn) {
+            $name_internal = $btn->attributes()->id;
+
+            $namestr = strval($name_internal);
+
+            //Image
+            $image = extractImageString($btn->Icon['value'], $default);
+
+            //Set mapping without overwriting the structure (in case explicit exceptions were made)
+            if (!key_exists($namestr, $buttonImageMappings)) {
+                $buttonImageMappings[$namestr] = $image;
+            }
+        }
+    }
+}
+
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $global_json, $abilityNameExceptions, $actorImageMappings;
+    global $ignoreNames, $global_json, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -434,6 +466,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     else {
                         $hero['universe'] = UNKNOWN;
                     }
+
+                    //Title
+                    $hero['title'] = extractLine(array("Hero/Title/"), $name_internal, $str2, "");
 
                     //Description Tagline
                     $hero['desc_tagline'] = extractLine(array("Hero/Description/"), $name_internal, $str2, NONE);
@@ -611,6 +646,14 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                         $a['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/", "Button/Tooltip/"), $searchStr, $str2, NONE);
                                     }
 
+                                    //Set image
+                                    if (key_exists($searchStr, $buttonImageMappings)) {
+                                        $a['image'] = $buttonImageMappings[$searchStr];
+                                    }
+                                    else {
+                                        $a['image'] = NOIMAGE;
+                                    }
+
                                     //Set ability type
                                     $abilityType = "";
                                     if ($heroic || $trait) {
@@ -645,6 +688,15 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             //Add a period and a space between instances where the key 'Quest:' shows up right after a word with no spaces between them
                             $t['desc'] = preg_replace('/(.)Quest:/', '$1. Quest:', $t['desc']);
 
+                            //Set image
+                            if (key_exists($tname_internal, $talentMappings)
+                                && key_exists(strval($talentMappings[$tname_internal]), $buttonImageMappings)) {
+                                $t['image'] = $buttonImageMappings[strval($talentMappings[$tname_internal])];
+                            }
+                            else {
+                                $t['image'] = NOIMAGE;
+                            }
+
                             $t['tier'] = $talent[ATTR]['Tier'];
                             $t['column'] = $talent[ATTR]['Column'];
                             $hero['talents'][] = $t;
@@ -659,13 +711,14 @@ function extractHero_xmlToJson($filepath, $file_strings) {
 }
 
 /*
- * Look through Data directories and extract talent mappings, actor mappings
+ * Look through Data directories and extract talent mappings, actor mappings, button mappings
  * (Necessary to do this before (and not in conjunction with) hero data
  * due to some legacy heroes sharing hero data in the old index, but only having talents/actors
  * (and not CHero data) in their new index.
  */
 $tfp = __DIR__ . FILE_STORMDATA_OLDTALENTINDEX;
 $afp = __DIR__ . FILE_STORMDATA_OLDACTORINDEX;
+$bfp = __DIR__ . FILE_STORMDATA_OLDBUTTONINDEX;
 
 //Extract old index
 if (file_exists($tfp)) {
@@ -680,6 +733,12 @@ if (file_exists($afp)) {
 else {
     die("Old Actor Index File does not exist: " . $afp);
 }
+if (file_exists($bfp)) {
+    extractButtonImages($bfp);
+}
+else {
+    die("Old Button Index File does not exist: " . $bfp);
+}
 
 //Extract stormdata
 foreach ($stormDataNames as $heroname => $bool_include) {
@@ -689,6 +748,7 @@ foreach ($stormDataNames as $heroname => $bool_include) {
         if (file_exists($fp)) {
             extractTalents($fp);
             extractActorImages($fp);
+            extractButtonImages($fp);
         }
         else {
             die("Storm Data File does not exist (for talents/actors): " . $fp);
@@ -710,6 +770,7 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
             if (file_exists($fp)) {
                 extractTalents($fp);
                 extractActorImages($fp);
+                extractButtonImages($fp);
             }
             else {
                 die("Hero Mods Special Exception File does not exist (for talents/actors): " . $fp);
@@ -725,11 +786,13 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
             if (file_exists($fp1)) {
                 extractTalents($fp1);
                 extractActorImages($fp1);
+                extractButtonImages($fp1);
                 $readfile = TRUE;
             }
             if (file_exists($fp2)) {
                 extractTalents($fp2);
                 extractActorImages($fp2);
+                extractButtonImages($fp2);
                 $readfile = TRUE;
             }
             if (!$readfile) {
