@@ -8,6 +8,8 @@ use Fizzik\Utility\FileHandling;
 
 set_time_limit(0);
 
+date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+
 //The json array that holds all of the heroes
 $global_json = [];
 $global_json['heroes'] = [];
@@ -952,7 +954,7 @@ $validargs = [
             global $validargs;
 
             if (count($args) == 1) {
-                $varg = $validargs['--log'];
+                $varg = &$validargs['--log'];
 
                 $fp = $args[0];
 
@@ -975,7 +977,7 @@ $validargs = [
         "log" => function ($str) {
             global $validargs;
 
-            $varg = $validargs['--log'];
+            $varg = &$validargs['--log'];
 
             if ($varg['enabled']) {
                 $file = $varg['file'];
@@ -1234,29 +1236,28 @@ else if ($argc > 1) {
                 $argcursor++;
                 if ($argcursor >= $argc) {
                     //Ran out of supplied args
-                    echo 'Invalid amount of arguments supplied for '. $arg . ', expected ' . $varg['count'] . '...'.E;
-                    echo $varg['syntax'].E;
-                    echo $varg['desc'].E;
+                    echo 'Invalid amount of arguments supplied for ' . $arg . ', expected ' . $varg['count'] . '...' . E;
+                    echo $varg['syntax'] . E;
+                    echo $varg['desc'] . E;
                     die();
-                }
-                else {
+                } else {
                     $addargsarr[] = $argv[$argcursor];
                     $a++;
                 }
             }
 
-            //Log execution if logging
-            $logging = $validargs['--log']['enabled'];
+            //Log execution of this optional argument if logging has been enabled beforehand
             $log = $validargs['--log']['log'];
+            $logging = $validargs['--log']['enabled'];
             if ($logging) {
                 $logstr = $argv[0];
-                $logstr .= $arg;
+                $logstr .= " $arg";
 
                 foreach ($addargsarr as $addarg) {
                     $logstr .= " $addarg";
                 }
 
-                $log($logstr.E); //Add additional line
+                $log($logstr . E); //Add additional line
             }
 
             //Execute optional argument
