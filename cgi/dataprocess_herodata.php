@@ -1,14 +1,4 @@
 <?php
-
-/*
- * Command Line Process
- * args:
- * 0: File path of script being executed (default arg from php)
- *
- * output:
- * JSON string of relevant hero data
- */
-
 set_time_limit(0);
 
 //The json array that holds all of the heroes
@@ -886,5 +876,104 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
     }
 }
 
-//Output json
-echo json_encode($global_json).E;
+/*
+ * Command Line Process
+ */
+/*
+ * The map of valid args to their expected additional arg count and closure
+ * [{arg}] => [
+ *      ['count'] => amount of additional arguments expected
+ *      ['exec'] => the closure to execute, expects "count" amount of arguments
+ * ]
+ */
+$validargs = [
+    "--help" => [
+        "count" => 0,
+        "syntax" => "--help",
+        "desc" => "Lists all available arguments.",
+        "exec" => function (...$args) {
+            global $validargs;
+
+            echo 'List of Valid Arguments:'.E;
+
+            foreach ($validargs as $varg) {
+                echo '--------------------------------------------------------'.E;
+                echo $varg['syntax'].E;
+                echo $varg['desc'].E;
+                echo '--------------------------------------------------------'.E;
+            }
+        }
+    ],
+    "--out" => [
+        "count" => 1,
+        "syntax" => "--out <json_output_filepath>",
+        "desc" => "Outputs json formatted data to filepath, creating any subdirectories as needed.",
+        "exec" => function (...$args) {
+
+        }
+    ],
+    "--dbout" => [
+        "count" => 0,
+        "syntax" => "--dbout",
+        "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.",
+        "exec" => function (...$args) {
+
+        }
+    ],
+    "--imageout" => [
+        "count" => 2,
+        "syntax" => "--imageout <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
+        "desc" => "Converts relevant images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. Requires ImageMagick utility to be installed and in system path.",
+        "exec" => function (...$args) {
+
+        }
+    ]
+];
+
+if ($argc == 1) {
+    //Program ran with no optional arguments, just echo json data
+    echo json_encode($global_json).E;
+}
+else if ($argc > 1) {
+    $argcursor = 1;
+    while ($argcursor < $argc) {
+        //Get next optional argument
+        $arg = $argv[$argcursor];
+
+        if (key_exists($arg, $validargs)) {
+            $varg = $validargs[$arg];
+
+            //Figure out how many additional args we need before execution
+            $addargs = $varg['count'];
+
+            //Collect additional args
+            $a = 0;
+            $addargsarr = [];
+            while ($a < $addargs) {
+                $argcursor++;
+                if ($argcursor >= $argc) {
+                    //Ran out of supplied args
+                    echo 'Invalid amount of arguments supplied for '. $arg . ', expected ' . $varg['count'] . '...'.E;
+                    echo $varg['syntax'].E;
+                    echo $varg['desc'].E;
+                    die();
+                }
+                else {
+                    $addargsarr[] = $argv[$argcursor];
+                    $a++;
+                }
+            }
+
+            //Execute optional argument
+            $varg['exec'](...$addargsarr);
+        }
+        else {
+            //Invalid optional argument, execute --help
+            echo 'Invalid argument supplied: ' . $arg .E;
+            $validargs['--help']['exec']();
+            die();
+        }
+
+        $argcursor++;
+    }
+}
