@@ -883,6 +883,12 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
     }
 }
 
+function imageOutHelper($imagestr, $ext, &$imagearr) {
+    if ($imagestr !== NOIMAGE) {
+        $imagearr[] = $imagestr . $ext;
+    }
+}
+
 /*
  * Command Line Process
  */
@@ -945,7 +951,7 @@ $validargs = [
     "--imageout" => [
         "count" => 2,
         "syntax" => "--imageout <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
-        "desc" => "Converts relevant images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. Requires ImageMagick utility to be installed and in system path.",
+        "desc" => "Copies and converts relevant images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. Requires ImageMagick utility to be installed and in system path.",
         "exec" => function (...$args) {
             global $global_json;
 
@@ -954,7 +960,35 @@ $validargs = [
                 $inputdir = $args[1];
                 $outputdir = $args[2];
 
-                
+                //Ensure output dir
+                FileHandling::ensureDirectory($outputdir);
+
+                //Compile list of all relevant image strings, appending the sought after file extension
+                $ext = ".dds";
+                $images = [];
+
+                foreach ($global_json['heroes'] as $hero) {
+                    imageOutHelper($hero['image_hero'], $ext, $images);
+                    imageOutHelper($hero['image_minimap'], $ext, $images);
+
+                    foreach ($hero['abilities'] as $ability) {
+                        imageOutHelper($ability['image'], $ext, $images);
+                    }
+
+                    foreach ($hero['talents'] as $talent) {
+                        imageOutHelper($talent['image'], $ext, $images);
+                    }
+                }
+
+                //Copy all relevant images to output dir before mogrifying them
+                foreach ($images as $image) {
+                    shell_exec('cp ' . $image . ' ' . $outputdir . $image . $ext);
+                }
+
+                //Mogrify all copied images, converting them to the appropriate filetype
+                foreach ($images as $image) {
+                    shell_exec('magick mogrify -format ' . $imagetype . ' ' . $outputdir . $image . $ext);
+                }
             }
             else {
                 die("Invalid amount of arguments exception.");
