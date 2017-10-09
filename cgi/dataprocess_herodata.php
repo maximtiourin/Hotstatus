@@ -16,6 +16,9 @@ $global_json = [];
 $global_json['heroes'] = [];
 
 //General QoL constants
+const NOIMAGE = 'NoImage';
+const UNKNOWN = 'Unknown';
+const NONE = 'None';
 const E = PHP_EOL;
 
 //QoL constants for referencing json encoded xml
@@ -36,6 +39,7 @@ const PATHFRAG_STORMDATA_HERO_DIR = "Data/";
 const PATHFRAG_STORMDATA_HERO_DATA = "Data.xml";
 const FILE_STORMDATA_OLDHEROINDEX = PATH_STORMDATA . "HeroData.xml";
 const FILE_STORMDATA_OLDTALENTINDEX = PATH_STORMDATA . "TalentData.xml";
+const FILE_STORMDATA_OLDACTORINDEX = PATH_STORMDATA . "ActorData.xml";
 const FILE_STORMDATA_STRINGS_OLDHEROINDEX = PATH_STORMDATA_STRINGS . "GameStrings.txt";
 //Heromods
 const PATH_HEROMODS = PATH_DATA . "mods/heromods/";
@@ -132,12 +136,22 @@ $abilityNameExceptions = [
  */
 $talentMappings = [];
 
+/*
+ * Map is populated of mapping of CActorUnit
+ * ['Hero'.{NAMEINTERNAL}] => [
+ *      ['hero'] => image name without extension
+ *      ['minimap'] => image name without extension
+ * ]
+ */
+$actorImageMappings = [];
+
+//Extracts the image name withotu extension from a dds image string while converting it to lowercase, default value case is not touched
 function extractImageString($str, $default = "") {
     $arr = [];
     $ret = preg_match("@([a-zA-Z0-9_-]+)\.dds@", $str, $arr);
 
     if ($ret == 1) {
-        return $arr[1];
+        return strtolower($arr[1]);
     }
     else {
         return $default;
@@ -256,7 +270,7 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
 function extractTalents($filepath) {
     global $talentMappings;
 
-    $str = file_get_contents($filepath); //Xml string of hero data
+    $str = file_get_contents($filepath); //Xml string of talent data
 
     $xml = simplexml_load_string($str);
 
@@ -270,8 +284,35 @@ function extractTalents($filepath) {
     }
 }
 
+function extractActorImages($filepath) {
+    global $actorImageMappings;
+    
+    $default = NOIMAGE;
+
+    $str = file_get_contents($filepath); //Xml string of actor data
+
+    $xml = simplexml_load_string($str);
+
+    if ($xml !== FALSE) {
+        foreach ($xml->CActorUnit as $actor) {          
+            $am = [];
+            
+            $name_internal = $actor->attributes()->id;
+            
+            $namestr = strval($name_internal);
+
+            //Images
+            $am['hero'] = extractImageString($actor->HeroIcon['value'], $default);
+            $am['minimap'] = extractImageString($actor->MinimapIcon['value'], $default);
+            
+            //Set mapping
+            $actorImageMappings[$namestr] = $am;
+        }
+    }
+}
+
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $global_json, $abilityNameExceptions;
+    global $ignoreNames, $global_json, $abilityNameExceptions, $actorImageMappings;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -319,7 +360,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         $hero['attribute'] = $j['AttributeId'][ATTR][V];
                     }
                     else {
-                        $hero['attribute'] = "None";
+                        $hero['attribute'] = NONE;
                     }
 
                     //Product id
@@ -349,7 +390,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         $hero['role'] = $j['CollectionCategory'][ATTR][V];
                     }
                     else {
-                        $hero['role'] = "Unknown";
+                        $hero['role'] = UNKNOWN;
                     }
 
                     //Universe
@@ -358,37 +399,53 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     }
                     else if (key_exists('UniverseIcon', $j)) {
                         $ustr = $j['UniverseIcon'][ATTR][V];
-                        $hero['universe'] = extractUniverseNameFromUniverseIcon($ustr, "Unknown");
+                        $hero['universe'] = extractUniverseNameFromUniverseIcon($ustr, UNKNOWN);
                     }
                     else {
-                        $hero['universe'] = "Unknown";
+                        $hero['universe'] = UNKNOWN;
                     }
 
                     //Description Tagline
-                    $hero['desc_tagline'] = extractLine(array("Hero/Description/"), $name_internal, $str2, "None");
+                    $hero['desc_tagline'] = extractLine(array("Hero/Description/"), $name_internal, $str2, NONE);
 
                     //Description Bio
-                    $hero['desc_bio'] = extractLine(array("Hero/Info/"), $name_internal, $str2, "None");
+                    $hero['desc_bio'] = extractLine(array("Hero/Info/"), $name_internal, $str2, NONE);
 
                     /*
                      * Image strings
                      */
-                    //$noimage = "NoImage";
+                    $actorstr = "Hero".$name_internal;
                     //Image name
-                    $hero['image_name'] = extractURLFriendlyProperName($hero['name']);
+                    //$hero['image_name'] = extractURLFriendlyProperName($hero['name']);
 
-                    //Image select screen button
-                    /*$imageid = 'SelectScreenButtonImage';
-                    $imagekey = 'image_selectscreen';
-                    if (key_exists($imageid, $j)
-                        && key_exists(ATTR, $j[$imageid])
-                        && key_exists(V, $j[$imageid][ATTR])) {
-                        $imgstr = $j[$imageid][ATTR][V];
-                        $hero[$imagekey] = extractImageString($imgstr, $noimage);
+                    //Actor mapping images
+                    if (key_exists($actorstr, $actorImageMappings)) {
+                        if (key_exists('hero', $actorImageMappings[$actorstr]) && $actorImageMappings[$actorstr]['hero'] !== NOIMAGE) {
+                            $hero['image_hero'] = $actorImageMappings[$actorstr]['hero'];
+                        }
+                        else {
+                            //    Some heroes, for whatever reason, don't have a HeroIcon node in their CActorUnit, so try to
+                            // find a Portrait for them in their CHero data
+                            if (key_exists('Portrait', $j)
+                                && key_exists(ATTR, $j['Portrait'])
+                                && key_exists(V, $j['Portrait'][ATTR])) {
+                                $hero['image_hero'] = extractImageString($j['Portrait'][ATTR][V], NOIMAGE);
+                            }
+                            else {
+                                $hero['image_hero'] = NOIMAGE;
+                            }
+                        }
+                        if (key_exists('minimap', $actorImageMappings[$actorstr]) && $actorImageMappings[$actorstr]['minimap'] !== NOIMAGE) {
+                            $hero['image_minimap'] = $actorImageMappings[$actorstr]['minimap'];
+                        }
+                        else {
+                            $hero['image_minimap'] = NOIMAGE;
+                        }
                     }
                     else {
-                        $hero[$imagekey] = $noimage;
-                    }*/
+                        $hero['image_hero'] = NOIMAGE;
+                        $hero['image_minimap'] = NOIMAGE;
+                    }
 
                     //Ratings
                     $hero['ratings'] = [];
@@ -447,7 +504,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         $hero['rarity'] = $j['Rarity'][ATTR][V];
                     }
                     else {
-                        $hero['rarity'] = "Unknown";
+                        $hero['rarity'] = UNKNOWN;
                     }
 
                     //Abilities
@@ -503,9 +560,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                         /*if (strlen($searchDefault) == 0)*/ $searchDefault = $aname_button;
                                     }
                                     if (!$haveButton && !$haveAbil) {
-                                        $a['name'] = "Unknown";
-                                        $a['name_internal'] = "Unknown";
-                                        $a['desc'] = "None";
+                                        $a['name'] = UNKNOWN;
+                                        $a['name_internal'] = UNKNOWN;
+                                        $a['desc'] = NONE;
                                     }
                                     else {
                                         $backupDefault = $searchDefault;
@@ -521,7 +578,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                             $a['name'] = extractLine(array($searchPrefix), $searchStr, $str2, $backupDefault);
                                         }
                                         $a['name_internal'] = $searchDefault;
-                                        $a['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/"), $searchStr, $str2, "None");
+                                        $a['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/", "Button/Tooltip/"), $searchStr, $str2, NONE);
                                     }
 
                                     //Set ability type
@@ -551,9 +608,9 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                         foreach ($j['TalentTreeArray'] as $talent) {
                             $t = [];
                             $tname_internal = $talent[ATTR]['Talent'];
-                            $t['name'] = extractLine(array("Button/Name/"), $tname_internal, $str2, "Unknown", true);
+                            $t['name'] = extractLine(array("Button/Name/"), $tname_internal, $str2, UNKNOWN, true);
                             $t['name_internal'] = $tname_internal;
-                            $t['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/", "Button/Tooltip/"), $tname_internal, $str2, "None", true);
+                            $t['desc'] = extractLine(array("Button/SimpleDisplayText/", "Button/Simple/", "Button/Tooltip/"), $tname_internal, $str2, NONE, true);
 
                             //Add a period and a space between instances where the key 'Quest:' shows up right after a word with no spaces between them
                             $t['desc'] = preg_replace('/(.)Quest:/', '$1. Quest:', $t['desc']);
@@ -572,12 +629,13 @@ function extractHero_xmlToJson($filepath, $file_strings) {
 }
 
 /*
- * Look through Data directories and extract talent mappings
+ * Look through Data directories and extract talent mappings, actor mappings
  * (Necessary to do this before (and not in conjunction with) hero data
- * due to some legacy heroes sharing hero data in the old index, but only having talents
+ * due to some legacy heroes sharing hero data in the old index, but only having talents/actors
  * (and not CHero data) in their new index.
  */
 $tfp = __DIR__ . FILE_STORMDATA_OLDTALENTINDEX;
+$afp = __DIR__ . FILE_STORMDATA_OLDACTORINDEX;
 
 //Extract old index
 if (file_exists($tfp)) {
@@ -585,6 +643,12 @@ if (file_exists($tfp)) {
 }
 else {
     die("Old Talent Index File does not exist: " . $tfp);
+}
+if (file_exists($afp)) {
+    extractActorImages($afp);
+}
+else {
+    die("Old Actor Index File does not exist: " . $afp);
 }
 
 //Extract stormdata
@@ -594,9 +658,10 @@ foreach ($stormDataNames as $heroname => $bool_include) {
 
         if (file_exists($fp)) {
             extractTalents($fp);
+            extractActorImages($fp);
         }
         else {
-            die("Storm Data File does not exist (for talents): " . $fp);
+            die("Storm Data File does not exist (for talents/actors): " . $fp);
         }
     }
 }
@@ -614,9 +679,10 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
 
             if (file_exists($fp)) {
                 extractTalents($fp);
+                extractActorImages($fp);
             }
             else {
-                die("Hero Mods Special Exception File does not exist (for talents): " . $fp);
+                die("Hero Mods Special Exception File does not exist (for talents/actors): " . $fp);
             }
         }
         else {
@@ -628,14 +694,16 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
             $readfile = FALSE;
             if (file_exists($fp1)) {
                 extractTalents($fp1);
+                extractActorImages($fp1);
                 $readfile = TRUE;
             }
             if (file_exists($fp2)) {
                 extractTalents($fp2);
+                extractActorImages($fp2);
                 $readfile = TRUE;
             }
             if (!$readfile) {
-                die("Hero Mods Files do not exist at either location (for talents): (" . $fp1 . ", " . $fp2 . ")");
+                die("Hero Mods Files do not exist at either location (for talents/actors): (" . $fp1 . ", " . $fp2 . ")");
             }
         }
     }
