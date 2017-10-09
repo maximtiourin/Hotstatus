@@ -144,6 +144,8 @@ $talentMappings = [];
  *
  * Can have predefined values that won't be overwritten, for use in special cases where mapped image strings are
  * undesirable, or can not be found with the preestablished CActorUnit pattern
+ *
+ * If explicitly defining a mapping, remember to encode it in htmlspecialchars
  */
 $actorImageMappings = [
     "HeroStukov" => [
@@ -156,6 +158,9 @@ $actorImageMappings = [
     "HeroLostVikings" => [
         "hero" => "ui_targetportrait_hero_lostvikings",
         "minimap" => "storm_ui_minimapicon_heros_erik"
+    ],
+    "HeroMedivh" => [
+        "hero" => "ui_targetportrait_hero_medivh"
     ]
 ];
 
@@ -164,13 +169,16 @@ $actorImageMappings = [
  */
 $buttonImageMappings = [];
 
-//Extracts the image name withotu extension from a dds image string while converting it to lowercase, default value case is not touched
+//Extracts the image name without extension from a dds image string while converting it to lowercase, default value case is not touched
+//Also encodes the string in htmlspecialchars w/ ENT_QUOTES, so it must be decoded before being displayed as plaintext, and for commandline use it must be decoded and then escaped with escapeshellarg()
 function extractImageString($str, $default = "") {
     $arr = [];
-    $ret = preg_match("@([a-zA-Z0-9_-]+)\.dds@", $str, $arr);
+    $ret = preg_match("@([a-zA-Z0-9_'-]+)\.dds@", $str, $arr);
 
     if ($ret == 1) {
-        return strtolower($arr[1]);
+        $escapestr = $arr[1];
+        $escapestr = htmlspecialchars($escapestr, ENT_QUOTES);
+        return strtolower($escapestr);
     }
     else {
         return $default;
@@ -468,10 +476,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     $hero['title'] = extractLine(array("Hero/Title/"), $name_internal, $str2, "");
 
                     //Description Tagline
-                    $hero['desc_tagline'] = extractLine(array("Hero/Description/"), $name_internal, $str2, NONE);
+                    $hero['desc_tagline'] = htmlspecialchars(extractLine(array("Hero/Description/"), $name_internal, $str2, NONE), ENT_COMPAT);
 
                     //Description Bio
-                    $hero['desc_bio'] = extractLine(array("Hero/Info/"), $name_internal, $str2, NONE);
+                    $hero['desc_bio'] = htmlspecialchars(extractLine(array("Hero/Info/"), $name_internal, $str2, NONE), ENT_COMPAT);
 
                     /*
                      * Image strings
@@ -883,10 +891,27 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
     }
 }
 
-function imageOutHelper($imagestr, $ext, &$imagearr) {
+function imageOutHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
-        $imagearr[] = $imagestr . $ext;
+        $imagearr[] = $imagestr;
     }
+}
+
+function imageOutDirectoryHelper($dir) {
+    $dirext = "/";
+
+    $len = strlen($dir);
+    if ($len > 0) {
+        $idx = $len - 1;
+
+        $lastchar = substr($dir, $idx, $idx);
+
+        if ($lastchar !== $dirext) {
+            return $dir . $dirext;
+        }
+    }
+
+    return $dir;
 }
 
 /*
@@ -949,45 +974,154 @@ $validargs = [
         }
     ],
     "--imageout" => [
-        "count" => 2,
-        "syntax" => "--imageout <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
-        "desc" => "Copies and converts relevant images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. Requires ImageMagick utility to be installed and in system path.",
+        "count" => 4,
+        "syntax" => "--imageout <--mode=[append]^[overwrite]^[cleardir]> <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
+        "desc" => "Copies and converts relavent images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. "
+            . "Requires ImageMagick utility to be installed and in system path.\nMode Options [Required to specify]:\n"
+            . "[append] : --mode=append : will only work on files if they don't already exist in the output directory, will list all files that were newly added at completion."
+            . "[overwrite] : --mode=overwrite : will work on all files and overwrite any that already exist"
+            . "[cleardir] : --mode=cleardir : completely empty output dir before doing work and will work on all files",
         "exec" => function (...$args) {
             global $global_json;
 
-            if (count($args) == 3) {
-                $imagetype = $args[0];
-                $inputdir = $args[1];
-                $outputdir = $args[2];
+            if (count($args) == 4) {
+                $mode = $args[0];
+                $imagetype = $args[1];
+                $inputdir = imageOutDirectoryHelper($args[2]);
+                $outputdir = imageOutDirectoryHelper($args[3]);
+
+                //Determine mode
+                $mstr = "--mode=";
+                $m_append = FALSE;
+                $m_overwrite = FALSE;
+                $m_cleardir = FALSE;
+                if ($mode === $mstr."append") {
+                    $m_append = TRUE;
+                }
+                else if ($mode === $mstr."overwrite") {
+                    $m_overwrite = TRUE;
+                }
+                else if ($mode === $mstr."cleardir") {
+                    $m_cleardir = TRUE;
+                }
+
+                if ($m_cleardir) {
+                    //Delete output dir if it exists before starting
+                    FileHandling::deleteDirectoryContents($outputdir);
+                }
 
                 //Ensure output dir
                 FileHandling::ensureDirectory($outputdir);
 
-                //Compile list of all relevant image strings, appending the sought after file extension
+                //Compile list of all relevant image strings
                 $ext = ".dds";
                 $images = [];
+                $appendimages = [];
 
+                $count = count($global_json['heroes']);
+                $i = 1;
                 foreach ($global_json['heroes'] as $hero) {
-                    imageOutHelper($hero['image_hero'], $ext, $images);
-                    imageOutHelper($hero['image_minimap'], $ext, $images);
+                    echo "Compiling list of image strings from heroes ($i/$count)                           \r";
+
+                    imageOutHelper($hero['image_hero'], $images);
+                    imageOutHelper($hero['image_minimap'], $images);
 
                     foreach ($hero['abilities'] as $ability) {
-                        imageOutHelper($ability['image'], $ext, $images);
+                        imageOutHelper($ability['image'], $images);
                     }
 
                     foreach ($hero['talents'] as $talent) {
-                        imageOutHelper($talent['image'], $ext, $images);
+                        imageOutHelper($talent['image'], $images);
                     }
+
+                    $i++;
                 }
 
-                //Copy all relevant images to output dir before mogrifying them
-                foreach ($images as $image) {
-                    shell_exec('cp ' . $image . ' ' . $outputdir . $image . $ext);
+                $count = count($images);
+
+                //Copy all relevant images to output dir before mogrifying them (if mode=append will ignore images that already exist as the final imagetype)
+                $i = 1;
+                foreach ($images as $img) {
+                    $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
+                    $path1 = escapeshellarg("$inputdir$image$ext"); //Escape the entire argument
+                    $path2 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
+
+                    if (!$m_append || !(file_exists("$outputdir$image.$imagetype"))) {
+                        echo "Copying images to output directory ($i/$count)                           \r";
+                        shell_exec("cp $path1 $path2");
+                        $appendimages[] = $image;
+                    }
+                    else {
+                        echo "Append: Output image already exists ($i/$count)                                  \r";
+                    }
+
+                    $i++;
                 }
 
-                //Mogrify all copied images, converting them to the appropriate filetype
-                foreach ($images as $image) {
-                    shell_exec('magick mogrify -format ' . $imagetype . ' ' . $outputdir . $image . $ext);
+                //Further do work according to mode
+                if (!$m_append) {
+                    //Mogrify all copied images, converting them to the appropriate filetype
+                    $i = 1;
+                    foreach ($images as $img) {
+                        $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
+                        $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
+                        echo "Converting copied images to .$imagetype ($i/$count)                                 \r";
+                        shell_exec("magick mogrify -format $imagetype $path1");
+                        $i++;
+                    }
+
+                    //Delete all .dds copied images
+                    if ($m_cleardir) {
+                        //Since output directory was cleaned just now, we essentially own it completely, so safe to do efficient deletion
+                        echo "Deleting copied $ext images...                                                                     \r";
+                        shell_exec("rm -f $outputdir*$ext");
+                    }
+                    else {
+                        //Only delete our specific files
+                        $i = 1;
+                        foreach ($images as $img) {
+                            $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
+                            $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
+                            echo "Deleting copied $ext images ($i/$count)                                                           \r";
+                            shell_exec("rm -f $path1");
+                            $i++;
+                        }
+                    }
+
+                    echo "Completed.                                                       \r".E;
+                }
+                else {
+                    //Append special operations, work only on appended files, and output all files that were appended, for easy work comparisons between runs.
+                    $count = count($appendimages);
+
+                    if ($count > 0) {
+                        //Mogrify copied images, converting them to the appropriate filetype
+                        $i = 1;
+                        foreach ($appendimages as $image) {
+                            $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
+                            echo "Converting appended copied images to .$imagetype ($i/$count)                             \r";
+                            shell_exec("magick mogrify -format $imagetype $path1");
+                            $i++;
+                        }
+
+                        //Only delete our specific files
+                        $i = 1;
+                        foreach ($appendimages as $image) {
+                            $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
+                            echo "Deleting appended copied $ext images ($i/$count)                                 \r";
+                            shell_exec("rm -f $path1");
+                            $i++;
+                        }
+
+                        //List all appended images
+                        echo "Completed: Appended new images....                                            \r".E.E;
+                        foreach ($appendimages as $image) {
+                            echo $image.E;
+                        }
+                    }
+                    else {
+                        echo "Completed: No new images appended.                                               \r".E;
+                    }
                 }
             }
             else {
