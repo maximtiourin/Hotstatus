@@ -142,8 +142,24 @@ $talentMappings = [];
  *      ['hero'] => image name without extension
  *      ['minimap'] => image name without extension
  * ]
+ *
+ *
+ * Can have predefined values that won't be overwritten, for use in special cases where mapped image strings are
+ * undesirable, or can not be found with the preestablished CActorUnit pattern
  */
-$actorImageMappings = [];
+$actorImageMappings = [
+    "HeroStukov" => [
+        "hero" => "ui_targetportrait_hero_stukov"
+    ],
+    "HeroDVa" => [
+        "hero" => "ui_targetportrait_hero_dva",
+        "minimap" => "storm_ui_minimapicon_dva"
+    ],
+    "HeroLostVikings" => [
+        "hero" => "ui_targetportrait_hero_lostvikings",
+        "minimap" => "storm_ui_minimapicon_heros_erik"
+    ]
+];
 
 //Extracts the image name withotu extension from a dds image string while converting it to lowercase, default value case is not touched
 function extractImageString($str, $default = "") {
@@ -179,6 +195,10 @@ function extractUniverseNameFromUniverseIcon($str, $default = "") {
 
 function extractURLFriendlyProperName($name) {
     return preg_replace('/[^a-zA-Z0-9]/', '', $name);
+}
+
+function createSpacesBetweenWords($str) {
+    return preg_replace('@([a-z\.])([A-Z])@', '$1 $2', $str);
 }
 
 /*
@@ -305,8 +325,18 @@ function extractActorImages($filepath) {
             $am['hero'] = extractImageString($actor->HeroIcon['value'], $default);
             $am['minimap'] = extractImageString($actor->MinimapIcon['value'], $default);
             
-            //Set mapping
-            $actorImageMappings[$namestr] = $am;
+            //Set mapping without overwriting the structure (in case explicit exceptions were made)
+            if (!key_exists($namestr, $actorImageMappings)) {
+                $actorImageMappings[$namestr] = $am;
+            }
+            else {
+                if (!key_exists('hero', $actorImageMappings[$namestr])) {
+                    $actorImageMappings[$namestr]['hero'] = $am['hero'];
+                }
+                if (!key_exists('minimap', $actorImageMappings[$namestr])) {
+                    $actorImageMappings[$namestr]['minimap'] = $am['minimap'];
+                }
+            }
         }
     }
 }
@@ -373,7 +403,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
 
                     //Difficulty
                     if (key_exists('Difficulty', $j)) {
-                        $hero['difficulty'] = $j["Difficulty"][ATTR][V];
+                        $hero['difficulty'] = createSpacesBetweenWords($j["Difficulty"][ATTR][V]);
                     }
                     else {
                         $hero['difficulty'] = "Easy";
