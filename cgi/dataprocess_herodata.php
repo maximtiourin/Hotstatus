@@ -893,7 +893,7 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
 
 function imageOutHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
-        $imagearr[] = $imagestr;
+        $imagearr[$imagestr] = TRUE;
     }
 }
 
@@ -1004,6 +1004,9 @@ $validargs = [
                 else if ($mode === $mstr."cleardir") {
                     $m_cleardir = TRUE;
                 }
+                else {
+                    die("Invalid mode argument.");
+                }
 
                 if ($m_cleardir) {
                     //Delete output dir if it exists before starting
@@ -1015,7 +1018,7 @@ $validargs = [
 
                 //Compile list of all relevant image strings
                 $ext = ".dds";
-                $images = [];
+                $images = []; //Map of unique image keys => TRUE
                 $appendimages = [];
 
                 $count = count($global_json['heroes']);
@@ -1041,7 +1044,7 @@ $validargs = [
 
                 //Copy all relevant images to output dir before mogrifying them (if mode=append will ignore images that already exist as the final imagetype)
                 $i = 1;
-                foreach ($images as $img) {
+                foreach ($images as $img => $bool) {
                     $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
                     $path1 = escapeshellarg("$inputdir$image$ext"); //Escape the entire argument
                     $path2 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
@@ -1062,7 +1065,7 @@ $validargs = [
                 if (!$m_append) {
                     //Mogrify all copied images, converting them to the appropriate filetype
                     $i = 1;
-                    foreach ($images as $img) {
+                    foreach ($images as $img => $bool) {
                         $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
                         $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
                         echo "Converting copied images to .$imagetype ($i/$count)                                 \r";
@@ -1079,7 +1082,7 @@ $validargs = [
                     else {
                         //Only delete our specific files
                         $i = 1;
-                        foreach ($images as $img) {
+                        foreach ($images as $img => $bool) {
                             $image = htmlspecialchars_decode($img, ENT_QUOTES); //Decode the image string
                             $path1 = escapeshellarg("$outputdir$image$ext"); //Escape the entire argument
                             echo "Deleting copied $ext images ($i/$count)                                                           \r";
