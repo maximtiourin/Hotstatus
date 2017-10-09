@@ -1,4 +1,11 @@
 <?php
+
+namespace Fizzik;
+
+require_once 'includes/include.php';
+
+use Fizzik\Utility\FileHandling;
+
 set_time_limit(0);
 
 //The json array that holds all of the heroes
@@ -909,7 +916,22 @@ $validargs = [
         "syntax" => "--out <json_output_filepath>",
         "desc" => "Outputs json formatted data to filepath, creating any subdirectories as needed.",
         "exec" => function (...$args) {
+            global $global_json;
 
+            if (count($args) == 1) {
+                $fp = $args[0];
+
+                $dir = dirname($fp);
+
+                FileHandling::ensureDirectory($dir);
+
+                $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
+                fwrite($file, json_encode($global_json).E);
+                fclose($file);
+            }
+            else {
+                die("Invalid amount of arguments exception.");
+            }
         }
     ],
     "--dbout" => [
@@ -925,7 +947,18 @@ $validargs = [
         "syntax" => "--imageout <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
         "desc" => "Converts relevant images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. Requires ImageMagick utility to be installed and in system path.",
         "exec" => function (...$args) {
+            global $global_json;
 
+            if (count($args) == 3) {
+                $imagetype = $args[0];
+                $inputdir = $args[1];
+                $outputdir = $args[2];
+
+                
+            }
+            else {
+                die("Invalid amount of arguments exception.");
+            }
         }
     ]
 ];
