@@ -942,14 +942,60 @@ $validargs = [
             }
         }
     ],
+    "--log" => [
+        "count" => 1,
+        "enabled" => FALSE,
+        "file" => "",
+        "syntax" => "--log <log_output_filepath>",
+        "desc" => "Logs relevant output from other arguments to filepath. This argument must precede any arguments where logging is desired.",
+        "exec" => function (...$args) {
+            global $validargs;
+
+            if (count($args) == 1) {
+                $varg = $validargs['--log'];
+
+                $fp = $args[0];
+
+                $dir = dirname($fp);
+
+                FileHandling::ensureDirectory($dir);
+
+                $file = fopen($fp, "a") or die("Unable to create and write to log file: " . $fp);
+
+                //Write initial timestamp lines to help keep track of separate execution logs
+                fwrite($file, "[" . date('Y:m:d H:i:s') . "] Log Append: ".E.E);
+
+                $varg['file'] = $file;
+                $varg['enabled'] = TRUE;
+            }
+            else {
+                die("Invalid amount of arguments exception.");
+            }
+        },
+        "log" => function ($str) {
+            global $validargs;
+
+            $varg = $validargs['--log'];
+
+            if ($varg['enabled']) {
+                $file = $varg['file'];
+
+                fwrite($file, $str.E);
+            }
+        }
+    ],
     "--out" => [
         "count" => 1,
         "syntax" => "--out <json_output_filepath>",
         "desc" => "Outputs json formatted data to filepath, creating any subdirectories as needed.",
         "exec" => function (...$args) {
-            global $global_json;
+            global $global_json, $validargs;
 
             if (count($args) == 1) {
+                //Init logging info
+                $log = $validargs['--log']['log'];
+
+                //Begin execution
                 $fp = $args[0];
 
                 $dir = dirname($fp);
@@ -957,8 +1003,15 @@ $validargs = [
                 FileHandling::ensureDirectory($dir);
 
                 $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
-                fwrite($file, json_encode($global_json).E);
+                $res = fwrite($file, json_encode($global_json).E);
                 fclose($file);
+
+                if ($res !== FALSE) {
+                    $log("[--out] Successfully Wrote JSON to file: $fp");
+                }
+                else {
+                    $log("[--out] ERROR: Could not write JSON to file: $fp");
+                }
             }
             else {
                 die("Invalid amount of arguments exception.");
@@ -982,9 +1035,13 @@ $validargs = [
             . "[overwrite] : --mode=overwrite : will work on all files and overwrite any that already exist"
             . "[cleardir] : --mode=cleardir : completely empty output dir before doing work and will work on all files",
         "exec" => function (...$args) {
-            global $global_json;
+            global $global_json, $validargs;
 
             if (count($args) == 4) {
+                //Init logging info
+                $log = $validargs['--log']['log'];
+
+                //Begin execution
                 $mode = $args[0];
                 $imagetype = $args[1];
                 $inputdir = imageOutDirectoryHelper($args[2]);
@@ -1011,6 +1068,8 @@ $validargs = [
                 if ($m_cleardir) {
                     //Delete output dir if it exists before starting
                     FileHandling::deleteDirectoryContents($outputdir);
+
+                    $log("[--imageout $mode] Deleting directory contents: $outputdir");
                 }
 
                 //Ensure output dir
@@ -1073,11 +1132,17 @@ $validargs = [
                         $i++;
                     }
 
+                    if ($count > 0) {
+                        $log("[--imageout $mode] Wrote images to directory: $outputdir");
+                    }
+
                     //Delete all .dds copied images
                     if ($m_cleardir) {
                         //Since output directory was cleaned just now, we essentially own it completely, so safe to do efficient deletion
                         echo "Deleting copied $ext images...                                                                     \r";
                         shell_exec("rm -f $outputdir*$ext");
+
+                        $log("[--imageout $mode] Deleted ANY .dds images in directory: $outputdir");
                     }
                     else {
                         //Only delete our specific files
@@ -1088,6 +1153,10 @@ $validargs = [
                             echo "Deleting copied $ext images ($i/$count)                                                           \r";
                             shell_exec("rm -f $path1");
                             $i++;
+                        }
+
+                        if ($count > 0) {
+                            $log("[--imageout $mode] Deleted .dds images in directory: $outputdir");
                         }
                     }
 
@@ -1117,9 +1186,17 @@ $validargs = [
                         }
 
                         //List all appended images
+                        $logging = $validargs['--log']['enabled'];
+                        if ($logging) $log("[--imageout $mode] Appended new images: ");
+
                         echo "Completed: Appended new images....                                            \r".E.E;
                         foreach ($appendimages as $image) {
-                            echo $image.E;
+                            if ($logging) {
+                                $log($image);
+                            }
+                            else {
+                                echo $image . E;
+                            }
                         }
                     }
                     else {
@@ -1168,6 +1245,20 @@ else if ($argc > 1) {
                 }
             }
 
+            //Log execution if logging
+            $logging = $validargs['--log']['enabled'];
+            $log = $validargs['--log']['log'];
+            if ($logging) {
+                $logstr = $argv[0];
+                $logstr .= $arg;
+
+                foreach ($addargsarr as $addarg) {
+                    $logstr .= " $addarg";
+                }
+
+                $log($logstr.E); //Add additional line
+            }
+
             //Execute optional argument
             $varg['exec'](...$addargsarr);
         }
@@ -1180,4 +1271,6 @@ else if ($argc > 1) {
 
         $argcursor++;
     }
+
+    if ($validargs['--log']['enabled']) fclose($validargs['--log']['file']);
 }
