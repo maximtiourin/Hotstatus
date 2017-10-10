@@ -6,7 +6,7 @@ Contains src for the web application built in symfony3, as well as the php cgi f
 Hotstatus is a web application that aggregates statistics from Heroes of the Storm matches
 parsed from replay files. It provides a way to relate useful statistics about Heroes, Talents, Maps, and Players. One major
 goal of the project is to provide player profiles that show players their personalized
-statistics as well as match history and and approximated matchmaking rating.
+statistics as well as match history and an approximated matchmaking rating.
 
 One major feature of the hotstatus pipeline developed for processing data is that all Hero, Talent, and Image information
 from the Heroes of the Storm game is extracted, formatted, and converted into useful structures without having to manually compile large listfiles.
