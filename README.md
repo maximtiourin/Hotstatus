@@ -12,7 +12,7 @@ One major feature of the hotstatus pipeline developed for processing data is tha
 from the Heroes of the Storm game is extracted, formatted, and converted into useful structures without having to manually compile large listfiles.
 
 Inspirations for this project are [na.op.gg](http://na.op.gg), [hotslogs.com](http://www.hotslogs.com), [stormspy.net](http://www.stormspy.net), and this project absolutely
-could not exist without the work done by Roman Semenov in setting up [hotsapi.net](http://www.hotsapi.net), which provides a centralized
+could not exist without the work done by Roman Semenov in setting up [hotsapi.net](http://hotsapi.net), which provides a centralized
 replay dataset.
 
 ##### CGI Libraries (cgi/lib)
