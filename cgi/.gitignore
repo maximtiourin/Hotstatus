@@ -1,4 +1,5 @@
 /replays/
-/bin/
+/bin/*
+!/bin/README.md
 /data/*
 !/data/README.txt
