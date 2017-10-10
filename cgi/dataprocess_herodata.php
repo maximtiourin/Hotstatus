@@ -10,6 +10,8 @@ set_time_limit(0);
 
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
+$timestart = microtime(true);
+
 //The json array that holds all of the heroes
 $global_json = [];
 $global_json['heroes'] = [];
@@ -893,6 +895,8 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
     }
 }
 
+$timeend = microtime(true);
+
 function imageOutHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
         $imagearr[$imagestr] = TRUE;
@@ -951,7 +955,7 @@ $validargs = [
         "syntax" => "--log <log_output_filepath>",
         "desc" => "Logs relevant output from other arguments to filepath. This argument must precede any arguments where logging is desired.",
         "exec" => function (...$args) {
-            global $validargs;
+            global $validargs, $timestart, $timeend;
 
             if (count($args) == 1) {
                 $varg = &$validargs['--log'];
@@ -964,8 +968,10 @@ $validargs = [
 
                 $file = fopen($fp, "a") or die("Unable to create and write to log file: " . $fp);
 
-                //Write initial timestamp lines to help keep track of separate execution logs
-                fwrite($file, "[" . date('Y:m:d H:i:s') . "] Log Append: ".E.E);
+                $timediff = round(($timeend - $timestart) * 1000) / 1000.0;
+
+                //Write initial timestamp lines and general execution info to help keep track of separate execution logs
+                fwrite($file, "[" . date('Y:m:d H:i:s') . "] Log Append: ".E.E."Heroes of the Storm Data was parsed in ".$timediff." seconds.".E.E);
 
                 $varg['file'] = $file;
                 $varg['enabled'] = TRUE;
@@ -1007,10 +1013,20 @@ $validargs = [
                 FileHandling::ensureDirectory($dir);
 
                 //If logging, track diff between same filenames
+                $d_old_s = "<~@OLD@~>"; //old diff start sep
+                $d_old_e = "</~@OLD@~>"; //old diff end sep
+                $d_new_s = "<~@NEW@~>"; //new diff start sep
+                $d_new_e = "</~@NEW@~>"; //new diff end sep
+                $copysuffix = "-copy-".time(); //Get temp suffix for copy
+                $copypath = $fp.$copysuffix;
+                $path1 = escapeshellarg($fp);
+                $path2 = escapeshellarg($copypath);
+                $copied = FALSE;
                 if ($logging) {
                     if (file_exists($fp)) {
                         //File already exists, copy old version and then log the diff between the old and the new.
-
+                        shell_exec("cp $path1 $copypath");
+                        $copied = TRUE;
                     }
                 }
 
@@ -1024,6 +1040,55 @@ $validargs = [
                 }
                 else {
                     $log("[--out] ERROR: Could not write JSON to file: $fp");
+                }
+
+                //If were tracking diff, perform the actual diff operations
+                if ($res !== FALSE && $copied) {
+                    //Get diff
+                    $diff = shell_exec('wdiff -3 -w"'.$d_old_s.'" -x"'.$d_old_e.'" -y"'.$d_new_s.'" -z"'.$d_new_e.'" '.$path2.' '.$path1);
+
+                    //Match all diff results
+                    $arr = [];
+                    $dres = preg_match_all("#$d_old_s.*$d_new_e#", $diff, $arr);
+
+                    //Check if we found atleast one diff result
+                    if ($dres !== FALSE && $dres > 0) {
+                        $log("[--out] Found diff between old and new: ".E);
+
+                        //Loop through diff results in order to log them
+                        $diffoutersep = "===================================================================";
+                        $diffsep =      "-------------------------------------------------------------------";
+                        $logstr = $diffoutersep.E;
+                        foreach ($arr[0] as $result) {
+                            $logstr .= $diffsep.E;
+
+                            //Old diff
+                            $oldarr = [];
+                            $oldres = preg_match("#$d_old_s(.*)$d_old_e#", $result, $oldarr);
+
+                            if ($oldres == 1) {
+                                $str = $oldarr[1];
+                                $logstr .= $str.E;
+                            }
+
+                            //New diff
+                            $newarr = [];
+                            $newres = preg_match("#$d_new_s(.*)$d_new_e#", $result, $newarr);
+
+                            if ($newres == 1) {
+                                $str = $newarr[1];
+                                $logstr .= $str.E;
+                            }
+
+                            $logstr .= $diffsep.E;
+                        }
+                        $logstr .= $diffoutersep.E.E;
+
+                        $log($logstr);
+                    }
+
+                    //Cleanup and remove copy
+                    FileHandling::deleteFileOrDirectoryAndItsContents($copypath);
                 }
             }
             else {
@@ -1042,11 +1107,11 @@ $validargs = [
     "--imageout" => [
         "count" => 4,
         "syntax" => "--imageout <--mode=[append]^[overwrite]^[cleardir]> <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
-        "desc" => "Copies and converts relavent images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed. "
-            . "Requires ImageMagick utility to be installed and in system path.\nMode Options [Required to specify]:\n"
-            . "[append] : --mode=append : will only work on files if they don't already exist in the output directory, will list all files that were newly added at completion."
-            . "[overwrite] : --mode=overwrite : will work on all files and overwrite any that already exist"
-            . "[cleardir] : --mode=cleardir : completely empty output dir before doing work and will work on all files",
+        "desc" => "Copies and converts relavent images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed.\n"
+            . "Requires ImageMagick utility to be installed and in system path.\n\nMode Options [Required to specify]:\n\n"
+            . "[append] : --mode=append : will only work on files if they don't already exist in the output directory, will list all files that were newly added at completion.\n\n"
+            . "[overwrite] : --mode=overwrite : will work on all files and overwrite any that already exist\n\n"
+            . "[cleardir] : --mode=cleardir : completely empty output dir before doing work and will work on all files\n",
         "exec" => function (...$args) {
             global $global_json, $validargs;
 
