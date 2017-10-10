@@ -10,6 +10,13 @@ php dataprocess_herodata.php --log data/log/herodata.log --imageout --mode=appen
 
 
 
+
+Command Lines for getting file diffs by words
+------------------------------------------
+wdiff -3 -w"<~@OLD@~>" -x"</~@OLD@~>" -y"<~@NEW@~>" -z"</~@NEW@~>" data/OLD.json data/NEW.json
+
+
+
 Location of all relevant Textures (Huge amount of irrelevant Textures inside, but this is a catch-all, use herodata process to narrow down to a listfile of relevant images)
 -----------------------------------------
 mods/heroes.stormmod/base.stormassets/Assets/Textures/

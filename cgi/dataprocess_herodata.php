@@ -995,6 +995,7 @@ $validargs = [
 
             if (count($args) == 1) {
                 //Init logging info
+                $logging = $validargs['--log']['enabled'];
                 $log = $validargs['--log']['log'];
 
                 //Begin execution
@@ -1002,8 +1003,18 @@ $validargs = [
 
                 $dir = dirname($fp);
 
+                //Ensure directory
                 FileHandling::ensureDirectory($dir);
 
+                //If logging, track diff between same filenames
+                if ($logging) {
+                    if (file_exists($fp)) {
+                        //File already exists, copy old version and then log the diff between the old and the new.
+
+                    }
+                }
+
+                //Write out file
                 $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
                 $res = fwrite($file, json_encode($global_json).E);
                 fclose($file);

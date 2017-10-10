@@ -8,4 +8,4 @@
 
 <b>Special Thanks</b>:
 - Ben Barrett [barrett777] (Heroes of the Storm C# Replay Parser Library - Heroes.ReplayParser)
-- Jeff Moser [Moserware] (TrueSkill MMR Algorithm - Skills)
+- Jeff Moser [Moserware] (TrueSkill MMR - Skills)

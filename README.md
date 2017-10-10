@@ -21,6 +21,7 @@ replay dataset.
 
 <b>CGI Utilities (System Path)</b>
 - [ImageMagick](https://www.imagemagick.org/script/index.php)
+- [wdiff (Windows)](https://www.di-mgt.com.au/wdiff-for-windows.html) | [wdiff (Linux)](https://www.gnu.org/software/wdiff/)
 
 <b>CGI Additional Binaries (cgi/bin)</b>
 - [ReplayParser](https://github.com/maximtiourin/Heroes.ReplayParser) (Compile ConsoleApplication and point HotstatusPipeline to its executable)
@@ -29,4 +30,4 @@ replay dataset.
 <b>Special Thanks</b>:
 - Roman Semenov [poma] (Heroes of the Storm replay API - Hotsapi.net)
 - Ben Barrett [barrett777] (Heroes of the Storm C# Replay Parser Library - Heroes.ReplayParser)
-- Jeff Moser [Moserware] (TrueSkill MMR Algorithm - Skills)
+- Jeff Moser [Moserware] (TrueSkill MMR - Skills)
