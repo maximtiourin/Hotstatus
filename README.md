@@ -15,18 +15,18 @@ Inspirations for this project are [na.op.gg](http://na.op.gg), [hotslogs.com](ht
 could not exist without the work done by Roman Semenov in setting up [hotsapi.net](http://hotsapi.net), which provides a centralized
 replay dataset.
 
-##### CGI Libraries (cgi/lib)
+<b>CGI Libraries (cgi/lib)</b>
 - [AWS Php SDK](https://aws.amazon.com/sdk-for-php/)
 - [Fizzik](https://github.com/maximtiourin/Fizzik)
 
-##### CGI Utilities (System Path)
+<b>CGI Utilities (System Path)</b>
 - [ImageMagick](https://www.imagemagick.org/script/index.php)
 
-##### CGI Additional Binaries (cgi/bin)
+<b>CGI Additional Binaries (cgi/bin)</b>
 - [ReplayParser](https://github.com/maximtiourin/Heroes.ReplayParser) (Compile ConsoleApplication and point HotstatusPipeline to its executable)
 - [Skills](https://github.com/maximtiourin/Skills) (Compile ConsoleApplication and point HotstatusPipeline to its executable)
 
-##Special Thanks:
+<b>Special Thanks</b>:
 - Roman Semenov [poma] (Heroes of the Storm replay API - Hotsapi.net)
 - Ben Barrett [barrett777] (Heroes of the Storm C# Replay Parser Library - Heroes.ReplayParser)
 - Jeff Moser [Moserware] (TrueSkill MMR Algorithm - Skills)
