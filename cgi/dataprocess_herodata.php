@@ -11,6 +11,7 @@ set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
 $timestart = microtime(true);
+$dataparsed = FALSE;
 
 //The json array that holds all of the heroes
 $global_json = [];
@@ -33,8 +34,8 @@ const IDX = "index";
  */
 const PATH_DATA = "/data/";
 //Stormdata
-const PATH_STORMDATA = PATH_DATA . "mods/heroesdata.stormmod/base.stormdata/GameData/";
-const PATH_STORMDATA_STRINGS = PATH_DATA . "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
+const PATH_STORMDATA = "mods/heroesdata.stormmod/base.stormdata/GameData/";
+const PATH_STORMDATA_STRINGS = "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
 const PATH_STORMDATA_HEROES = PATH_STORMDATA . "Heroes/";
 const PATHFRAG_STORMDATA_HERO_DIR = "Data/";
 const PATHFRAG_STORMDATA_HERO_DATA = "Data.xml";
@@ -44,14 +45,18 @@ const FILE_STORMDATA_OLDACTORINDEX = PATH_STORMDATA . "ActorData.xml";
 const FILE_STORMDATA_OLDBUTTONINDEX = PATH_STORMDATA . "ButtonData.xml";
 const FILE_STORMDATA_STRINGS_OLDHEROINDEX = PATH_STORMDATA_STRINGS . "GameStrings.txt";
 //Heromods
-const PATH_HEROMODS = PATH_DATA . "mods/heromods/";
+const PATH_HEROMODS = "mods/heromods/";
 const PATHFRAG_HEROMODS_HERO_DIR = ".stormmod/base.stormdata/GameData/";
 const PATHFRAG_HEROMODS_HERO_STRINGS_DIR = ".stormmod/enus.stormdata/LocalizedData/GameStrings.txt";
 const PATHFRAG_HEROMODS_HERO_DATA1 = "HeroData.xml";
 const PATHFRAG_HEROMODS_HERO_DATA2 = "Data.xml";
+//Images
+const PATH_TEXTURES = "mods/heroes.stormmod/base.stormassets/Assets/Textures/";
 
 
-//What stormdata heroes to check (Not all *Data.xml files will have <CHero>, but that shouldnt be a problem)
+/*
+ * What stormdata heroes to check (Not all *Data.xml files will have <CHero>, but that shouldnt be a problem)
+ */
 $stormDataNames = [
     "Anubarak" => TRUE,
     "Artanis" => TRUE,
@@ -321,7 +326,7 @@ function extractTalents($filepath) {
 
 function extractActorImages($filepath) {
     global $actorImageMappings;
-    
+
     $default = NOIMAGE;
 
     $str = file_get_contents($filepath); //Xml string of actor data
@@ -329,17 +334,17 @@ function extractActorImages($filepath) {
     $xml = simplexml_load_string($str);
 
     if ($xml !== FALSE) {
-        foreach ($xml->CActorUnit as $actor) {          
+        foreach ($xml->CActorUnit as $actor) {
             $am = [];
-            
+
             $name_internal = $actor->attributes()->id;
-            
+
             $namestr = strval($name_internal);
 
             //Images
             $am['hero'] = extractImageString($actor->HeroIcon['value'], $default);
             $am['minimap'] = extractImageString($actor->MinimapIcon['value'], $default);
-            
+
             //Set mapping without overwriting the structure (in case explicit exceptions were made)
             if (!key_exists($namestr, $actorImageMappings)) {
                 $actorImageMappings[$namestr] = $am;
@@ -488,7 +493,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     /*
                      * Image strings
                      */
-                    $actorstr = "Hero".$name_internal;
+                    $actorstr = "Hero" . $name_internal;
                     //Image name
                     //$hero['image_name'] = extractURLFriendlyProperName($hero['name']);
 
@@ -502,7 +507,8 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                             // find a Portrait for them in their CHero data
                             if (key_exists('Portrait', $j)
                                 && key_exists(ATTR, $j['Portrait'])
-                                && key_exists(V, $j['Portrait'][ATTR])) {
+                                && key_exists(V, $j['Portrait'][ATTR])
+                            ) {
                                 $hero['image_hero'] = extractImageString($j['Portrait'][ATTR][V], NOIMAGE);
                             }
                             else {
@@ -592,9 +598,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                 $trait = FALSE;
                                 foreach ($ability['Flags'] as $aflag) {
                                     if (key_exists(ATTR, $aflag)
-                                    && key_exists(IDX, $aflag[ATTR])
-                                    && key_exists(V, $aflag[ATTR])
-                                    && intval($aflag[ATTR][V]) == 1) {
+                                        && key_exists(IDX, $aflag[ATTR])
+                                        && key_exists(V, $aflag[ATTR])
+                                        && intval($aflag[ATTR][V]) == 1
+                                    ) {
                                         if ($aflag[ATTR][IDX] == "ShowInHeroSelect") {
                                             $isValidAbility = TRUE;
                                         }
@@ -631,7 +638,8 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                                     if ($haveButton /*&& !$haveAbil*/) {
                                         $searchStr = $aname_button;
                                         $searchPrefix = "Button/Name/";
-                                        /*if (strlen($searchDefault) == 0)*/ $searchDefault = $aname_button;
+                                        /*if (strlen($searchDefault) == 0)*/
+                                        $searchDefault = $aname_button;
                                     }
                                     if (!$haveButton && !$haveAbil) {
                                         $a['name'] = UNKNOWN;
@@ -699,7 +707,8 @@ function extractHero_xmlToJson($filepath, $file_strings) {
 
                             //Set image
                             if (key_exists($tname_internal, $talentMappings)
-                                && key_exists(strval($talentMappings[$tname_internal]), $buttonImageMappings)) {
+                                && key_exists(strval($talentMappings[$tname_internal]), $buttonImageMappings)
+                            ) {
                                 $t['image'] = $buttonImageMappings[strval($talentMappings[$tname_internal])];
                             }
                             else {
@@ -725,56 +734,37 @@ function extractHero_xmlToJson($filepath, $file_strings) {
  * due to some legacy heroes sharing hero data in the old index, but only having talents/actors
  * (and not CHero data) in their new index.
  */
-$tfp = __DIR__ . FILE_STORMDATA_OLDTALENTINDEX;
-$afp = __DIR__ . FILE_STORMDATA_OLDACTORINDEX;
-$bfp = __DIR__ . FILE_STORMDATA_OLDBUTTONINDEX;
+function extractData() {
+    global $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
 
-//Extract old index
-if (file_exists($tfp)) {
-    extractTalents($tfp);
-}
-else {
-    die("Old Talent Index File does not exist: " . $tfp);
-}
-if (file_exists($afp)) {
-    extractActorImages($afp);
-}
-else {
-    die("Old Actor Index File does not exist: " . $afp);
-}
-if (file_exists($bfp)) {
-    extractButtonImages($bfp);
-}
-else {
-    die("Old Button Index File does not exist: " . $bfp);
-}
+    $tfp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDTALENTINDEX;
+    $afp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDACTORINDEX;
+    $bfp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDBUTTONINDEX;
 
-//Extract stormdata
-foreach ($stormDataNames as $heroname => $bool_include) {
-    if ($bool_include) {
-        $fp = __DIR__ . PATH_STORMDATA_HEROES . $heroname . PATHFRAG_STORMDATA_HERO_DIR . $heroname . PATHFRAG_STORMDATA_HERO_DATA;
-
-        if (file_exists($fp)) {
-            extractTalents($fp);
-            extractActorImages($fp);
-            extractButtonImages($fp);
-        }
-        else {
-            die("Storm Data File does not exist (for talents/actors): " . $fp);
-        }
+    //Extract old index
+    if (file_exists($tfp)) {
+        extractTalents($tfp);
     }
-}
+    else {
+        die("Old Talent Index File does not exist: " . $tfp);
+    }
+    if (file_exists($afp)) {
+        extractActorImages($afp);
+    }
+    else {
+        die("Old Actor Index File does not exist: " . $afp);
+    }
+    if (file_exists($bfp)) {
+        extractButtonImages($bfp);
+    }
+    else {
+        die("Old Button Index File does not exist: " . $bfp);
+    }
 
-$strfile = null; //Clear mem
-
-//Extract heromods
-foreach ($heromodsDataNames as $heroname => $bool_include) {
-    if ($bool_include) {
-        $strfile = null;
-
-        if (key_exists($heroname, $heromodsDataNamesExceptions)) {
-            //Special exception hero mods case
-            $fp = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . $heromodsDataNamesExceptions[$heroname];
+    //Extract stormdata
+    foreach ($stormDataNames as $heroname => $bool_include) {
+        if ($bool_include) {
+            $fp = __DIR__ . PATH_DATA . PATH_STORMDATA_HEROES . $heroname . PATHFRAG_STORMDATA_HERO_DIR . $heroname . PATHFRAG_STORMDATA_HERO_DATA;
 
             if (file_exists($fp)) {
                 extractTalents($fp);
@@ -782,120 +772,151 @@ foreach ($heromodsDataNames as $heroname => $bool_include) {
                 extractButtonImages($fp);
             }
             else {
-                die("Hero Mods Special Exception File does not exist (for talents/actors): " . $fp);
-            }
-        }
-        else {
-            //Regular hero mods case
-            $fp1 = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . PATHFRAG_HEROMODS_HERO_DATA1;
-            $fp2 = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . ucfirst($heroname) . PATHFRAG_HEROMODS_HERO_DATA2;
-
-            //Extract talents from all files in case of weird splitting
-            $readfile = FALSE;
-            if (file_exists($fp1)) {
-                extractTalents($fp1);
-                extractActorImages($fp1);
-                extractButtonImages($fp1);
-                $readfile = TRUE;
-            }
-            if (file_exists($fp2)) {
-                extractTalents($fp2);
-                extractActorImages($fp2);
-                extractButtonImages($fp2);
-                $readfile = TRUE;
-            }
-            if (!$readfile) {
-                die("Hero Mods Files do not exist at either location (for talents/actors): (" . $fp1 . ", " . $fp2 . ")");
+                die("Storm Data File does not exist (for talents/actors): " . $fp);
             }
         }
     }
-}
 
-/*
- * Look through Data directories and extract hero data
- */
-//Extract heroes from old hero index
-$fp = __DIR__ . FILE_STORMDATA_OLDHEROINDEX;
-$strfp = __DIR__ . FILE_STORMDATA_STRINGS_OLDHEROINDEX;
-$strfile = null;
+    $strfile = null; //Clear mem
 
-if (file_exists($strfp)) {
-    $strfile = file_get_contents($strfp);
-}
-else {
-    die("Old Hero Index String File does not exist: " . $strfp);
-}
+    //Extract heromods
+    foreach ($heromodsDataNames as $heroname => $bool_include) {
+        if ($bool_include) {
+            $strfile = null;
 
-if (file_exists($fp)) {
-    extractHero_xmlToJson($fp, $strfile);
-}
-else {
-    die("Old Hero Index File does not exist: " . $fp);
-}
+            if (key_exists($heroname, $heromodsDataNamesExceptions)) {
+                //Special exception hero mods case
+                $fp = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . $heromodsDataNamesExceptions[$heroname];
 
-//Extract stormdata (use same strings from old hero index)
-foreach ($stormDataNames as $heroname => $bool_include) {
-    if ($bool_include) {
-        $fp = __DIR__ . PATH_STORMDATA_HEROES . $heroname . PATHFRAG_STORMDATA_HERO_DIR . $heroname . PATHFRAG_STORMDATA_HERO_DATA;
+                if (file_exists($fp)) {
+                    extractTalents($fp);
+                    extractActorImages($fp);
+                    extractButtonImages($fp);
+                }
+                else {
+                    die("Hero Mods Special Exception File does not exist (for talents/actors): " . $fp);
+                }
+            }
+            else {
+                //Regular hero mods case
+                $fp1 = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . PATHFRAG_HEROMODS_HERO_DATA1;
+                $fp2 = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . ucfirst($heroname) . PATHFRAG_HEROMODS_HERO_DATA2;
 
-        if (file_exists($fp)) {
-            extractHero_xmlToJson($fp, $strfile);
-        }
-        else {
-            die("Storm Data File does not exist: " . $fp);
+                //Extract talents from all files in case of weird splitting
+                $readfile = FALSE;
+                if (file_exists($fp1)) {
+                    extractTalents($fp1);
+                    extractActorImages($fp1);
+                    extractButtonImages($fp1);
+                    $readfile = TRUE;
+                }
+                if (file_exists($fp2)) {
+                    extractTalents($fp2);
+                    extractActorImages($fp2);
+                    extractButtonImages($fp2);
+                    $readfile = TRUE;
+                }
+                if (!$readfile) {
+                    die("Hero Mods Files do not exist at either location (for talents/actors): (" . $fp1 . ", " . $fp2 . ")");
+                }
+            }
         }
     }
-}
 
-$strfile = null;
+    /*
+     * Look through Data directories and extract hero data
+     */
+    //Extract heroes from old hero index
+    $fp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDHEROINDEX;
+    $strfp = __DIR__ . PATH_DATA . FILE_STORMDATA_STRINGS_OLDHEROINDEX;
+    $strfile = null;
 
-//Extract heromods
-foreach ($heromodsDataNames as $heroname => $bool_include) {
-    if ($bool_include) {
-        $strfp = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_STRINGS_DIR;
+    if (file_exists($strfp)) {
+        $strfile = file_get_contents($strfp);
+    }
+    else {
+        die("Old Hero Index String File does not exist: " . $strfp);
+    }
 
-        $strfile = null;
+    if (file_exists($fp)) {
+        extractHero_xmlToJson($fp, $strfile);
+    }
+    else {
+        die("Old Hero Index File does not exist: " . $fp);
+    }
 
-        if (file_exists($strfp)) {
-            $strfile = file_get_contents($strfp);
-        }
-        else {
-            die("Hero Modes String File does not exist: " . $strfp);
-        }
-
-        if (key_exists($heroname, $heromodsDataNamesExceptions)) {
-            //Special exception hero mods case
-            $fp = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . $heromodsDataNamesExceptions[$heroname];
+    //Extract stormdata (use same strings from old hero index)
+    foreach ($stormDataNames as $heroname => $bool_include) {
+        if ($bool_include) {
+            $fp = __DIR__ . PATH_DATA . PATH_STORMDATA_HEROES . $heroname . PATHFRAG_STORMDATA_HERO_DIR . $heroname . PATHFRAG_STORMDATA_HERO_DATA;
 
             if (file_exists($fp)) {
                 extractHero_xmlToJson($fp, $strfile);
             }
             else {
-                die("Hero Mods Special Exception File does not exist: " . $fp);
-            }
-        }
-        else {
-            //Regular hero mods case
-            $fp1 = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . PATHFRAG_HEROMODS_HERO_DATA1;
-            $fp2 = __DIR__ . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . ucfirst($heroname) . PATHFRAG_HEROMODS_HERO_DATA2;
-
-            //Parse for CHero data, fp1 > fp2, so if hero was Alarak and he had
-            // both a AlarakData.xml and a HeroData.xml, the HeroData.xml would take precedence
-            // if it was $fp1 and would be parsed for the CHero data
-            if (file_exists($fp1)) {
-                extractHero_xmlToJson($fp1, $strfile);
-            }
-            else if (file_exists($fp2)) {
-                extractHero_xmlToJson($fp2, $strfile);
-            }
-            else {
-                die("Hero Mods Files do not exist at either location: (" . $fp1 . ", " . $fp2 . ")");
+                die("Storm Data File does not exist: " . $fp);
             }
         }
     }
+
+    $strfile = null;
+
+    //Extract heromods
+    foreach ($heromodsDataNames as $heroname => $bool_include) {
+        if ($bool_include) {
+            $strfp = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_STRINGS_DIR;
+
+            $strfile = null;
+
+            if (file_exists($strfp)) {
+                $strfile = file_get_contents($strfp);
+            }
+            else {
+                die("Hero Modes String File does not exist: " . $strfp);
+            }
+
+            if (key_exists($heroname, $heromodsDataNamesExceptions)) {
+                //Special exception hero mods case
+                $fp = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . $heromodsDataNamesExceptions[$heroname];
+
+                if (file_exists($fp)) {
+                    extractHero_xmlToJson($fp, $strfile);
+                }
+                else {
+                    die("Hero Mods Special Exception File does not exist: " . $fp);
+                }
+            }
+            else {
+                //Regular hero mods case
+                $fp1 = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . PATHFRAG_HEROMODS_HERO_DATA1;
+                $fp2 = __DIR__ . PATH_DATA . PATH_HEROMODS . $heroname . PATHFRAG_HEROMODS_HERO_DIR . ucfirst($heroname) . PATHFRAG_HEROMODS_HERO_DATA2;
+
+                //Parse for CHero data, fp1 > fp2, so if hero was Alarak and he had
+                // both a AlarakData.xml and a HeroData.xml, the HeroData.xml would take precedence
+                // if it was $fp1 and would be parsed for the CHero data
+                if (file_exists($fp1)) {
+                    extractHero_xmlToJson($fp1, $strfile);
+                }
+                else if (file_exists($fp2)) {
+                    extractHero_xmlToJson($fp2, $strfile);
+                }
+                else {
+                    die("Hero Mods Files do not exist at either location: (" . $fp1 . ", " . $fp2 . ")");
+                }
+            }
+        }
+    }
+
+    $dataparsed = TRUE;
 }
 
 $timeend = microtime(true);
+
+function listfileImagesHelper($imagestr, &$imagearr) {
+    if ($imagestr !== NOIMAGE) {
+        $imagearr[htmlspecialchars_decode($imagestr)] = TRUE;
+    }
+}
 
 function imageOutHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
@@ -925,37 +946,44 @@ function imageOutDirectoryHelper($dir) {
  */
 /*
  * The map of valid args to their expected additional arg count and closure
+ *
+ * All valid args are gauranteed to have the atleast following key/value pairs
  * [{arg}] => [
  *      ['count'] => amount of additional arguments expected
+ *      ['shouldExtract'] => whether or not this argument requires data extraction beforehand
+ *      ['syntax'] => example syntax of using the argument properly
+ *      ['desc'] => description of what the argument does and how to properly use it
  *      ['exec'] => the closure to execute, expects "count" amount of arguments
  * ]
  */
 $validargs = [
     "--help" => [
         "count" => 0,
+        "shouldExtract" => FALSE,
         "syntax" => "--help",
         "desc" => "Lists all available arguments.",
         "exec" => function (...$args) {
             global $validargs;
 
-            echo 'List of Valid Arguments:'.E;
+            echo 'List of Valid Arguments:' . E;
 
             foreach ($validargs as $varg) {
-                echo '--------------------------------------------------------'.E;
-                echo $varg['syntax'].E;
-                echo $varg['desc'].E;
-                echo '--------------------------------------------------------'.E;
+                echo '--------------------------------------------------------' . E;
+                echo $varg['syntax'] . E;
+                echo $varg['desc'] . E;
+                echo '--------------------------------------------------------' . E;
             }
         }
     ],
     "--log" => [
         "count" => 1,
         "enabled" => FALSE,
+        "shouldExtract" => FALSE,
         "file" => "",
         "syntax" => "--log <log_output_filepath>",
         "desc" => "Logs relevant output from other arguments to filepath. This argument must precede any arguments where logging is desired.",
         "exec" => function (...$args) {
-            global $validargs, $timestart, $timeend;
+            global $dataparsed, $validargs, $timestart, $timeend;
 
             if (count($args) == 1) {
                 $varg = &$validargs['--log'];
@@ -971,7 +999,10 @@ $validargs = [
                 $timediff = round(($timeend - $timestart) * 1000) / 1000.0;
 
                 //Write initial timestamp lines and general execution info to help keep track of separate execution logs
-                fwrite($file, "[" . date('Y:m:d H:i:s') . "] Log Append: ".E.E."Heroes of the Storm Data was parsed in ".$timediff." seconds.".E.E);
+                $initstr = "[" . date('Y:m:d H:i:s') . "] Log Append: " . E . E;
+                if ($dataparsed) $initstr .= "Heroes of the Storm Data was parsed in " . $timediff . " seconds." . E . E;
+
+                fwrite($file, $initstr);
 
                 $varg['file'] = $file;
                 $varg['enabled'] = TRUE;
@@ -988,12 +1019,160 @@ $validargs = [
             if ($varg['enabled']) {
                 $file = $varg['file'];
 
-                fwrite($file, $str.E);
+                fwrite($file, $str . E);
+            }
+        }
+    ],
+    "--listfile" => [
+        "count" => 2,
+        "shouldExtract" => FALSE,
+        "syntax" => "--listfile --mode=[heroes]^[images] <listfile_output_path>",
+        "desc" => "Outputs a listfile of the given type to the output_path. Creates subdirectories as needed.\n\nMode Options [Required to specify]:\n\n"
+            . "[heroes] : --mode=heroes : will output a listfile containing the casc paths of all relevant hero data.\n"
+            . "[images] : --mode=images : will output a listfile containing the casc paths of all relevant images, requires parsing previously extracted hero data to do so.\n",
+        "exec" => function (...$args) {
+            global $global_json, $validargs, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
+
+            if (count($args) == 1) {
+                //Init logging info
+                $log = $validargs['--log']['log'];
+
+                //Begin execution
+                $mode = $args[0];
+                $fp = $args[1];
+
+                //Determine mode
+                $mstr = "--mode=";
+                $m_heroes = FALSE;
+                $m_images = FALSE;
+                if ($mode === $mstr . "heroes") {
+                    $m_heroes = TRUE;
+                }
+                else if ($mode === $mstr . "images") {
+                    $m_images = TRUE;
+                }
+                else {
+                    die("Invalid mode argument.");
+                }
+
+                $dir = dirname($fp);
+
+                if ($m_heroes) {
+                    //Compile list of all possible casc paths for relevant hero data
+                    $lfile = "";
+
+                    //Old Index Herodata + Strings
+                    $lfile .= FILE_STORMDATA_OLDHEROINDEX.E;
+                    $lfile .= FILE_STORMDATA_OLDTALENTINDEX.E;
+                    $lfile .= FILE_STORMDATA_OLDACTORINDEX.E;
+                    $lfile .= FILE_STORMDATA_OLDBUTTONINDEX.E;
+                    $lfile .= FILE_STORMDATA_STRINGS_OLDHEROINDEX.E;
+
+                    //Stormdata Herodata
+                    foreach ($stormDataNames as $name => $include) {
+                        if ($include) {
+                            $path = PATH_STORMDATA_HEROES . $name . PATHFRAG_STORMDATA_HERO_DIR . $name . PATHFRAG_STORMDATA_HERO_DATA;
+                            $lfile .= $path . E;
+                        }
+                    }
+
+                    //Heromods Herodata (Include exceptions and all file fragments)
+                    foreach ($heromodsDataNames as $name => $include) {
+                        if ($include) {
+                            $strpath = PATH_HEROMODS . $name . PATHFRAG_HEROMODS_HERO_STRINGS_DIR;
+
+                            $lfile .= $strpath.E;
+
+                            $bpath = PATH_HEROMODS . $name . PATHFRAG_HEROMODS_HERO_DIR;
+
+                            if (key_exists($name, $heromodsDataNamesExceptions)) {
+                                $path = $bpath . $heromodsDataNamesExceptions[$name];
+                                $lfile .= $path.E;
+                            }
+                            else {
+                                $path1 = $bpath . PATHFRAG_HEROMODS_HERO_DATA1;
+                                $path2 = $bpath . ucfirst($name) . PATHFRAG_HEROMODS_HERO_DATA2;
+
+                                $lfile .= $path1.E;
+                                $lfile .= $path2.E;
+                            }
+                        }
+                    }
+
+                    //Ensure directory
+                    FileHandling::ensureDirectory($dir);
+
+                    //Write out listfile
+                    $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
+                    $res = fwrite($file, $lfile);
+                    fclose($file);
+
+                    if ($res !== FALSE) {
+                        $log("[--listfile $mode] Successfully created heroes listfile: $fp");
+                    }
+                    else {
+                        $log("[--listfile $mode] ERROR: Could not create heroes listfile: $fp");
+                    }
+                }
+                else if ($m_images) {
+                    //Extract data in order to get image strings
+                    extractData();
+
+                    //Compile list of all relevant image strings
+                    $ext = ".dds";
+                    $images = []; //Map of unique image keys => TRUE
+
+                    $count = count($global_json['heroes']);
+                    $i = 1;
+                    foreach ($global_json['heroes'] as $hero) {
+                        echo "Compiling list of image strings from heroes ($i/$count)                           \r";
+
+                        listfileImagesHelper($hero['image_hero'], $images);
+                        listfileImagesHelper($hero['image_minimap'], $images);
+
+                        foreach ($hero['abilities'] as $ability) {
+                            listfileImagesHelper($ability['image'], $images);
+                        }
+
+                        foreach ($hero['talents'] as $talent) {
+                            listfileImagesHelper($talent['image'], $images);
+                        }
+
+                        $i++;
+                    }
+
+                    //Compile list of all casc paths for relevant images
+                    $lfile = "";
+
+                    foreach ($images as $img) {
+                        $path = PATH_TEXTURES . $img . $ext;
+                        $lfile .= $path.E;
+                    }
+
+                    //Ensure directory
+                    FileHandling::ensureDirectory($dir);
+
+                    //Write out listfile
+                    $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
+                    $res = fwrite($file, $lfile);
+                    fclose($file);
+
+                    if ($res !== FALSE) {
+                        $log("[--listfile $mode] Successfully created images listfile: $fp");
+                    }
+                    else {
+                        $log("[--listfile $mode] ERROR: Could not create images listfile: $fp");
+                    }
+                }
+            }
+            else {
+                die("Invalid amount of arguments exception.");
             }
         }
     ],
     "--out" => [
         "count" => 1,
+        "shouldExtract" => TRUE,
         "syntax" => "--out <json_output_filepath>",
         "desc" => "Outputs json formatted data to filepath, creating any subdirectories as needed.",
         "exec" => function (...$args) {
@@ -1017,8 +1196,8 @@ $validargs = [
                 $d_old_e = "</~@OLD@~>"; //old diff end sep
                 $d_new_s = "<~@NEW@~>"; //new diff start sep
                 $d_new_e = "</~@NEW@~>"; //new diff end sep
-                $copysuffix = "-copy-".time(); //Get temp suffix for copy
-                $copypath = $fp.$copysuffix;
+                $copysuffix = "-copy-" . time(); //Get temp suffix for copy
+                $copypath = $fp . $copysuffix;
                 $path1 = escapeshellarg($fp);
                 $path2 = escapeshellarg($copypath);
                 $copied = FALSE;
@@ -1032,7 +1211,7 @@ $validargs = [
 
                 //Write out file
                 $file = fopen($fp, "w") or die("Unable to create and write to file: " . $fp);
-                $res = fwrite($file, json_encode($global_json).E);
+                $res = fwrite($file, json_encode($global_json) . E);
                 fclose($file);
 
                 if ($res !== FALSE) {
@@ -1045,7 +1224,7 @@ $validargs = [
                 //If were tracking diff, perform the actual diff operations
                 if ($res !== FALSE && $copied) {
                     //Get diff
-                    $diff = shell_exec('wdiff -3 -w"'.$d_old_s.'" -x"'.$d_old_e.'" -y"'.$d_new_s.'" -z"'.$d_new_e.'" '.$path2.' '.$path1);
+                    $diff = shell_exec('wdiff -3 -w"' . $d_old_s . '" -x"' . $d_old_e . '" -y"' . $d_new_s . '" -z"' . $d_new_e . '" ' . $path2 . ' ' . $path1);
 
                     //Match all diff results
                     $arr = [];
@@ -1053,14 +1232,14 @@ $validargs = [
 
                     //Check if we found atleast one diff result
                     if ($dres !== FALSE && $dres > 0) {
-                        $log("[--out] Found diff between old and new: ".E);
+                        $log("[--out] Found diff between old and new: " . E);
 
                         //Loop through diff results in order to log them
                         $diffoutersep = "===================================================================";
-                        $diffsep =      "-------------------------------------------------------------------";
-                        $logstr = $diffoutersep.E;
+                        $diffsep = "-------------------------------------------------------------------";
+                        $logstr = $diffoutersep . E;
                         foreach ($arr[0] as $result) {
-                            $logstr .= $diffsep.E;
+                            $logstr .= $diffsep . E;
 
                             //Old diff
                             $oldarr = [];
@@ -1068,7 +1247,7 @@ $validargs = [
 
                             if ($oldres == 1) {
                                 $str = $oldarr[1];
-                                $logstr .= $str.E;
+                                $logstr .= $str . E;
                             }
 
                             //New diff
@@ -1077,12 +1256,12 @@ $validargs = [
 
                             if ($newres == 1) {
                                 $str = $newarr[1];
-                                $logstr .= $str.E;
+                                $logstr .= $str . E;
                             }
 
-                            $logstr .= $diffsep.E;
+                            $logstr .= $diffsep . E;
                         }
-                        $logstr .= $diffoutersep.E.E;
+                        $logstr .= $diffoutersep . E . E;
 
                         $log($logstr);
                     }
@@ -1098,6 +1277,7 @@ $validargs = [
     ],
     "--dbout" => [
         "count" => 0,
+        "shouldExtract" => TRUE,
         "syntax" => "--dbout",
         "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.",
         "exec" => function (...$args) {
@@ -1106,6 +1286,7 @@ $validargs = [
     ],
     "--imageout" => [
         "count" => 4,
+        "shouldExtract" => TRUE,
         "syntax" => "--imageout <--mode=[append]^[overwrite]^[cleardir]> <image_output_filetype> <dds_image_input_dir> <image_output_dir>",
         "desc" => "Copies and converts relavent images in input_dir to images of output_filetype in output_dir. Creates subdirectories as needed.\n"
             . "Requires ImageMagick utility to be installed and in system path.\n\nMode Options [Required to specify]:\n\n"
@@ -1130,13 +1311,13 @@ $validargs = [
                 $m_append = FALSE;
                 $m_overwrite = FALSE;
                 $m_cleardir = FALSE;
-                if ($mode === $mstr."append") {
+                if ($mode === $mstr . "append") {
                     $m_append = TRUE;
                 }
-                else if ($mode === $mstr."overwrite") {
+                else if ($mode === $mstr . "overwrite") {
                     $m_overwrite = TRUE;
                 }
-                else if ($mode === $mstr."cleardir") {
+                else if ($mode === $mstr . "cleardir") {
                     $m_cleardir = TRUE;
                 }
                 else {
@@ -1238,7 +1419,7 @@ $validargs = [
                         }
                     }
 
-                    echo "Completed.                                                       \r".E;
+                    echo "Completed.                                                       \r" . E;
                 }
                 else {
                     //Append special operations, work only on appended files, and output all files that were appended, for easy work comparisons between runs.
@@ -1267,7 +1448,7 @@ $validargs = [
                         $logging = $validargs['--log']['enabled'];
                         if ($logging) $log("[--imageout $mode] Appended new images: ");
 
-                        echo "Completed: Appended new images....                                            \r".E.E;
+                        echo "Completed: Appended new images....                                            \r" . E . E;
                         foreach ($appendimages as $image) {
                             if ($logging) {
                                 $log($image);
@@ -1278,7 +1459,7 @@ $validargs = [
                         }
                     }
                     else {
-                        echo "Completed: No new images appended.                                               \r".E;
+                        echo "Completed: No new images appended.                                               \r" . E;
                     }
                 }
             }
@@ -1291,9 +1472,14 @@ $validargs = [
 
 if ($argc == 1) {
     //Program ran with no optional arguments, just echo json data
-    echo json_encode($global_json).E;
+    extractData();
+    echo json_encode($global_json) . E;
 }
 else if ($argc > 1) {
+    // Go through, validate, check what arguments are encountered, add arguments to execution list,
+    // and see if data should be extracted before arguments are executed.
+    $shouldextract = FALSE;
+    $argExecQueue = []; //Queue of closures and their supplied arguments
     $argcursor = 1;
     while ($argcursor < $argc) {
         //Get next optional argument
@@ -1323,31 +1509,47 @@ else if ($argc > 1) {
                 }
             }
 
-            //Log execution of this optional argument if logging has been enabled beforehand
-            $log = $validargs['--log']['log'];
-            $logging = $validargs['--log']['enabled'];
-            if ($logging) {
-                $logstr = $argv[0];
-                $logstr .= " $arg";
+            //Should we queue extraction?
+            if ($varg['shouldExtract']) $shouldextract = TRUE;
 
-                foreach ($addargsarr as $addarg) {
-                    $logstr .= " $addarg";
-                }
-
-                $log($logstr . E); //Add additional line
-            }
-
-            //Execute optional argument
-            $varg['exec'](...$addargsarr);
+            //Add to execution order
+            $argExecQueue[] = array("arg" => $arg, "addargs" => $addargsarr);
         }
         else {
             //Invalid optional argument, execute --help
-            echo 'Invalid argument supplied: ' . $arg .E;
+            echo 'Invalid argument supplied: ' . $arg . E;
             $validargs['--help']['exec']();
             die();
         }
 
         $argcursor++;
+    }
+
+    //Extract data if extraction was queued
+    if ($shouldextract) extractData();
+
+    //Go through and actually execute arguments
+    foreach ($argExecQueue as $item) {
+        $arg = $item['arg'];
+        $addargs = $item['addargs'];
+        $varg = $validargs[$arg];
+
+        //Log execution of this optional argument if logging has been enabled beforehand
+        $log = $validargs['--log']['log'];
+        $logging = $validargs['--log']['enabled'];
+        if ($logging) {
+            $logstr = $argv[0];
+            $logstr .= " $arg";
+
+            foreach ($addargs as $addarg) {
+                $logstr .= " $addarg";
+            }
+
+            $log($logstr . E); //Add additional line
+        }
+
+        //Execute optional argument
+        $varg['exec'](...$addargs);
     }
 
     if ($validargs['--log']['enabled']) fclose($validargs['--log']['file']);
