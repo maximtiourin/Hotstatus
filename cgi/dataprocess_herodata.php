@@ -32,7 +32,7 @@ const IDX = "index";
 /*
  * Data directory path constants
  */
-const PATH_DATA = "/data/";
+const PATH_DATA = "/data/heroesdata/";
 //Stormdata
 const PATH_STORMDATA = "mods/heroesdata.stormmod/base.stormdata/GameData/";
 const PATH_STORMDATA_STRINGS = "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
@@ -1033,7 +1033,7 @@ $validargs = [
         "exec" => function (...$args) {
             global $global_json, $validargs, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
 
-            if (count($args) == 1) {
+            if (count($args) == 2) {
                 //Init logging info
                 $log = $validargs['--log']['log'];
 
@@ -1099,6 +1099,9 @@ $validargs = [
                         }
                     }
 
+                    //Replace all '/' with '\' in order to match casc paths
+                    $lfile = preg_replace("@/@", "\\", $lfile);
+
                     //Ensure directory
                     FileHandling::ensureDirectory($dir);
 
@@ -1108,10 +1111,10 @@ $validargs = [
                     fclose($file);
 
                     if ($res !== FALSE) {
-                        $log("[--listfile $mode] Successfully created heroes listfile: $fp");
+                        $log("[--listfile $mode] Successfully created heroes listfile: $fp".E);
                     }
                     else {
-                        $log("[--listfile $mode] ERROR: Could not create heroes listfile: $fp");
+                        $log("[--listfile $mode] ERROR: Could not create heroes listfile: $fp".E);
                     }
                 }
                 else if ($m_images) {
@@ -1122,11 +1125,8 @@ $validargs = [
                     $ext = ".dds";
                     $images = []; //Map of unique image keys => TRUE
 
-                    $count = count($global_json['heroes']);
                     $i = 1;
                     foreach ($global_json['heroes'] as $hero) {
-                        echo "Compiling list of image strings from heroes ($i/$count)                           \r";
-
                         listfileImagesHelper($hero['image_hero'], $images);
                         listfileImagesHelper($hero['image_minimap'], $images);
 
@@ -1144,10 +1144,13 @@ $validargs = [
                     //Compile list of all casc paths for relevant images
                     $lfile = "";
 
-                    foreach ($images as $img) {
+                    foreach ($images as $img => $nbool) {
                         $path = PATH_TEXTURES . $img . $ext;
                         $lfile .= $path.E;
                     }
+
+                    //Replace all '/' with '\' in order to match casc paths
+                    $lfile = preg_replace("@/@", "\\", $lfile);
 
                     //Ensure directory
                     FileHandling::ensureDirectory($dir);
@@ -1158,10 +1161,10 @@ $validargs = [
                     fclose($file);
 
                     if ($res !== FALSE) {
-                        $log("[--listfile $mode] Successfully created images listfile: $fp");
+                        $log("[--listfile $mode] Successfully created images listfile: $fp".E);
                     }
                     else {
-                        $log("[--listfile $mode] ERROR: Could not create images listfile: $fp");
+                        $log("[--listfile $mode] ERROR: Could not create images listfile: $fp".E);
                     }
                 }
             }
