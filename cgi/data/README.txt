@@ -1,3 +1,9 @@
+Command Line Favorites
+------------------------------------------
+php dataprocess_herodata.php --log data/log/herodata.log --out data/output.json --dbout --mode=upsert
+
+
+
 Command Lines for generating JSON output
 ------------------------------------------
 php dataprocess_herodata.php --log data/log/herodata.log --out data/output.json
@@ -7,7 +13,6 @@ php dataprocess_herodata.php --log data/log/herodata.log --out data/output.json
 Command Lines For Getting Texture Diffs 
 ------------------------------------------
 php dataprocess_herodata.php --log data/log/herodata.log --imageout --mode=append png data/textures data/images
-
 
 
 

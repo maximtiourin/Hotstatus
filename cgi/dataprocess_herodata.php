@@ -856,7 +856,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
  * (and not CHero data) in their new index.
  */
 function extractData() {
-    global $timestart, $timeend, $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
+    global $timestart, $timeend, $timediff, $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
 
     //Extract build id
     $buildfp = __DIR__ . PATH_DATA . FILE_BUILDDATA;
