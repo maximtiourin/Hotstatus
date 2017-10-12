@@ -856,7 +856,7 @@ function extractHero_xmlToJson($filepath, $file_strings) {
  * (and not CHero data) in their new index.
  */
 function extractData() {
-    global $timeend, $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
+    global $timestart, $timeend, $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
 
     //Extract build id
     $buildfp = __DIR__ . PATH_DATA . FILE_BUILDDATA;
@@ -1038,6 +1038,7 @@ function extractData() {
     }
 
     $timeend = microtime(true);
+    $timediff = round(($timeend - $timestart) * 1000) / 1000.0;
     $dataparsed = TRUE;
 }
 
@@ -1112,7 +1113,7 @@ $validargs = [
         "syntax" => "--log <log_output_filepath>",
         "desc" => "Logs relevant output from other arguments to filepath. This argument must precede any arguments where logging is desired.",
         "exec" => function (...$args) {
-            global $dataparsed, $validargs, $timestart, $timeend;
+            global $dataparsed, $validargs, $timestart, $timeend, $timediff;
 
             if (count($args) == 1) {
                 $varg = &$validargs['--log'];
@@ -1124,8 +1125,6 @@ $validargs = [
                 FileHandling::ensureDirectory($dir);
 
                 $file = fopen($fp, "a") or die("Unable to create and write to log file: " . $fp);
-
-                $timediff = round(($timeend - $timestart) * 1000) / 1000.0;
 
                 //Write initial timestamp lines and general execution info to help keep track of separate execution logs
                 $initstr = "[" . date('Y:m:d H:i:s') . "] Log Append: " . E . E;
@@ -1445,10 +1444,6 @@ $validargs = [
                 /*
                  * Prepare statements
                  */
-                //EmptyTable
-                $db->prepare("EmptyTable", "TRUNCATE TABLE ?");
-                $db->bind("EmptyTable", "s", $t_table);
-
                 // UpsertHero
                 $db->prepare("UpsertHero",
                     "INSERT INTO herodata_heroes "
@@ -1491,12 +1486,9 @@ $validargs = [
                  * Empty tables if specified
                  */
                 if ($m_clean) {
-                    $t_table = "herodata_talents";
-                    $db->execute("EmptyTable");
-                    $t_table = "herodata_abilities";
-                    $db->execute("EmptyTable");
-                    $t_table = "herodata_heroes";
-                    $db->execute("EmptyTable");
+                    $db->query("TRUNCATE TABLE herodata_talents");
+                    $db->query("TRUNCATE TABLE herodata_abilities");
+                    $db->query("TRUNCATE TABLE herodata_heroes");
 
                     $log("[--dbout $mode] Emptied herodata tables...");
                 }
