@@ -29,6 +29,13 @@ log/
    - Where herodata process should log to (herodata.log)
 
 
+
+Location of build id
+----------------------------------------
+mods/core.stormmod/base.stormdata/BuildId.txt
+
+
+
 Location of all relevant Textures (Huge amount of irrelevant Textures inside, but this is a catch-all, use herodata process to narrow down to a listfile of relevant images)
 -----------------------------------------
 mods/heroes.stormmod/base.stormassets/Assets/Textures/

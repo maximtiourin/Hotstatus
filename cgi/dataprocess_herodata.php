@@ -262,7 +262,7 @@ $heroCustomRoleMappings = [
     "DemonHunter" => CROLE_DMG_SUSTAIN, //Valla
     "Varian" => CROLE_BRUISER,
     "Necromancer" => CROLE_SIEGE, //Xul
-    "Zagara" => CROLE_SEGE,
+    "Zagara" => CROLE_SIEGE,
     "Zarya" => CROLE_TANK,
     "Zeratul" => CROLE_DMG_AMBUSHER,
     "Zuljin" => CROLE_DMG_SUSTAIN
@@ -847,10 +847,10 @@ function extractHero_xmlToJson($filepath, $file_strings) {
  * (and not CHero data) in their new index.
  */
 function extractData() {
-    global $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
+    global $timeend, $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
 
     //Extract build id
-    $buildfp = FILE_BUILDDATA;
+    $buildfp = __DIR__ . PATH_DATA . FILE_BUILDDATA;
     if (file_exists($buildfp)) {
         extractBuild($buildfp);
     }
@@ -1028,10 +1028,9 @@ function extractData() {
         }
     }
 
+    $timeend = microtime(true);
     $dataparsed = TRUE;
 }
-
-$timeend = microtime(true);
 
 function listfileImagesHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
