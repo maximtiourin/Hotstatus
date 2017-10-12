@@ -1408,19 +1408,48 @@ $validargs = [
         }
     ],
     "--dbout" => [
-        "count" => 0,
+        "count" => 1,
         "shouldExtract" => TRUE,
-        "syntax" => "--dbout",
-        "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.",
+        "syntax" => "--dbout --mode=[clean]^[upsert]",
+        "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.\n\nMode Options [Required to specify]:\n\n"
+            . "[clean] : --mode=clean : Clears all herodata in the database before updating it with newly parsed data. Should really only be used for development.\n"
+            . "[upsert] : --mode=upsert : Attempts to insert newly parsed data to the database, if unique keys already exist for that data, only non-unique fields are updated.\n",
         "exec" => function (...$args) {
-            global $database_credentials;
+            global $validargs, $database_credentials, $global_json;
 
-            if (count($args) == 0) {
+            if (count($args) == 1) {
+                //Init logging info
+                $log = $validargs['--log']['log'];
+
+                //Begin Execution
+                $mode = $args[0];
+
+                //Determine mode
+                $mstr = "--mode=";
+                $m_clean = FALSE;
+                $m_upsert = FALSE;
+                if ($mode === $mstr . "clean") {
+                    $m_clean = TRUE;
+                }
+                else if ($mode === $mstr . "upsert") {
+                    $m_upsert = TRUE;
+                }
+                else {
+                    die("Invalid mode argument.");
+                }
+
                 //Setup and connext to database
                 $db = new MysqlDatabase();
                 $db->connect($database_credentials['hostname'], $database_credentials['user'], $database_credentials['password'], $database_credentials['database']);
 
-                //Prepare statements
+                /*
+                 * Prepare statements
+                 */
+                //EmptyTable
+                $db->prepare("EmptyTable", "TRUNCATE TABLE ?");
+                $db->bind("EmptyTable", "s", $t_table);
+
+                // UpsertHero
                 $db->prepare("UpsertHero",
                     "INSERT INTO herodata_heroes "
                 . "(name, name_internal, name_sort, name_attribute, difficulty, role_blizzard, role_specific, universe, title, desc_tagline, desc_bio, rarity, image_hero, image_minimap, rating_damage, rating_utility, rating_survivability, rating_complexity) "
@@ -1430,7 +1459,103 @@ $validargs = [
                 . "role_blizzard = VALUES(role_blizzard), role_specific = VALUES(role_specific), universe = VALUES(universe), title = VALUES(title), desc_tagline = VALUES(desc_tagline), "
                 . "desc_bio = VALUES(desc_bio), rarity = VALUES(rarity), image_hero = VALUES(image_hero), image_minimap = VALUES(image_minimap), rating_damage = VALUES(rating_damage), "
                 . "rating_utility = VALUES(rating_utility), rating_survivability = VALUES(rating_survivability), rating_complexity = VALUES(rating_complexity)");
+                $db->bind("UpsertHero",
+                    "ssssssssssssssiiii",
+                    $r_name, $r_name_internal, $r_name_sort, $r_name_attribute, $r_difficulty, $r_role_blizzard, $r_role_specific, $r_universe, $r_title, $r_desc_tagline,
+                    $r_desc_bio, $r_rarity, $r_image_hero, $r_image_minimap, $r_rating_damage, $r_rating_utility, $r_rating_survivability, $r_rating_complexity);
 
+                // UpsertAbility
+                $db->prepare("UpsertAbility",
+                    "INSERT INTO herodata_abilities "
+                    . "(hero, name, name_internal, desc_simple, image, type) "
+                    . "VALUES (?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image), type = VALUES(type)");
+                $db->bind("UpsertAbility",
+                    "ssssss",
+                    $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_type);
+
+                // UpsertTalent
+                $db->prepare("UpsertTalent",
+                    "INSERT INTO herodata_talents "
+                    . "(hero, name, name_internal, desc_simple, image, tier_row, tier_column) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image), tier_row = VALUES(tier_row), tier_column = VALUES(tier_column)");
+                $db->bind("UpsertTalent",
+                    "sssssii",
+                    $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_tier_row, $r_tier_column);
+
+
+                /*
+                 * Empty tables if specified
+                 */
+                if ($m_clean) {
+                    $t_table = "herodata_talents";
+                    $db->execute("EmptyTable");
+                    $t_table = "herodata_abilities";
+                    $db->execute("EmptyTable");
+                    $t_table = "herodata_heroes";
+                    $db->execute("EmptyTable");
+
+                    $log("[--dbout $mode] Emptied herodata tables...");
+                }
+
+                /*
+                 * Perform queries
+                 */
+                foreach ($global_json['heroes'] as $hero) {
+                    //UpsertHero
+                    $r_name = $hero['name'];
+                    $r_name_internal = $hero['name_internal'];
+                    $r_name_sort = $hero['name_sort'];
+                    $r_name_attribute = $hero['attribute'];
+                    $r_difficulty = $hero['difficulty'];
+                    $r_role_blizzard = $hero['role'];
+                    $r_role_specific = $hero['role_custom'];
+                    $r_universe = $hero['universe'];
+                    $r_title = $hero['title'];
+                    $r_desc_tagline = $hero['desc_tagline'];
+                    $r_desc_bio = $hero['desc_bio'];
+                    $r_rarity = $hero['rarity'];
+                    $r_image_hero = $hero['image_hero'];
+                    $r_image_minimap = $hero['image_minimap'];
+
+                    $ratings = $hero['ratings'];
+                    $r_rating_damage = $ratings['damage'];
+                    $r_rating_utility = $ratings['utility'];
+                    $r_rating_survivability = $ratings['survivability'];
+                    $r_rating_complexity = $ratings['complexity'];
+
+                    $db->execute("UpsertHero");
+
+                    //UpsertAbility
+                    foreach ($hero['abilities'] as $ability) {
+                        $r_hero = $hero['name'];
+                        $r_name = $ability['name'];
+                        $r_name_internal = $ability['name_internal'];
+                        $r_desc_simple = $ability['desc'];
+                        $r_image = $ability['image'];
+                        $r_type = $ability['type'];
+
+                        $db->execute("UpsertAbility");
+                    }
+
+                    //UpsertTalent
+                    foreach ($hero['talents'] as $talent) {
+                        $r_hero = $hero['name'];
+                        $r_name = $talent['name'];
+                        $r_name_internal = $talent['name_internal'];
+                        $r_desc_simple = $talent['desc'];
+                        $r_image = $talent['image'];
+                        $r_tier_row = $talent['tier'];
+                        $r_tier_column = $talent['column'];
+
+                        $db->execute("UpsertTalent");
+                    }
+                }
+
+                $log("[--dbout $mode] Updated database with new herodata...".E);
             }
             else {
                 die("Invalid amount of arguments exception.");
