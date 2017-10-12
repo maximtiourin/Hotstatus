@@ -15,6 +15,7 @@ $dataparsed = FALSE;
 
 //The json array that holds all of the heroes
 $global_json = [];
+$global_json['build'] = 0;
 $global_json['heroes'] = [];
 
 //General QoL constants
@@ -33,6 +34,8 @@ const IDX = "index";
  * Data directory path constants
  */
 const PATH_DATA = "/data/heroesdata/";
+//Buildata
+const FILE_BUILDDATA = "mods/core.stormmod/base.stormdata/BuildId.txt";
 //Stormdata
 const PATH_STORMDATA = "mods/heroesdata.stormmod/base.stormdata/GameData/";
 const PATH_STORMDATA_STRINGS = "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
@@ -178,6 +181,93 @@ $actorImageMappings = [
  */
 $buttonImageMappings = [];
 
+/*
+ * Custom Role Mappings for Heroes, if an internal named hero isn't defined here, the const UNKNOWN will be used for their custom role
+ */
+const CROLE_HEALER = "Healer";
+const CROLE_UTILITY = "Utility";
+const CROLE_SIEGE = "Siege";
+const CROLE_SUPPORT = "Support";
+const CROLE_DMG_SUSTAIN = "Sustained Damage";
+const CROLE_DMG_BURST = "Burst Damage";
+const CROLE_DMG_AMBUSHER = "Ambusher";
+const CROLE_TANK = "Tank";
+const CROLE_BRUISER = "Bruiser";
+$heroCustomRoleMappings = [
+    "Abathur" => CROLE_UTILITY,
+    "Alarak" => CROLE_DMG_AMBUSHER,
+    "Ana" => CROLE_HEALER,
+    "Anubarak" => CROLE_TANK, //Anub'arak
+    "Artanis" => CROLE_BRUISER,
+    "Arthas" => CROLE_BRUISER,
+    "Auriel" => CROLE_HEALER,
+    "Azmodan" => CROLE_SIEGE,
+    "FaerieDragon" => CROLE_HEALER, //Brightwing
+    "Amazon" => CROLE_DMG_SUSTAIN, //Cassia
+    "Chen" => CROLE_BRUISER,
+    "Cho" => CROLE_TANK,
+    "Chromie" => CROLE_DMG_BURST,
+    "DVa" => CROLE_TANK, //D.Va
+    "Dehaka" => CROLE_BRUISER,
+    "Diablo" => CROLE_TANK,
+    "ETC" => CROLE_TANK, //E.T.C.
+    "Falstad" => CROLE_DMG_SUSTAIN,
+    "Gall" => CROLE_DMG_SUSTAIN,
+    "Garrosh" => CROLE_TANK,
+    "Tinker" => CROLE_SIEGE, //Gazlowe
+    "Genji" => CROLE_DMG_SUSTAIN,
+    "Greymane" => CROLE_DMG_SUSTAIN,
+    "Guldan" => CROLE_DMG_SUSTAIN, //Gul'dan
+    "Illidan" => CROLE_DMG_SUSTAIN,
+    "Jaina" => CROLE_DMG_BURST,
+    "Crusader" => CROLE_TANK, //Johanna
+    "Kaelthas" => CROLE_DMG_BURST, //Kael'thas
+    "KelThuzad" => CROLE_DMG_BURST, //Kel'Thuzad
+    "Kerrigan" => CROLE_DMG_AMBUSHER,
+    "Monk" => CROLE_HEALER, //Kharazim
+    "Leoric" => CROLE_BRUISER,
+    "LiLi" => CROLE_HEALER,
+    "Wizard" => CROLE_DMG_BURST, //Li-Ming
+    "Medic" => CROLE_HEALER, //Lt. Morales
+    "Lucio" => CROLE_HEALER, //Lúcio
+    "Dryad" => CROLE_DMG_SUSTAIN, //Lunara
+    "Malfurion" => CROLE_HEALER,
+    "Malthael" => CROLE_DMG_SUSTAIN,
+    "Medivh" => CROLE_SUPPORT,
+    "Muradin" => CROLE_TANK,
+    "Murky" => CROLE_UTILITY,
+    "WitchDoctor" => CROLE_DMG_SUSTAIN, //Nazeebo
+    "Nova" => CROLE_DMG_AMBUSHER,
+    "Probius" => CROLE_SIEGE,
+    "Ragnaros" => CROLE_DMG_SUSTAIN,
+    "Raynor" => CROLE_DMG_SUSTAIN,
+    "Rehgar" => CROLE_HEALER,
+    "Rexxar" => CROLE_TANK,
+    "Samuro" => CROLE_DMG_AMBUSHER,
+    "SgtHammer" => CROLE_SIEGE, //Sgt. Hammer
+    "Barbarian" => CROLE_BRUISER, //Sonya
+    "Stitches" => CROLE_TANK,
+    "Stukov" => CROLE_HEALER,
+    "Sylvanas" => CROLE_SIEGE,
+    "Tassadar" => CROLE_SUPPORT,
+    "Butcher" => CROLE_DMG_AMBUSHER, //The Butcher
+    "LostVikings" => CROLE_UTILITY, //The Lost Vikings
+    "Thrall" => CROLE_DMG_SUSTAIN,
+    "Tracer" => CROLE_DMG_SUSTAIN,
+    "Tychus" => CROLE_DMG_SUSTAIN,
+    "Tyrael" => CROLE_BRUISER,
+    "Tyrande" => CROLE_SUPPORT,
+    "Uther" => CROLE_HEALER,
+    "Valeera" => CROLE_DMG_AMBUSHER,
+    "DemonHunter" => CROLE_DMG_SUSTAIN, //Valla
+    "Varian" => CROLE_BRUISER,
+    "Necromancer" => CROLE_SIEGE, //Xul
+    "Zagara" => CROLE_SEGE,
+    "Zarya" => CROLE_TANK,
+    "Zeratul" => CROLE_DMG_AMBUSHER,
+    "Zuljin" => CROLE_DMG_SUSTAIN
+];
+
 //Extracts the image name without extension from a dds image string while converting it to lowercase, default value case is not touched
 //Also encodes the string in htmlspecialchars w/ ENT_QUOTES, so it must be decoded before being displayed as plaintext, and for commandline use it must be decoded and then escaped with escapeshellarg()
 function extractImageString($str, $default = "") {
@@ -307,6 +397,17 @@ function extractLine($prefixarr, $id, &$linesepstring, $defaultValue = "", $isTa
     }
 }
 
+function extractBuild($filepath) {
+    global $global_json;
+
+    $filelines = file($filepath);
+
+    $buildline = $filelines[0];
+    $build = str_replace("BB", "", $buildline);
+
+    $global_json['build'] = intval($build);
+}
+
 function extractTalents($filepath) {
     global $talentMappings;
 
@@ -388,7 +489,7 @@ function extractButtonImages($filepath) {
 }
 
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $global_json, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
+    global $ignoreNames, $global_json, $heroCustomRoleMappings, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -468,6 +569,17 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     else {
                         $hero['role'] = UNKNOWN;
                     }
+                    //Map Role 'Damage' to 'Assassin' for proper role name
+                    if ($hero['role'] === 'Damage') $hero['role'] = 'Assassin';
+
+                    //Custom Role
+                    if (key_exists($name_internal, $heroCustomRoleMappings)) {
+                        $hero['role_custom'] = $heroCustomRoleMappings[$name_internal];
+                    }
+                    else {
+                        $hero['role_custom'] = UNKNOWN;
+                    }
+
 
                     //Universe
                     if (key_exists('Universe', $j)) {
@@ -736,6 +848,15 @@ function extractHero_xmlToJson($filepath, $file_strings) {
  */
 function extractData() {
     global $dataparsed, $stormDataNames, $heromodsDataNames, $heromodsDataNamesExceptions;
+
+    //Extract build id
+    $buildfp = FILE_BUILDDATA;
+    if (file_exists($buildfp)) {
+        extractBuild($buildfp);
+    }
+    else {
+        die("Build file does not exist: " . $buildfp);
+    }
 
     $tfp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDTALENTINDEX;
     $afp = __DIR__ . PATH_DATA . FILE_STORMDATA_OLDACTORINDEX;
