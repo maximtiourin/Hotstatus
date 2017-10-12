@@ -1338,10 +1338,10 @@ $validargs = [
                 fclose($file);
 
                 if ($res !== FALSE) {
-                    $log("[--out] Successfully Wrote JSON to file: $fp");
+                    $log("[--out] Successfully Wrote JSON to file: $fp".E);
                 }
                 else {
-                    $log("[--out] ERROR: Could not write JSON to file: $fp");
+                    $log("[--out] ERROR: Could not write JSON to file: $fp".E);
                 }
 
                 //If were tracking diff, perform the actual diff operations
