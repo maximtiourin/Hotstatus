@@ -6,7 +6,16 @@
 }
 @media screen and (min-width: 992px) {
     body { padding-top: 60px; }
+
+    .hotstatus-page-width {
+        width: 60%;
+        margin: auto;
+    }
 }
+
+.adslot_1 { width: 320px; height: 100px; }
+@media (min-width:500px) { .adslot_1 { width: 468px; height: 60px; } }
+@media (min-width:800px) { .adslot_1 { width: 728px; height: 90px; } }
 
 .span,
 .left {
@@ -18,6 +27,7 @@
     float: right;
 }
 
+.table,
 #hsl-table {
     border-spacing: 0px;
 }

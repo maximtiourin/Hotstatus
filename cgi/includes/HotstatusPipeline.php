@@ -17,6 +17,7 @@ class HotstatusPipeline {
     const REPLAY_STATUS_PARSING = "parsing"; //status value for when a replay is being parsed
     const REPLAY_STATUS_PARSED = "parsed"; //status value for when a replay is done being parsed
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
+    const DATABASE_CHARSET = "utf8mb4";
 
     /*
      * Takes a date time string, converts it to a date time, and returns an assoc array

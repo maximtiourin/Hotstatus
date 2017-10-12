@@ -22,6 +22,7 @@ date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 $db = new MysqlDatabase();
 $creds = Credentials::getReplayProcessCredentials();
 $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+$db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
 //Aws
 $awsCreds = new \Aws\Credentials\Credentials($creds[Credentials::KEY_AWS_KEY], $creds[Credentials::KEY_AWS_SECRET]);

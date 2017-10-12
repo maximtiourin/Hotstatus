@@ -13,19 +13,21 @@
 {% block body %}
     {# Begin HTML #}
     <div class="container-fluid bg-info">
-        <div class="row">
-            <div class="col">
-                {% include ':snippets:heroes/top_role_winrates/table.html.twig' %}
-            </div>
-            <div class="col">
-                {% include ':snippets:heroes/top_role_playrates/table.html.twig' %}
-            </div>
-            <div class="col">
-                {% include ':snippets:heroes/top_role_banrates/table.html.twig' %}
+        <div class="">
+            <div class="row">
+                    <div class="col">
+                        {% include ':snippets:heroes/top_role_winrates/table.html.twig' %}
+                    </div>
+                    <div class="col">
+                        {% include ':snippets:heroes/top_role_playrates/table.html.twig' %}
+                    </div>
+                    <div class="col">
+                        {% include ':snippets:heroes/top_role_banrates/table.html.twig' %}
+                    </div>
             </div>
         </div>
         <div class="row">
-            <div class="col mx-auto">
+            <div class="col">
                 <div class="text-center">
                     {% include ':snippets:advertising/responsive.html.twig' %}
                 </div>
@@ -33,13 +35,15 @@
         </div>
         <div class="row">
             <div class="col">
-                {% embed ':snippets:heroes/statslist.html.twig' %}
-                    {% block javascripts %}{% endblock %}
-                {% endembed %}
+                <div class="text-center">
+                    {% embed ':snippets:heroes/statslist.html.twig' %}
+                        {% block javascripts %}{% endblock %}
+                    {% endembed %}
+                </div>
             </div>
         </div>
         <div class="row">
-            <div class="col mx-auto">
+            <div class="col">
                 <div class="text-center">
                     {% include ':snippets:advertising/responsive.html.twig' %}
                 </div>

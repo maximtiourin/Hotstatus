@@ -4,7 +4,18 @@ heroes_statslist.data = [];
 
 for (var i = 0; i < herodata_heroes.length; i++) {
     var hero = herodata_heroes[i];
-    heroes_statslist.data.push(['<img src="' + herodata_imagepath + hero['image_hero'] + '.png" width="48px" height="48px">' + hero['name'], hero['role_specific'], 5, 5, 5, 5]);
+    heroes_statslist.data.push(
+        [
+            '<img src="' + herodata_imagepath + hero['image_hero'] + '.png" width="40px" height="40px">',
+            hero['name'],
+            hero['role_blizzard'],
+            hero['role_specific'],
+            5,
+            5,
+            5,
+            5
+        ]
+    );
 }
 
 /*heroes_statslist.data = [
@@ -16,18 +27,24 @@ for (var i = 0; i < herodata_heroes.length; i++) {
 ];*/
 
 heroes_statslist.columns = [
-    {title: 'Hero'},
-    {title: 'Role'},
-    {title: 'Win %'},
-    {title: 'Play %'},
-    {title: 'Ban %'},
-    {title: 'Win Delta %'}
+    {"width": 50, "searchable": false, "responsivePriority": 1},
+    {"title": 'Hero', "width": 100, "responsivePriority": 2},
+    {"title": 'Role', "visible": false},
+    {"title": 'Role_Specific', "visible": false},
+    {"title": 'Win %', "responsivePriority": 3},
+    {"title": 'Play %', "responsivePriority": 4},
+    {"title": 'Ban %', "responsivePriority": 5},
+    {"title": 'Win Delta %', "responsivePriority": 6}
 ];
 
 heroes_statslist.order = [[0, 'asc']];
 
 heroes_statslist.processing = true;
-heroes_statslist.pageLength = 25;
+//heroes_statslist.pageLength = 25;
+heroes_statslist.paging = false;
+heroes_statslist.responsive = true;
+heroes_statslist.scrollX = false;
+heroes_statslist.scrollY = false;
 
 $(document).ready(function() {
     $('#hsl-table').DataTable(heroes_statslist);

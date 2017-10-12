@@ -1440,6 +1440,7 @@ $validargs = [
                 //Setup and connext to database
                 $db = new MysqlDatabase();
                 $db->connect($database_credentials['hostname'], $database_credentials['user'], $database_credentials['password'], $database_credentials['database']);
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 /*
                  * Prepare statements
