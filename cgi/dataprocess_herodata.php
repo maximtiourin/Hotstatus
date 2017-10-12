@@ -5,13 +5,22 @@ namespace Fizzik;
 require_once 'includes/include.php';
 
 use Fizzik\Utility\FileHandling;
+use Fizzik\Database\MySqlDatabase;
 
 set_time_limit(0);
-
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
 $timestart = microtime(true);
 $dataparsed = FALSE;
+
+//Database credentials for use with --dbout command line argument
+$creds = Credentials::getReplayProcessCredentials();
+$database_credentials = [
+    "hostname" => $creds[Credentials::KEY_DB_HOSTNAME],
+    "user" => $creds[Credentials::KEY_DB_USER],
+    "password" => $creds[Credentials::KEY_DB_PASSWORD],
+    "database" => $creds[Credentials::KEY_DB_DATABASE],
+];
 
 //The json array that holds all of the heroes
 $global_json = [];
@@ -1404,7 +1413,28 @@ $validargs = [
         "syntax" => "--dbout",
         "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.",
         "exec" => function (...$args) {
+            global $database_credentials;
 
+            if (count($args) == 0) {
+                //Setup and connext to database
+                $db = new MysqlDatabase();
+                $db->connect($database_credentials['hostname'], $database_credentials['user'], $database_credentials['password'], $database_credentials['database']);
+
+                //Prepare statements
+                $db->prepare("UpsertHero",
+                    "INSERT INTO herodata_heroes "
+                . "(name, name_internal, name_sort, name_attribute, difficulty, role_blizzard, role_specific, universe, title, desc_tagline, desc_bio, rarity, image_hero, image_minimap, rating_damage, rating_utility, rating_survivability, rating_complexity) "
+                . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                . "ON DUPLICATE KEY UPDATE "
+                . "name_internal = VALUES(name_internal), name_sort = VALUES(name_sort), name_attribute = VALUES(name_attribute), difficulty = VALUES(difficulty), "
+                . "role_blizzard = VALUES(role_blizzard), role_specific = VALUES(role_specific), universe = VALUES(universe), title = VALUES(title), desc_tagline = VALUES(desc_tagline), "
+                . "desc_bio = VALUES(desc_bio), rarity = VALUES(rarity), image_hero = VALUES(image_hero), image_minimap = VALUES(image_minimap), rating_damage = VALUES(rating_damage), "
+                . "rating_utility = VALUES(rating_utility), rating_survivability = VALUES(rating_survivability), rating_complexity = VALUES(rating_complexity)");
+
+            }
+            else {
+                die("Invalid amount of arguments exception.");
+            }
         }
     ],
     "--imageout" => [
