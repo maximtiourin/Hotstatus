@@ -12,6 +12,20 @@ framework:
                 # The base url to use for the 'images' asset package, can be ammended to make use of a cdn
                 # base_urls: 'http://cdn.mycdn.com'
 
+#config database parameters
+doctrine:
+    dbal:
+        default_connection: hotstatus_mysql
+        connections:
+            hotstatus_mysql:
+                driver: pdo_mysql
+                host: '%hotstatus_mysql_dev_host%'
+                port: '%hotstatus_mysql_dev_port%'
+                dbname: '%hotstatus_mysql_dev_dbname%'
+                user: '%hotstatus_mysql_dev_user%'
+                password: '%hotstatus_mysql_dev_password%'
+                charset: UTF8MB4
+
 web_profiler:
     toolbar: true
     intercept_redirects: false

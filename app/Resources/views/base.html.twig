@@ -8,6 +8,7 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
     </head>
     <body>
+        <script>{% block dynamicVariables %}{% endblock %}</script>
         {% include ':snippets:navigation.html.twig' %}
         {% block body %}{% endblock %}
         {% block javascripts %}{% endblock %}

@@ -1,9 +1,17 @@
 {% extends 'base.html.twig' %}
 
+{# Include snippets and then alias their blocks so as to order them as needed #}
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
 {% use ':snippets/heroes:statslist.html.twig' with javascripts as hsljavascripts %}
 
+{# Inject dynamic content variables #}
+{% block dynamicVariables %}
+    {# Inject herodata array and make available to all javascript #}
+    var herodata_imagepath = "{{ asset('images/')|raw }}";
+    var herodata_heroes = {{ herodata_heroes|json_encode|raw }};
+{% endblock %}
 {% block body %}
+    {# Begin HTML #}
     <div class="container-fluid bg-info">
         <div class="row">
             <div class="col">
@@ -40,10 +48,12 @@
     </div>
 {% endblock %}
 
+{# Stylesheets #}
 {% block stylesheets %}
     {{ block('stdstylesheets') }}
 {% endblock %}
 
+{# Javascript #}
 {% block javascripts %}
     {{ block('stdjavascripts') }}
     {{ block('hsljavascripts') }}
