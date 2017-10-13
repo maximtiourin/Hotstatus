@@ -39,7 +39,7 @@ heroes_statslist.columns = [
 
 heroes_statslist.order = [[0, 'asc']];
 
-heroes_statslist.processing = true;
+heroes_statslist.processing = false;
 //heroes_statslist.pageLength = 25;
 heroes_statslist.paging = false;
 heroes_statslist.responsive = true;
