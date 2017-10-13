@@ -13,28 +13,77 @@
     }
 }
 
-.adslot_1 { width: 320px; height: 100px; }
-@media (min-width:500px) { .adslot_1 { width: 468px; height: 60px; } }
-@media (min-width:800px) { .adslot_1 { width: 728px; height: 90px; } }
+body {
+    background: #000000 !important;
+}
+
+.adslot_horizontal_1 { width: 234px; height: 60px; }
+@media (min-width:360px) { .adslot_horizontal_1 { width: 320px; height: 100px; } }
+@media (min-width:768px) { .adslot_horizontal_1 { width: 728px; height: 90px; } }
+
+.adslot_vertical_1 {
+    display: none;
+    position: fixed;
+    top: 180px;
+}
+@media (min-width:576px) { .adslot_vertical_1 { width: 120px; height: 240px; } }
+@media (min-width:768px) { .adslot_vertical_1 { width: 200px; height: 200px; } }
+@media (min-width:1438px) { .adslot_vertical_1 { width: 250px; height: 250px; } }
+@media (min-width:1738px) { .adslot_vertical_1 { width: 300px; height: 250px; } }
+/*@media (min-width:768px) { .adslot_vertical_1 { width: 120px; height: 600px; } }
+@media (min-width:900px) { .adslot_vertical_1 { width: 300px; height: 600px; } }
+@media (min-width:768px) { .adslot_vertical_1 { width: 120px; height: 600px; } }
+@media (min-width:801px) { .adslot_vertical_1 { width: 160px; height: 600px; } }*/
 
 /* Fixes the bug of the duplicate data tables sort icon appearing on the first row of results when using bootstrap style */
 .dataTables_scrollBody thead {visibility: hidden;}
 
-.span,
-.left {
+span.left {
     float: left;
 }
 
-.span,
-.right {
+span.right {
     float: right;
 }
-
-.table,
 #hsl-table {
-    border-spacing: 0px;
+    border-spacing: 0;
 }
 
-.div,
+#heroes-statslist-container {
+    background-color: #5bc0de;
+}
+
 #heroes-statslist-toolbar {
+    background-color: #6c6159;
+    position: relative;
+    margin: 0px 16px;
+    padding: 7px 5px;
+}
+
+#heroes-statslist-toolbar-container-search {
+    margin: 2px 2px 0px 2px;
+}
+
+.heroes-statslist-toolbar-rolebutton {
+    background-color: #2d2d62;
+    font-size: 16px;
+    margin: 2px;
+    padding: 3px 7px;
+    cursor: pointer;
+    border-color: #3131e6;
+    border-style: outset;
+    border-radius: 4px;
+    color: #FFFFFF;
+}
+
+.heroes-statslist-toolbar-subrolebutton {
+    background-color: #4b3da8;
+    font-size: 14px;
+    margin: 2px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border-color: #4c3eb5;
+    border-style: outset;
+    border-radius: 4px;
+    color: #FFFFFF;
 }

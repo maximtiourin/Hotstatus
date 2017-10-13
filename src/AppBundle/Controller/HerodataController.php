@@ -51,7 +51,7 @@ class HerodataController extends Controller {
             $dtrow = [];
 
             //Hero Portrait
-            $dtrow[] = '<img src="' . $imgbasepath . $row['image_hero'] . '.png" width="40px" height="40px">';
+            $dtrow[] = '<img src="' . $imgbasepath . $row['image_hero'] . '.png" class="rounded-circle " width="40px" height="40px">';
 
             //Hero proper name
             $dtrow[] = $row['name'];

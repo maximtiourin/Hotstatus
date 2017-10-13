@@ -51,9 +51,13 @@ heroes_statslist.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from t
 heroes_statslist.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
 $(document).ready(function() {
-    var table = $('#hsl-table').DataTable(heroes_statslist);
+    $('#hsl-table').DataTable(heroes_statslist);
 
     $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
-        $('#hsl-table').DataTable().search($('#heroes-statslist-toolbar-search').val()).draw();
+        $('#hsl-table').DataTable().search($(this).val()).draw();
+    });
+
+    $('.hsl-rolebutton').click(function () {
+        $('#hsl-table').DataTable().search($(this).attr("value")).draw();
     });
 });
