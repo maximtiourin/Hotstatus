@@ -38,15 +38,17 @@ heroes_statslist.columns = [
     {"title": 'Win Delta %', "searchable": false,"responsivePriority": 6}
 ];
 
-heroes_statslist.order = [[0, 'asc']];
-heroes_statslist.processing = true;
-//heroes_statslist.deferRender = true;
-heroes_statslist.ajax = herodata_heroes_path;
-//heroes_statslist.pageLength = 25;
-heroes_statslist.paging = false;
-heroes_statslist.responsive = true;
-heroes_statslist.scrollX = false;
-heroes_statslist.scrollY = false;
+heroes_statslist.order = [[0, 'asc']]; //The default ordering of the table on load => column 0 ascending
+heroes_statslist.processing = true; //Displays an indicator whenever the table is processing data
+heroes_statslist.deferRender = true; //Defers rendering the table until data starts coming in
+heroes_statslist.ajax = herodata_heroes_path; //Requests data from the path
+//heroes_statslist.pageLength = 25; //Controls how many rows per page
+heroes_statslist.paging = false; //Controls whether or not the table is allowed to paginate data by page length
+heroes_statslist.responsive = true; //Controls whether or not the table collapses responsively as need
+heroes_statslist.scrollX = false; //Controls whether or not the table can create a horizontal scroll bar
+heroes_statslist.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+heroes_statslist.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+heroes_statslist.info = false; //Displays table control information, such as if filtering displaying what results are viewed out of how many
 
 $(document).ready(function() {
     $('#hsl-table').DataTable(heroes_statslist);
