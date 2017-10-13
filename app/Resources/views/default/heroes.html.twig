@@ -11,6 +11,15 @@
     {# var herodata_heroes = {{ herodata_heroes|json_encode|raw }}; #}
     var herodata_heroes_path = "{{ path('herodata_datatable_heroes_statslist')|raw }}";
 {% endblock %}
+
+{# Custom styling that require the use of path generation #}
+{% block style %}
+    {#.div,
+    #heroes-statslist-toolbar {
+        background-image: url('{{ asset("storm_temp_btn-upgrade-terran-neosteelframe.png", 'images') }}');
+    }#}
+{% endblock %}
+
 {% block body %}
     {# Begin HTML #}
     <div class="container-fluid bg-info">

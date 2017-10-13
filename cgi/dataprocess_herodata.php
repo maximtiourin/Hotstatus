@@ -282,7 +282,9 @@ $heroCustomRoleMappings = [
  * Useful is a sorting name is non-ideal, ie: Lucio => Lcio
  */
 $heroCustomSortMappings = [
-    "Lucio" => "Lucio"
+    "Lucio" => "Lucio",
+    "Cho" => "Cho",
+    "Gall" => "Gall"
 ];
 
 //Extracts the image name without extension from a dds image string while converting it to lowercase, default value case is not touched

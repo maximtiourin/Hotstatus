@@ -6,6 +6,9 @@
         <title>{% block title %}Hots Webapp{% endblock %}</title>
         {% block stylesheets %}{% endblock %}
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+        <style>
+            {% block style %}{% endblock %}
+        </style>
     </head>
     <body>
         <script>{% block dynamicVariables %}{% endblock %}</script>

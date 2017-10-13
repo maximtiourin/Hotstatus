@@ -1,0 +1,41 @@
+@media screen and (max-width: 767px) {
+    body { padding-top: 60px; }
+}
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    body { padding-top: 74px; }
+}
+@media screen and (min-width: 992px) {
+    body { padding-top: 60px; }
+
+    .hotstatus-page-width {
+        width: 60%;
+        margin: auto;
+    }
+}
+
+.adslot_1 { width: 320px; height: 100px; }
+@media (min-width:500px) { .adslot_1 { width: 468px; height: 60px; } }
+@media (min-width:800px) { .adslot_1 { width: 728px; height: 90px; } }
+
+/* Fixes the bug of the duplicate data tables sort icon appearing on the first row of results when using bootstrap style */
+.dataTables_scrollBody thead {visibility: hidden;}
+
+.span,
+.left {
+    float: left;
+}
+
+.span,
+.right {
+    float: right;
+}
+
+.table,
+#hsl-table {
+    border-spacing: 0px;
+}
+
+.div,
+#heroes-statslist-toolbar {
+}
+/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly8vLi9hc3NldHMvY3NzL2Jhc2UuY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0lBQ0ksT0FBTyxrQkFBa0IsRUFBRTtDQUM5QjtBQUNEO0lBQ0ksT0FBTyxrQkFBa0IsRUFBRTtDQUM5QjtBQUNEO0lBQ0ksT0FBTyxrQkFBa0IsRUFBRTs7SUFFM0I7UUFDSSxXQUFXO1FBQ1gsYUFBYTtLQUNoQjtDQUNKOztBQUVELFlBQVksYUFBYSxDQUFDLGNBQWMsRUFBRTtBQUMxQywyQkFBMkIsWUFBWSxhQUFhLENBQUMsYUFBYSxFQUFFLEVBQUU7QUFDdEUsMkJBQTJCLFlBQVksYUFBYSxDQUFDLGFBQWEsRUFBRSxFQUFFOztBQUV0RSwySEFBMkg7QUFDM0gsOEJBQThCLG1CQUFtQixDQUFDOztBQUVsRDs7SUFFSSxZQUFZO0NBQ2Y7O0FBRUQ7O0lBRUksYUFBYTtDQUNoQjs7QUFFRDs7SUFFSSxvQkFBb0I7Q0FDdkI7O0FBRUQiLCJmaWxlIjoiYmFzZS5hMWQyOTM4NDhlNDJjYmFiNDZjNWFjODQ5NjY2YWQwOS5jc3MiLCJzb3VyY2VzQ29udGVudCI6WyJAbWVkaWEgc2NyZWVuIGFuZCAobWF4LXdpZHRoOiA3NjdweCkge1xyXG4gICAgYm9keSB7IHBhZGRpbmctdG9wOiA2MHB4OyB9XHJcbn1cclxuQG1lZGlhIHNjcmVlbiBhbmQgKG1pbi13aWR0aDogNzY4cHgpIGFuZCAobWF4LXdpZHRoOiA5OTFweCkge1xyXG4gICAgYm9keSB7IHBhZGRpbmctdG9wOiA3NHB4OyB9XHJcbn1cclxuQG1lZGlhIHNjcmVlbiBhbmQgKG1pbi13aWR0aDogOTkycHgpIHtcclxuICAgIGJvZHkgeyBwYWRkaW5nLXRvcDogNjBweDsgfVxyXG5cclxuICAgIC5ob3RzdGF0dXMtcGFnZS13aWR0aCB7XHJcbiAgICAgICAgd2lkdGg6IDYwJTtcclxuICAgICAgICBtYXJnaW46IGF1dG87XHJcbiAgICB9XHJcbn1cclxuXHJcbi5hZHNsb3RfMSB7IHdpZHRoOiAzMjBweDsgaGVpZ2h0OiAxMDBweDsgfVxyXG5AbWVkaWEgKG1pbi13aWR0aDo1MDBweCkgeyAuYWRzbG90XzEgeyB3aWR0aDogNDY4cHg7IGhlaWdodDogNjBweDsgfSB9XHJcbkBtZWRpYSAobWluLXdpZHRoOjgwMHB4KSB7IC5hZHNsb3RfMSB7IHdpZHRoOiA3MjhweDsgaGVpZ2h0OiA5MHB4OyB9IH1cclxuXHJcbi8qIEZpeGVzIHRoZSBidWcgb2YgdGhlIGR1cGxpY2F0ZSBkYXRhIHRhYmxlcyBzb3J0IGljb24gYXBwZWFyaW5nIG9uIHRoZSBmaXJzdCByb3cgb2YgcmVzdWx0cyB3aGVuIHVzaW5nIGJvb3RzdHJhcCBzdHlsZSAqL1xyXG4uZGF0YVRhYmxlc19zY3JvbGxCb2R5IHRoZWFkIHt2aXNpYmlsaXR5OiBoaWRkZW47fVxyXG5cclxuLnNwYW4sXHJcbi5sZWZ0IHtcclxuICAgIGZsb2F0OiBsZWZ0O1xyXG59XHJcblxyXG4uc3BhbixcclxuLnJpZ2h0IHtcclxuICAgIGZsb2F0OiByaWdodDtcclxufVxyXG5cclxuLnRhYmxlLFxyXG4jaHNsLXRhYmxlIHtcclxuICAgIGJvcmRlci1zcGFjaW5nOiAwcHg7XHJcbn1cclxuXHJcbi5kaXYsXHJcbiNoZXJvZXMtc3RhdHNsaXN0LXRvb2xiYXIge1xyXG59XG5cblxuLy8gV0VCUEFDSyBGT09URVIgLy9cbi8vIC4vYXNzZXRzL2Nzcy9iYXNlLmNzcyJdLCJzb3VyY2VSb290IjoiIn0=*/

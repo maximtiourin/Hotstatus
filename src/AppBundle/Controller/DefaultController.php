@@ -5,6 +5,7 @@ namespace AppBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Asset;
 
 class DefaultController extends Controller
 {
@@ -20,23 +21,7 @@ class DefaultController extends Controller
      * @Route("/heroes", name="heroes")
      */
     public function heroesAction(Request $request) {
-        /*$db = $this->getDoctrine()->getConnection("hotstatus_mysql");
-        $db->setFetchMode(\PDO::FETCH_ASSOC);
-
-        //Prepare statements
-        $ps = [];
-        $ps['SelectHeroes'] = $db->prepare("SELECT * FROM herodata_heroes");
-
-        $heroes = [];
-
-        $stmt = $ps['SelectHeroes'];
-        $stmt->execute();
-        while ($row = $stmt->fetch()) {
-            $heroes[] = $row;
-        }*/
-
         return $this->render('default/heroes.html.twig', [
-            //'herodata_heroes' => $heroes
         ]);
     }
 
