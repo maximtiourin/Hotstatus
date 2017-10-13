@@ -277,6 +277,14 @@ $heroCustomRoleMappings = [
     "Zuljin" => CROLE_DMG_SUSTAIN
 ];
 
+/*
+ * If a hero internal name is defined here, then their mapped value will be used as their sorting name rather than being parsing the sorting name.
+ * Useful is a sorting name is non-ideal, ie: Lucio => Lcio
+ */
+$heroCustomSortMappings = [
+    "Lucio" => "Lucio"
+];
+
 //Extracts the image name without extension from a dds image string while converting it to lowercase, default value case is not touched
 //Also encodes the string in htmlspecialchars w/ ENT_QUOTES, so it must be decoded before being displayed as plaintext, and for commandline use it must be decoded and then escaped with escapeshellarg()
 function extractImageString($str, $default = "") {
@@ -498,7 +506,7 @@ function extractButtonImages($filepath) {
 }
 
 function extractHero_xmlToJson($filepath, $file_strings) {
-    global $ignoreNames, $global_json, $heroCustomRoleMappings, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
+    global $ignoreNames, $global_json, $heroCustomRoleMappings, $heroCustomSortMappings, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
 
     $str = file_get_contents($filepath); //Xml string of hero data
     $str2 = $file_strings; //Line seperated hero localization strings
@@ -539,7 +547,12 @@ function extractHero_xmlToJson($filepath, $file_strings) {
                     $hero['name_internal'] = $name_internal;
 
                     //Sort name
-                    $hero['name_sort'] = extractLine(array("Hero/SortName/"), $name_internal, $str2, extractURLFriendlyProperName($hero['name']));
+                    if (key_exists($name_internal, $heroCustomSortMappings)) {
+                        $hero['name_sort'] = $heroCustomSortMappings[$name_internal];
+                    }
+                    else {
+                        $hero['name_sort'] = extractLine(array("Hero/SortName/"), $name_internal, $str2, extractURLFriendlyProperName($hero['name']));
+                    }
 
                     //Attribute name
                     if (key_exists('AttributeId', $j)) {

@@ -7,8 +7,9 @@
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
     {# Inject herodata array and make available to all javascript #}
-    var herodata_imagepath = "{{ asset('images/')|raw }}";
-    var herodata_heroes = {{ herodata_heroes|json_encode|raw }};
+    {# var herodata_imagepath = "{{ asset('', 'images')|raw }}"; #}
+    {# var herodata_heroes = {{ herodata_heroes|json_encode|raw }}; #}
+    var herodata_heroes_path = "{{ path('herodata_datatable_heroes_statslist')|raw }}";
 {% endblock %}
 {% block body %}
     {# Begin HTML #}

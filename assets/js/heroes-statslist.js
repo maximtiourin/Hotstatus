@@ -1,6 +1,6 @@
 var heroes_statslist = {};
 
-heroes_statslist.data = [];
+/*heroes_statslist.data = [];
 
 for (var i = 0; i < herodata_heroes.length; i++) {
     var hero = herodata_heroes[i];
@@ -16,7 +16,7 @@ for (var i = 0; i < herodata_heroes.length; i++) {
             5
         ]
     );
-}
+}*/
 
 /*heroes_statslist.data = [
     ['Abathur',     'Utility',  48.89,   15.34,  1.34,    -.49],
@@ -29,17 +29,19 @@ for (var i = 0; i < herodata_heroes.length; i++) {
 heroes_statslist.columns = [
     {"width": 50, "searchable": false, "responsivePriority": 1},
     {"title": 'Hero', "width": 100, "responsivePriority": 2},
+    {"title": 'Hero_Sort', "visible": false},
     {"title": 'Role', "visible": false},
     {"title": 'Role_Specific', "visible": false},
-    {"title": 'Win %', "responsivePriority": 3},
-    {"title": 'Play %', "responsivePriority": 4},
-    {"title": 'Ban %', "responsivePriority": 5},
-    {"title": 'Win Delta %', "responsivePriority": 6}
+    {"title": 'Win %', "searchable": false, "responsivePriority": 3},
+    {"title": 'Play %', "searchable": false, "responsivePriority": 4},
+    {"title": 'Ban %', "searchable": false, "responsivePriority": 5},
+    {"title": 'Win Delta %', "searchable": false,"responsivePriority": 6}
 ];
 
 heroes_statslist.order = [[0, 'asc']];
-
-heroes_statslist.processing = false;
+heroes_statslist.processing = true;
+//heroes_statslist.deferRender = true;
+heroes_statslist.ajax = herodata_heroes_path;
 //heroes_statslist.pageLength = 25;
 heroes_statslist.paging = false;
 heroes_statslist.responsive = true;
