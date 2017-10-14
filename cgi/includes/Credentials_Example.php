@@ -13,11 +13,13 @@ class Credentials {
     const KEY_DB_PASSWORD = "db_password";
     const KEY_DB_DATABASE = "db_database";
     const KEY_MONGODB_URI = "mongodb_uri";
+    const KEY_REDIS_URI = "redis_uri";
     private static $replayProcess_db_hostname = "%HOSTNAME%";
     private static $replayProcess_db_user = "%USER%";
     private static $replayProcess_db_password = "%PASSWORD%";
     private static $replayProcess_db_database = "%DATABASE%";
     private static $replayProcess_mongodb_uri = "%URI%";
+    private static $replayProcess_redis_uri = "%URI%";
     //Replay Process AWS credentials
     const KEY_AWS_KEY = "aws_key";
     const KEY_AWS_SECRET = "aws_secret";
@@ -34,6 +36,7 @@ class Credentials {
         $a[self::KEY_DB_PASSWORD] = self::$replayProcess_db_password;
         $a[self::KEY_DB_DATABASE] = self::$replayProcess_db_database;
         $a[self::KEY_MONGODB_URI] = self::$replayProcess_mongodb_uri;
+        $a[self::KEY_REDIS_URI] = self::$replayProcess_redis_uri;
 
         $a[self::KEY_AWS_KEY] = self::$replayProcess_aws_key;
         $a[self::KEY_AWS_SECRET] = self::$replayProcess_aws_secret;
