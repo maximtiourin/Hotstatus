@@ -12,18 +12,18 @@ framework:
                 base_path: '/images'
 
 #config database parameters
-doctrine:
-    dbal:
-        default_connection: hotstatus_mysql
-        connections:
-            hotstatus_mysql:
-                driver: pdo_mysql
-                host: '%hotstatus_mysql_prod_host%'
-                port: '%hotstatus_mysql_prod_port%'
-                dbname: '%hotstatus_mysql_prod_dbname%'
-                user: '%hotstatus_mysql_prod_user%'
-                password: '%hotstatus_mysql_prod_password%'
-                charset: UTF8MB4
+#doctrine:
+#    dbal:
+#        default_connection: hotstatus_mysql
+#        connections:
+#            hotstatus_mysql:
+#                driver: pdo_mysql
+#                host: '%hotstatus_mysql_dev_host%'
+#                port: '%hotstatus_mysql_dev_port%'
+#                dbname: '%hotstatus_mysql_dev_dbname%'
+#                user: '%hotstatus_mysql_dev_user%'
+#                password: '%hotstatus_mysql_dev_password%'
+#                charset: UTF8MB4
 
 monolog:
     handlers:

@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\DBAL\Statement;
 use Symfony\Component\Asset;
+use Fizzik\Database\MySqlDatabase;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
@@ -27,6 +28,8 @@ class HerodataController extends Controller {
      * @Route("/herodata/datatable/heroes/statslist", name="herodata_datatable_heroes_statslist")
      */
     public function getDataTableHeroesStatsListAction() {
+        $query = "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes";
+
         //Get image path from packages
         /** @var Asset\Packages $pkgs */
         $pkgs = $this->get("assets.packages");
@@ -34,20 +37,25 @@ class HerodataController extends Controller {
         $imgbasepath = $pkg->getUrl('');
 
         //Get db connection
-        $db = $this->getDoctrine()->getConnection("hotstatus_mysql");
-        $db->setFetchMode(\PDO::FETCH_ASSOC);
+        $db = new MysqlDatabase();
+
+        $creds = [
+            'host' => $this->getParameter("hotstatus_mysql_host"),
+            'user' => $this->getParameter("hotstatus_mysql_user"),
+            'pass' => $this->getParameter("hotstatus_mysql_pass"),
+            'database' => $this->getParameter("hotstatus_mysql_database")
+        ];
+
+        $db->connect($creds['host'], $creds['user'], $creds['pass'], $creds['database']);
+        $db->setEncoding($this->getParameter('hotstatus_mysql_encoding'));
 
         //Prepare statements
-        $ps = [];
-        $ps['SelectHeroes'] = $db->prepare("SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
+        $db->prepare("SelectHeroes", $query);
 
         $datatable = [];
-
-        /** @var Statement $stmt */
-        $stmt = $ps['SelectHeroes'];
-        $stmt->execute();
         $data = [];
-        while ($row = $stmt->fetch()) {
+        $result = $db->execute("SelectHeroes");
+        while ($row = $db->fetchArray($result)) {
             $dtrow = [];
 
             //Hero Portrait
@@ -79,6 +87,9 @@ class HerodataController extends Controller {
 
             $data[] = $dtrow;
         }
+
+        $db->freeResult($result);
+        $db->close();
 
         $datatable['data'] = $data;
 

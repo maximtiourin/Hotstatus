@@ -19,6 +19,7 @@ if (isset($_SERVER['HTTP_CLIENT_IP'])
 }
 
 require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/../cgi/lib/Fizzik/fizzik-autoloader.php';
 Debug::enable();
 
 $kernel = new AppKernel('dev', true);
