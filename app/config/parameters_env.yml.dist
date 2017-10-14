@@ -1,0 +1,15 @@
+# This file is a "template" of what your parameters_env.yml file should look like
+# Replace 'env' with the environment this file is meant to configure paremeters for, ie: 'dev', 'prod'
+
+imports:
+    - { resource: parameters.yml }
+
+parameters:
+    #hotstatus_mysql
+    hotstatus_mysql_host: {HOSTNAME}
+    hotstatus_mysql_port: {PORT}
+    hotstatus_mysql_dbname: {DATABASE}
+    hotstatus_mysql_user: {USER}
+    hotstatus_mysql_password: {PASSWORD}
+    #hotstatus_redis
+    hotstatus_redis_uri: {CONNECTION URI}
