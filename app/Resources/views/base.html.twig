@@ -7,6 +7,11 @@
         {% block stylesheets %}{% endblock %}
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
         <style>
+            body {
+                background: #000008;
+                background-image: url('{{ asset('ui/bg.jpg', 'images') }}');
+                background-repeat: no-repeat;
+            }
             {% block style %}{% endblock %}
         </style>
     </head>

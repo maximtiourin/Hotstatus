@@ -27,18 +27,18 @@ for (var i = 0; i < herodata_heroes.length; i++) {
 ];*/
 
 heroes_statslist.columns = [
-    {"width": 50, "searchable": false, "responsivePriority": 1},
-    {"title": 'Hero', "width": 100, "responsivePriority": 2},
+    {"width": "10%", "sClass": "hsl-table-portrait-td", "searchable": false, "responsivePriority": 1},
+    {"title": 'Hero', "width": "18%", "iDataSort": 2, "responsivePriority": 2}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
     {"title": 'Hero_Sort', "visible": false},
     {"title": 'Role', "visible": false},
     {"title": 'Role_Specific', "visible": false},
-    {"title": 'Win %', "searchable": false, "responsivePriority": 3},
-    {"title": 'Play %', "searchable": false, "responsivePriority": 4},
-    {"title": 'Ban %', "searchable": false, "responsivePriority": 5},
-    {"title": 'Win Delta %', "searchable": false,"responsivePriority": 6}
+    {"title": 'Win %', "width": "18%", "searchable": false, "responsivePriority": 3},
+    {"title": 'Play %', "width": "18%", "searchable": false, "responsivePriority": 4},
+    {"title": 'Ban %', "width": "18%", "searchable": false, "responsivePriority": 5},
+    {"title": 'Win Delta %', "width": "18%", "searchable": false,"responsivePriority": 6}
 ];
 
-heroes_statslist.order = [[0, 'asc']]; //The default ordering of the table on load => column 0 ascending
+heroes_statslist.order = [[2, 'asc']]; //The default ordering of the table on load => column 3 at index 2 ascending
 heroes_statslist.processing = false; //Displays an indicator whenever the table is processing data
 heroes_statslist.deferRender = true; //Defers rendering the table until data starts coming in
 heroes_statslist.ajax = herodata_heroes_path; //Requests data from the path
