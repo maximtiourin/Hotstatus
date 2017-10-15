@@ -35,14 +35,16 @@
 .color-secondary-b2-3 { color: #131E20 }
 .color-secondary-b2-4 { color: #0E1A1D }
 
+.color-statslist-toolbar { color: #3d4b52 }
+
 @media screen and (max-width: 767px) {
-    body { padding-top: 60px; }
+    body { padding-top: 72px; }
 }
 @media screen and (min-width: 768px) and (max-width: 991px) {
-    body { padding-top: 74px; }
+    body { padding-top: 86px; }
 }
 @media screen and (min-width: 992px) {
-    body { padding-top: 60px; }
+    body { padding-top: 72px; }
 
     .hotstatus-page-width {
         width: 60%;
@@ -78,6 +80,14 @@ span.left {
 span.right {
     float: right;
 }
+
+#hotstatus-navbar {
+    background-color: #201D26 !important;
+    border: 1px !important;
+    border-style: solid !important;
+    border-color: #4F495C !important;
+}
+
 #hsl-table {
     border: 0 !important;
     border-spacing: 0 !important;
@@ -115,7 +125,7 @@ span.right {
 
 }
 #hsl-table th {
-    background-color: #813da8 !important;
+    /* background-color: #813da8 !important; */
     text-align: left;
 }
 
@@ -146,7 +156,7 @@ span.right {
 }
 
 .heroes-statslist-toolbar-rolebutton {
-    background-color: #081647;
+    background-color: #10042B;
     font-size: 12px !important;
     margin: 2px;
     padding: 3px 7px;

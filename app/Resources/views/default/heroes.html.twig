@@ -4,6 +4,11 @@
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
 {% use ':snippets/heroes:statslist.html.twig' with javascripts as hsljavascripts %}
 
+{# Append to title #}
+{% block title %}
+: Hero Statistics
+{% endblock %}
+
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
     {# Inject herodata array and make available to all javascript #}
