@@ -38,13 +38,13 @@
 .color-statslist-toolbar { color: #3d4b52 }
 
 @media screen and (max-width: 767px) {
-    body { padding-top: 72px; }
+    body { padding-top: 76px; }
 }
 @media screen and (min-width: 768px) and (max-width: 991px) {
-    body { padding-top: 86px; }
+    body { padding-top: 90px; }
 }
 @media screen and (min-width: 992px) {
-    body { padding-top: 72px; }
+    body { padding-top: 76px; }
 
     .hotstatus-page-width {
         width: 60%;
