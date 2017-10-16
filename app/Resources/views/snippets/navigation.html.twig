@@ -12,15 +12,20 @@
                     <a class="nav-link {{ route == 'heroes' ? 'active' }}" href="{{ path('heroes') }}">Heroes</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ route == 'maps' ? 'active' }}" href="{{ path('maps') }}">Maps</a>
+                    <a class="nav-link {{ route == 'talents' ? 'active' }}" href="{{ path('talents') }}">Talents</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ route == 'talents' ? 'active' }}" href="{{ path('talents') }}">Talents</a>
+                    <a class="nav-link {{ route == 'rankings' ? 'active' }}" href="{{ path('rankings') }}">Rankings</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {{ route == 'upload' ? 'active' }}" style="margin-right: 32px;" href="{{ path('upload') }}">Upload Replay</a>
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0" method="get" action="#">
                 <input class="form-control mr-sm-2" type="text" placeholder="Enter Player Name..." aria-label="Search by Player Name">
-                <button class="btn my-2 my-sm-0" type="submit">Search</button>
+                <button id="nav-player-search-btn" class="btn my-2 my-sm-0" type="submit"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
             </form>
         </div>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">

@@ -26,17 +26,25 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/maps", name="maps")
+     * @Route("/talents", name="talents")
      */
-    public function mapsAction(Request $request) {
+    public function talentsAction(Request $request) {
         return $this->render('default/index.html.twig', [
         ]);
     }
 
     /**
-     * @Route("/talents", name="talents")
+     * @Route("/rankings", name="rankings")
      */
-    public function talentsAction(Request $request) {
+    public function rankingsAction(Request $request) {
+        return $this->render('default/index.html.twig', [
+        ]);
+    }
+
+    /**
+     * @Route("/upload", name="upload")
+     */
+    public function uploadAction(Request $request) {
         return $this->render('default/index.html.twig', [
         ]);
     }
