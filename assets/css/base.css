@@ -52,23 +52,23 @@
     }
 }
 
-.adslot_horizontal_1 { width: 234px; height: 60px; }
+.adslot_horizontal_1 {
+    overflow: hidden;
+    width: 234px;
+    height: 60px;
+}
 @media (min-width:360px) { .adslot_horizontal_1 { width: 320px; height: 100px; } }
 @media (min-width:768px) { .adslot_horizontal_1 { width: 728px; height: 90px; } }
 
 .adslot_vertical_1 {
     display: none;
+    overflow: hidden;
     position: fixed;
     top: 180px;
 }
-@media (min-width:576px) { .adslot_vertical_1 { width: 120px; height: 240px; } }
-@media (min-width:768px) { .adslot_vertical_1 { width: 200px; height: 200px; } }
+@media (min-width:1200px) { .adslot_vertical_1 { width: 200px; height: 200px; } }
 @media (min-width:1438px) { .adslot_vertical_1 { width: 250px; height: 250px; } }
 @media (min-width:1738px) { .adslot_vertical_1 { width: 300px; height: 250px; } }
-/*@media (min-width:768px) { .adslot_vertical_1 { width: 120px; height: 600px; } }
-@media (min-width:900px) { .adslot_vertical_1 { width: 300px; height: 600px; } }
-@media (min-width:768px) { .adslot_vertical_1 { width: 120px; height: 600px; } }
-@media (min-width:801px) { .adslot_vertical_1 { width: 160px; height: 600px; } }*/
 
 /* Fixes the bug of the duplicate data tables sort icon appearing on the first row of results when using bootstrap style */
 .dataTables_scrollBody thead {visibility: hidden;}
