@@ -39,13 +39,13 @@
 
 /* General screen size dependent sizing */
 @media screen and (max-width: 767px) {
-    body { padding-top: 76px; }
+    /*body { padding-top: 76px; }*/
 }
 @media screen and (min-width: 768px) and (max-width: 991px) {
-    body { padding-top: 90px; }
+    /*body { padding-top: 90px; }*/
 }
 @media screen and (min-width: 992px) {
-    body { padding-top: 76px; }
+    /*body { padding-top: 76px; }*/
 
     .hotstatus-page-width {
         width: 60%;
@@ -82,6 +82,8 @@
 
 /* Navigation */
 #hotstatus-navbar {
+    width: 100% !important;
+    overflow: hidden;
     background-color: #201D26 !important;
     border: 1px !important;
     border-style: solid !important;
@@ -108,6 +110,15 @@
     border-color: #3D12A1;
     border-style: solid;
 }
+.nav-stopwordwrap {
+    white-space: nowrap;
+    overflow: hidden !important;
+}
+@media (min-width:768px) {
+    .nav-md-hideitem {
+        display: none!important;
+    }
+}
 
 /* Footer */
 html {
@@ -130,6 +141,13 @@ body {
     text-align: center;
     overflow: auto;
     overflow-wrap: normal;
+}
+.footer a:visited, a:link, a:active {
+    color: #c6c4db;
+    text-decoration: none;
+}
+.footer a:hover {
+    color: #8782ff;
 }
 #footer-primary {
     padding-top: 6px;
@@ -181,6 +199,8 @@ body {
 #hsl-table thead, th {
     /* background-color: #813da8 !important; */
     text-align: left;
+    white-space: normal!important;
+    overflow: hidden!important;
 }
 
 .hsl-portrait {

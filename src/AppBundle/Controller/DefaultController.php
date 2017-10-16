@@ -13,6 +13,13 @@ class DefaultController extends Controller
      * @Route("/", name="homepage")
      */
     public function indexAction(Request $request) {
+        return $this->redirectToRoute("heroes");
+    }
+
+    /**
+     * @Route("/news", name="news")
+     */
+    public function newsAction(Request $request) {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -45,6 +52,22 @@ class DefaultController extends Controller
      * @Route("/upload", name="upload")
      */
     public function uploadAction(Request $request) {
+        return $this->render('default/index.html.twig', [
+        ]);
+    }
+
+    /**
+     * @Route("/contact", name="contact")
+     */
+    public function contactAction(Request $request) {
+        return $this->render('default/index.html.twig', [
+        ]);
+    }
+
+    /**
+     * @Route("/faq", name="faq")
+     */
+    public function faqAction(Request $request) {
         return $this->render('default/index.html.twig', [
         ]);
     }
