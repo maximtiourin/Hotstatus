@@ -87,16 +87,16 @@ class HerodataController extends Controller {
                 //Hero Specific role
                 $dtrow[] = $row['role_specific'];
 
-                //Temp Winrate
-                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 80.0, 1);
-
                 //Temp Playrate
                 $dtrow[] = round((mt_rand() / mt_getrandmax()) * 20.0, 1);
 
                 //Temp Banrate
                 $dtrow[] = round((mt_rand() / mt_getrandmax()) * 12.0, 1);
 
-                //Temp win delta
+                //Temp Winrate
+                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 80.0, 1);
+
+                //Temp win delta (This is the % change in winrate from this iso week to last iso week)
                 $dtrow[] = round((mt_rand() / mt_getrandmax()) * 8.0, 1);
 
                 $data[] = $dtrow;

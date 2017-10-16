@@ -37,6 +37,7 @@
 
 .color-statslist-toolbar { color: #3d4b52 }
 
+/* General screen size dependent sizing */
 @media screen and (max-width: 767px) {
     body { padding-top: 76px; }
 }
@@ -52,6 +53,7 @@
     }
 }
 
+/* Advertising */
 .adslot_horizontal_1 {
     overflow: hidden;
     width: 234px;
@@ -73,14 +75,12 @@
 /* Fixes the bug of the duplicate data tables sort icon appearing on the first row of results when using bootstrap style */
 .dataTables_scrollBody thead {visibility: hidden;}
 
-span.left {
-    float: left;
+/* Hides the sort icon for a datatable column where it is not desired */
+.sortIconDisabled {
+    background: none !important;
 }
 
-span.right {
-    float: right;
-}
-
+/* Navigation */
 #hotstatus-navbar {
     background-color: #201D26 !important;
     border: 1px !important;
@@ -88,6 +88,7 @@ span.right {
     border-color: #4F495C !important;
 }
 
+/* Statlist styling */
 #hsl-table {
     border: 0 !important;
     border-spacing: 0 !important;
@@ -96,17 +97,16 @@ span.right {
 }
 
 #hsl-table tr,td,thead,th {
-    padding: 4px 0px !important;
+    padding: 2px 8px !important;
     border: 0 !important;
     border-spacing: 0 !important;
-    color: #FFFFFF;
+    color: #FFFFFF !important;
 }
 
 #hsl-table td {
     display: table-cell !important;
     vertical-align: middle !important;
     text-align: left;
-    padding: 4px !important;
 }
 
 .hsl-table-portrait-td {
@@ -121,10 +121,7 @@ span.right {
     background-color: rgba(255,255,255,0.05);
 }
 
-#hsl-table thead {
-
-}
-#hsl-table th {
+#hsl-table thead, th {
     /* background-color: #813da8 !important; */
     text-align: left;
 }
@@ -177,4 +174,117 @@ span.right {
     border-style: outset;
     border-radius: 4px;
     color: #FFFFFF;
+}
+
+/* DataTable sort icons using font awesome */
+table.dataTable thead .sorting::before {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting::after {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_asc::before {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_asc {
+    background-color: rgba(0,0,0,0.21);
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_asc::after {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_desc::before {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_desc {
+    background-color: rgba(0,0,0,0.21);
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+table.dataTable thead .sorting_desc::after {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+/* Sort Icon for Text sorting */
+table.dataTable thead .sortIcon_Text.sorting_asc::before {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    color: rgba(255,255,255,0.21);
+    right: 12px !important;
+    content: "\f15d";
+}
+
+table.dataTable thead .sortIcon_Text.sorting_desc::after {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    color: rgba(255,255,255,0.21);
+    right: 12px !important;
+    content: "\f15e";
+}
+
+/* Sort Icon for Number sorting */
+table.dataTable thead .sortIcon_Number.sorting_asc::before {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    color: rgba(255,255,255,0.21);
+    right: 12px !important;
+    content: "\f160";
+}
+
+table.dataTable thead .sortIcon_Number.sorting_desc::after {
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    color: rgba(255,255,255,0.21);
+    right: 12px !important;
+    content: "\f161";
+}
+
+/* Miscellaneous */
+span.left {
+    float: left;
+}
+
+span.right {
+    float: right;
 }

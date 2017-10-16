@@ -1,44 +1,18 @@
 var heroes_statslist = {};
 
-/*heroes_statslist.data = [];
-
-for (var i = 0; i < herodata_heroes.length; i++) {
-    var hero = herodata_heroes[i];
-    heroes_statslist.data.push(
-        [
-            '<img src="' + herodata_imagepath + hero['image_hero'] + '.png" width="40px" height="40px">',
-            hero['name'],
-            hero['role_blizzard'],
-            hero['role_specific'],
-            5,
-            5,
-            5,
-            5
-        ]
-    );
-}*/
-
-/*heroes_statslist.data = [
-    ['Abathur',     'Utility',  48.89,   15.34,  1.34,    -.49],
-    ['Tyrande',     'Support',  52.34,   21.12,  16.73,   4.82],
-    ['Kharazim',    'Healer',   51.45,   12.83,  4.92,    1.34],
-    ['Li Li',       'Healer',   53.62,   18.78,  8.14,    .89],
-    ['Diablo',      'Tank',     57.10,   9.18,   2.16,    3.14]
-];*/
-
 heroes_statslist.columns = [
-    {"width": "10%", "sClass": "hsl-table-portrait-td", "searchable": false, "responsivePriority": 1},
-    {"title": 'Hero', "width": "18%", "iDataSort": 2, "responsivePriority": 2}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+    {"width": "10%", "sClass": "hsl-table-portrait-td", "bSortable": false, "searchable": false, "responsivePriority": 1},
+    {"title": 'Hero', "width": "18%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc'], "responsivePriority": 2}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
     {"title": 'Hero_Sort', "visible": false},
     {"title": 'Role', "visible": false},
     {"title": 'Role_Specific', "visible": false},
-    {"title": 'Win %', "width": "18%", "searchable": false, "responsivePriority": 3},
-    {"title": 'Play %', "width": "18%", "searchable": false, "responsivePriority": 4},
-    {"title": 'Ban %', "width": "18%", "searchable": false, "responsivePriority": 5},
-    {"title": 'Win Delta %', "width": "18%", "searchable": false,"responsivePriority": 6}
+    {"title": 'Games Played', "width": "18%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 5},
+    {"title": 'Games Banned', "width": "18%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 6},
+    {"title": 'Win Percent', "width": "18%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 3},
+    {"title": '% Δ', "width": "5%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 4}
 ];
 
-heroes_statslist.order = [[2, 'asc']]; //The default ordering of the table on load => column 3 at index 2 ascending
+heroes_statslist.order = [[7, 'desc']]; //The default ordering of the table on load => column 8 at index 7 descending
 heroes_statslist.processing = false; //Displays an indicator whenever the table is processing data
 heroes_statslist.deferRender = true; //Defers rendering the table until data starts coming in
 heroes_statslist.ajax = herodata_heroes_path; //Requests data from the path
