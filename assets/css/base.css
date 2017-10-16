@@ -88,6 +88,24 @@
     border-color: #4F495C !important;
 }
 
+#hotstatus-navbar .nav-link {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+#hotstatus-navbar .nav-link:hover {
+    color: #8782ff;
+}
+
+#hotstatus-navbar .nav-link.active {
+    background-color: #566eff;
+}
+
+#hotstatus-navbar .nav-link.active:hover {
+    background-color: #6e87ff;
+    color: #FFFFFF;
+}
+
 /* Statlist styling */
 #hsl-table {
     border: 0 !important;
