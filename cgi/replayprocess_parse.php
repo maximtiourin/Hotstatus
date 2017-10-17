@@ -13,6 +13,7 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\MongoDBDatabase;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Utility\SleepHandler;
+use MongoDB\Collection;
 use MongoDB\Driver\Exception\BulkWriteException;
 use MongoDB\Exception\InvalidArgumentException;
 use MongoDB\Exception\RuntimeException;
@@ -35,7 +36,7 @@ const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
 const UNLOCK_PARSING_DURATION = 60; //Must be unlocked for atleast 1 minute while parsing status
-$e = PHP_EOL;
+const E = PHP_EOL;
 $sleep = new SleepHandler();
 
 //Prepare statements
@@ -51,11 +52,364 @@ $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 //Helper functions
 
-//Begin main script
-echo '--------------------------------------'.$e
-    .'Replay process <<PARSE>> has started'.$e
-    .'--------------------------------------'.$e;
 
+/*
+ * Upserts relevant match data into 'matches' collection
+ * Returns assoc array:
+ * ['match'] = Updated parse data with new fields added
+ * ['match_id'] = The official match id tied to the match data
+ */
+function insertMatch(&$parse) {
+    global $mongo, $r_id;
+
+    $parse['_id'] = $r_id; //Set document id to be the match id
+
+    /* Update document with additional relevant data */
+    //Week Data
+    $parse['week_info'] = HotstatusPipeline::getWeekDataOfReplay($parse['date']);
+
+    //Begin inserting 'match' document
+    /** @var Collection $clc */
+    $clc = $mongo->selectCollection('matches');
+
+    $clcres = $clc->insertOne($parse);
+
+    $affectedCount = $clcres->getInsertedCount();
+    $affectedId = $clcres->getInsertedId();
+
+    echo $affectedCount.' documents inserted into \'matches\' collection'.E;
+    //echo 'Inserted parsed replay #'.$r_id.' as match #'.$affectedId.' into \'matches\' collection...'.E;
+
+    return ['match' => $parse, 'match_id' => $affectedId];
+}
+
+/*
+ * Updates the 'players' collection with all relevant player data
+ */
+function updatePlayers(&$match) {
+    global $mongo;
+
+    //A assoc array of bulk write operations, {'OP_NAME' => ['PARAMETERS', ...]}
+    $bulkWrites = [];
+
+    //Players collection
+    /** @var Collection $clc_players */
+    $clc_players = $mongo->selectCollection('players');
+
+    //Iterate through players and update relevant structures while aggregating stats
+    foreach ($match['players'] as $player) {
+        //Init helpers
+        $scope = "";
+        $w_scope = "";
+
+        //Multi Calc values
+        $inc_wonMatch = ($player['team'] === $match['winner']) ? (1) : (0); //Did player win the match?
+
+        //Init Arrays
+        $filter = [];
+        $set = [];
+        $setOnInsert = [];
+        $max = [];
+        $inc = [];
+        $addToSet = [];
+
+        /* !!!!!!!!!! Build Filter Array */
+        // ??? _id
+        $filter['_id'] = $player['id'];
+        /* !!!!!!!!!! Build Update Array */
+        // >>> name
+        $set['name'] = $player['name'];
+        // >>> tag
+        $set['tag'] = $player['tag'];
+        // >>> region
+        $set['region'] = $match['region'];
+        // >>> account_level
+        $max['account_level'] = $player['account_level'];
+        // >>> summary_data
+        // >>>.>>> matches
+        // >>>.>>>.>>> total
+        $scope = "summary_data.matches.total";
+        // >>>.>>>.>>>.>>> played
+        $inc["$scope.played"] = 1;
+        // >>>.>>>.>>>.>>> won
+        $inc["$scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>> timeplayed
+        $inc["$scope.timeplayed"] = $match['match_length'];
+        // >>>.>>>.>>>.>>> silenced_played
+        $inc["$scope.silenced_played"] = ($player['silenced'] === 1) ? ($match['match_length']) : (0);
+        // >>>.>>>.>>>.>>> stats
+        $scope .= ".stats";
+        // >>>.>>>.>>>.>>>.>>> kills
+        $inc["$scope.kills"] = $player['stats']['kills'];
+        // >>>.>>>.>>>.>>>.>>> assists
+        $inc["$scope.assists"] = $player['stats']['assists'];
+        // >>>.>>>.>>>.>>>.>>> deaths
+        $inc["$scope.deaths"] = $player['stats']['deaths'];
+        // >>>.>>>.>>>.>>>.>>> siege_damage
+        $inc["$scope.siege_damage"] = $player['stats']['siege_damage'];
+        // >>>.>>>.>>>.>>>.>>> hero_damage
+        $inc["$scope.hero_damage"] = $player['stats']['hero_damage'];
+        // >>>.>>>.>>>.>>>.>>> structure_damage
+        $inc["$scope.structure_damage"] = $player['stats']['structure_damage'];
+        // >>>.>>>.>>>.>>>.>>> healing
+        $inc["$scope.healing"] = $player['stats']['healing'];
+        // >>>.>>>.>>>.>>>.>>> damage_taken
+        $inc["$scope.damage_taken"] = $player['stats']['damage_taken'];
+        // >>>.>>>.>>>.>>>.>>> merc_camps
+        $inc["$scope.merc_camps"] = $player['stats']['merc_camps'];
+        // >>>.>>>.>>>.>>>.>>> exp_contrib
+        $inc["$scope.exp_contrib"] = $player['stats']['exp_contrib'];
+        // >>>.>>>.>>>.>>>.>>> best_killstreak
+        $max["$scope.best_killstreak"] = $player['stats']['best_killstreak'];
+        // >>>.>>>.>>>.>>>.>>> time_spent_dead
+        $inc["$scope.time_spent_dead"] = $player['stats']['time_spent_dead'];
+        // <<<.<<<.<<<.<<<.<<< medals
+        $l_scope = "$scope.medals";
+        foreach ($player['stats']['medals'] as $medal) {
+        // <<<.<<<.<<<.<<<.<<<.<<< "MedalId"
+            $l_scope .= ".$medal.count";
+            $inc["$l_scope."] = 1;
+        }
+        // >>>.>>>.>>> granular
+        $scope = "summary_data.matches.granular";
+        // >>>.>>>.>>>.>>> "HeroId"
+        $scope .= ".".$player['hero'];
+        // >>>.>>>.>>>.>>>.>>> hero_level
+        $max["$scope.hero_level"] = $player['hero_level'];
+        // >>>.>>>.>>>.>>>.>>> "MapId"
+        $scope .= ".".$match['map'];
+        // >>>.>>>.>>>.>>>.>>>.>>> "GameTypeId"
+        $scope .= ".".$match['type'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> played
+        $inc["$scope.played"] = 1;
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> won
+        $inc["$scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> timeplayed
+        $inc["$scope.timeplayed"] = $match['match_length'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> stats
+        $scope .= ".stats";
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> kills
+        $inc["$scope.kills"] = $player['stats']['kills'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> assists
+        $inc["$scope.assists"] = $player['stats']['assists'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> deaths
+        $inc["$scope.deaths"] = $player['stats']['deaths'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> siege_damage
+        $inc["$scope.siege_damage"] = $player['stats']['siege_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> hero_damage
+        $inc["$scope.hero_damage"] = $player['stats']['hero_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> structure_damage
+        $inc["$scope.structure_damage"] = $player['stats']['structure_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> healing
+        $inc["$scope.healing"] = $player['stats']['healing'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> damage_taken
+        $inc["$scope.damage_taken"] = $player['stats']['damage_taken'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> merc_camps
+        $inc["$scope.merc_camps"] = $player['stats']['merc_camps'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> exp_contrib
+        $inc["$scope.exp_contrib"] = $player['stats']['exp_contrib'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> best_killstreak
+        $max["$scope.best_killstreak"] = $player['stats']['best_killstreak'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> time_spent_dead
+        $inc["$scope.time_spent_dead"] = $player['stats']['time_spent_dead'];
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< medals
+        $l_scope = "$scope.medals";
+        foreach ($player['stats']['medals'] as $medal) {
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "MedalId"
+            $l_scope .= ".$medal.count";
+            $inc["$l_scope."] = 1;
+        }
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+        $l_scope = "$scope.talents";
+        foreach ($player['talents'] as $talent) {
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+            $l_scope .= ".$talent";
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+            $inc["$l_scope.played"] = 1;
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+            $inc["$l_scope.won"] = $inc_wonMatch;
+        }
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+        $l_scope = "$scope.builds";
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+        $l_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+        $setOnInsert["$l_scope.talents"] = $player['talents'];
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+        $inc["$l_scope.played"] = 1;
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+        $inc["$l_scope.won"] = $inc_wonMatch;
+        // >>> weekly_data
+        $scope = "weekly_data";
+        // >>>.>>> "ISO_YEAR"
+        $scope .= ".".$match['week_info']['year'];
+        // >>>.>>>.>>> "ISO_WEEK"
+        $scope .= ".".$match['week_info']['week'];
+        // >>>.>>>.>>>.>>> date_start
+        $setOnInsert["$scope.date_start"] = $match['week_info']['date_start'];
+        // >>>.>>>.>>>.>>> date_end
+        $setOnInsert["$scope.date_end"] = $match['week_info']['date_end'];
+        // >>>.>>>.>>>.>>> matches
+        $scope .= ".matches";
+        // >>>.>>>.>>>.>>>.>>> total
+        $w_scope = "$scope.total";
+        // >>>.>>>.>>>.>>>.>>>.>>> played
+        $inc["$w_scope.played"] = 1;
+        // >>>.>>>.>>>.>>>.>>>.>>> won
+        $inc["$w_scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>>.>>>.>>> timeplayed
+        $inc["$w_scope.timeplayed"] = $match['match_length'];
+        // >>>.>>>.>>>.>>>.>>>.>>> stats
+        $w_scope .= ".stats";
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> kills
+        $inc["$w_scope.kills"] = $player['stats']['kills'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> assists
+        $inc["$w_scope.assists"] = $player['stats']['assists'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> deaths
+        $inc["$w_scope.deaths"] = $player['stats']['deaths'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> siege_damage
+        $inc["$w_scope.siege_damage"] = $player['stats']['siege_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> hero_damage
+        $inc["$w_scope.hero_damage"] = $player['stats']['hero_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> structure_damage
+        $inc["$w_scope.structure_damage"] = $player['stats']['structure_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> healing
+        $inc["$w_scope.healing"] = $player['stats']['healing'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> damage_taken
+        $inc["$w_scope.damage_taken"] = $player['stats']['damage_taken'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> merc_camps
+        $inc["$w_scope.merc_camps"] = $player['stats']['merc_camps'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> exp_contrib
+        $inc["$w_scope.exp_contrib"] = $player['stats']['exp_contrib'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> best_killstreak
+        $max["$w_scope.best_killstreak"] = $player['stats']['best_killstreak'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> time_spent_dead
+        $inc["$w_scope.time_spent_dead"] = $player['stats']['time_spent_dead'];
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<< medals
+        $l_scope = "$w_scope.medals";
+        foreach ($player['stats']['medals'] as $medal) {
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "MedalId"
+            $l_scope .= ".$medal.count";
+            $inc["$l_scope."] = 1;
+        }
+        // >>>.>>>.>>>.>>>.>>> granular
+        $w_scope = "$scope.granular";
+        // >>>.>>>.>>>.>>>.>>>.>>> "HeroId"
+        $w_scope .= ".".$player['hero'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> hero_level
+        $max["$w_scope.hero_level"] = $player['hero_level'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> "MapId"
+        $w_scope .= ".".$match['map'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> "GameTypeId"
+        $w_scope .= ".".$match['type'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> played
+        $inc["$w_scope.played"] = 1;
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> won
+        $inc["$w_scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> timeplayed
+        $inc["$w_scope.timeplayed"] = $match['match_length'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> stats
+        $w_scope .= ".stats";
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> kills
+        $inc["$w_scope.kills"] = $player['stats']['kills'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> assists
+        $inc["$w_scope.assists"] = $player['stats']['assists'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> deaths
+        $inc["$w_scope.deaths"] = $player['stats']['deaths'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> siege_damage
+        $inc["$w_scope.siege_damage"] = $player['stats']['siege_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> hero_damage
+        $inc["$w_scope.hero_damage"] = $player['stats']['hero_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> structure_damage
+        $inc["$w_scope.structure_damage"] = $player['stats']['structure_damage'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> healing
+        $inc["$w_scope.healing"] = $player['stats']['healing'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> damage_taken
+        $inc["$w_scope.damage_taken"] = $player['stats']['damage_taken'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> merc_camps
+        $inc["$w_scope.merc_camps"] = $player['stats']['merc_camps'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> exp_contrib
+        $inc["$w_scope.exp_contrib"] = $player['stats']['exp_contrib'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> best_killstreak
+        $max["$w_scope.best_killstreak"] = $player['stats']['best_killstreak'];
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>>.>>> time_spent_dead
+        $inc["$w_scope.time_spent_dead"] = $player['stats']['time_spent_dead'];
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< medals
+        $l_scope = "$w_scope.medals";
+        foreach ($player['stats']['medals'] as $medal) {
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "MedalId"
+            $l_scope .= ".$medal.count";
+            $inc["$l_scope."] = 1;
+        }
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+        $l_scope = "$w_scope.talents";
+        foreach ($player['talents'] as $talent) {
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+            $l_scope .= ".$talent";
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+            $inc["$l_scope.played"] = 1;
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+            $inc["$l_scope.won"] = $inc_wonMatch;
+        }
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+        $l_scope = "$w_scope.builds";
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+        $l_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+        $setOnInsert["$l_scope.talents"] = $player['talents'];
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+        $inc["$l_scope.played"] = 1;
+        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+        $inc["$l_scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>>.>>> parties
+        $w_scope = "$scope.parties";
+        // >>>.>>>.>>>.>>>.>>>.>>> "PartyHashKey"
+        $w_scope .= ".".HotstatusPipeline::getPerPlayerPartyHash($player['party']);
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> players
+        $setOnInsert["$w_scope.players"] = HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']);
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> played
+        $inc["$w_scope.played"] = 1;
+        // >>>.>>>.>>>.>>>.>>>.>>>.>>> won
+        $inc["$w_scope.won"] = $inc_wonMatch;
+        // >>>.>>>.>>>.>>>.>>> list
+        $addToSet["$scope.list"] = $match['_id'];
+
+
+        // !!!!!!!!!! Build Complete Operation
+        $op = [
+            $filter,        //Filter Array
+            [               //Update Array
+                '$set' => $set,
+                '$setOnInsert' => $setOnInsert,
+                '$max' => $max,
+                '$inc' => $inc,
+                '$addToSet' => $addToSet
+            ],
+            [               //Options Array
+                'upsert' => true
+            ]
+        ];
+
+        $bulkWrites[] = ['updateOne' => $op];
+    }
+
+    //Bulk write out all operations with ordered option (If any write fails, they ALL fail)
+    $res = $clc_players->bulkWrite($bulkWrites, [
+        'ordered' => true
+    ]);
+
+    $upsertedCount = $res->getUpsertedCount();
+
+    echo $upsertedCount.' documents upserted into \'players\' collection'.E;
+}
+
+
+
+
+//Begin main script
+echo '--------------------------------------'.E
+    .'Replay process <<PARSE>> has started'.E
+    .'--------------------------------------'.E;
 
 //Look for replays to parse and handle
 while (true) {
@@ -68,7 +422,7 @@ while (true) {
         //Found a failed replay parse, reset it to downloaded
         $row = $db->fetchArray($result);
 
-        echo 'Found a failed replay parse at replay #' . $row['id'] . ', resetting status to \'' . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . '\'...'.$e;
+        echo 'Found a failed replay parse at replay #' . $row['id'] . ', resetting status to \'' . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . '\'...'.E;
 
         $r_id = $row['id'];
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
@@ -92,33 +446,23 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
-            echo 'Parsing replay #' . $r_id . '...'.$e;
+            echo 'Parsing replay #' . $r_id . '...'.E;
 
             $r_filepath = $row['file'];
 
             $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath);
 
             if (!key_exists('error', $parse)) {
-                //No parse error, add the match to the mongodb collection
-                $parse['_id'] = $r_id; //Set document id to be the match id
-
-                /* Update document with additional relevant data */
-                //Week Data
-                $parse['week_info'] = HotstatusPipeline::getWeekDataOfReplay($parse['date']);
-
-                //Begin inserting document
-                $clc = $mongo->selectCollection('matches');
-
+                //No parse error, add all relevant match data to database in needed collections
                 $inserterror = FALSE;
                 $msg = "";
                 try {
-                    $clcres = $clc->insertOne($parse);
-
-                    $affectedCount = $clcres->getInsertedCount();
-                    $affectedId = $clcres->getInsertedId();
-
-                    echo $affectedCount.' documents inserted into \'matches\' collection'.$e;
-                    echo 'Inserted parsed replay #'.$r_id.' as match #'.$affectedId.' into \'matches\' collection...'.$e;
+                    //Matches
+                    $insertResult = insertMatch($parse);
+                    //Players
+                    updatePlayers($insertResult['match']);
+                    //Heroes
+                    //WeeklyMatches
 
                     //Delete local file
                     if (file_exists($r_filepath)) {
@@ -127,13 +471,13 @@ while (true) {
 
                     //Update mysql
                     $r_id = $row['id'];
-                    $r_match_id = $affectedId;
+                    $r_match_id = $insertResult['match_id'];
                     $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
                     $r_timestamp = time();
 
                     $db->execute("UpdateReplayParsed");
 
-                    echo 'Successfully parsed replay #'.$r_id.'...'.$e;
+                    echo 'Successfully parsed replay #'.$r_id.'...'.E;
                 }
                 catch (InvalidArgumentException $e) {
                     $inserterror = TRUE;
@@ -150,23 +494,22 @@ while (true) {
 
                 if ($inserterror) {
                     //Error adding to collection, cancel parsing, long sleep to potentially account for hitting mongodb size limit
-                    echo 'Failed to insert parsed data into MongoDB collection...'.$e;
-                    echo $msg.$e;
+                    echo 'Failed to ingest parsed data into MongoDB collection...'.E;
+                    echo $msg.E;
 
                     $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
                 }
-
             }
             else {
                 //Encountered an error parsing replay, output it and cancel parsing
-                echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.$e;
+                echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.E;
 
                 $sleep->add(MINI_SLEEP_DURATION);
             }
         }
         else {
             //No unlocked downloaded replays to parse, sleep
-            echo 'No unlocked downloaded replays found... '.time().$e;
+            echo 'No unlocked downloaded replays found... '.time().E;
 
             $sleep->add(SLEEP_DURATION);
         }
