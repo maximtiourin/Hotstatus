@@ -125,7 +125,8 @@ class HotstatusPipeline {
      * sorting them by an associated player 'name', which is obtained from searching a supplied player party relation object array
      */
     public static function getPlayerIdArrayFromPlayerPartyRelationArray(&$players, &$playerpartyarr) {
-        return self::getPlayerIdArrayFromPlayerNameArray(self::getPlayerNameArrayFromPlayerPartyRelationArray($playerpartyarr), $players);
+        $names = self::getPlayerNameArrayFromPlayerPartyRelationArray($playerpartyarr);
+        return self::getPlayerIdArrayFromPlayerNameArray($names, $players);
     }
 
     /*
