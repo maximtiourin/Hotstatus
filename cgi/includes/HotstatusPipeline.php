@@ -20,6 +20,12 @@ class HotstatusPipeline {
     const DATABASE_CHARSET = "utf8mb4";
 
     /*
+     * Cached Requests - Collection of keys to specific cached redis data, should be used to cache or invalidate
+     */
+    const CACHE_REQUEST_DATATABLE_HEROES_STATSLIST = "Cache_Request_DataTable_Heroes_Statslist";
+
+
+    /*
      * Takes a date time string, converts it to a date time, and returns an assoc array
      * that contains the following fields:
      * ['week'] = week # of the year

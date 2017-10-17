@@ -2,6 +2,7 @@
 
 namespace AppBundle\Controller;
 
+use Fizzik\HotstatusPipeline;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +31,7 @@ class HerodataController extends Controller {
      * @Route("/herodata/datatable/heroes/statslist", name="herodata_datatable_heroes_statslist")
      */
     public function getDataTableHeroesStatsListAction() {
-        $query = "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes";
+        $cachekey = HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST;
 
         $datatable = [];
 
@@ -39,7 +40,7 @@ class HerodataController extends Controller {
         $redis->connect($this->getParameter("hotstatus_redis_uri"));
 
         //Try to get cached value
-        $cacheval = $redis->getCachedString($query);
+        $cacheval = $redis->getCachedString($cachekey);
         if ($cacheval !== NULL) {
             $datatable = json_decode($cacheval, true);
         }
@@ -59,7 +60,7 @@ class HerodataController extends Controller {
             $db->setEncoding($this->getParameter('hotstatus_mysql_encoding'));
 
             //Prepare statements
-            $db->prepare("SelectHeroes", $query);
+            $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
             //Get image path from packages
             /** @var Asset\Packages $pkgs */
@@ -107,7 +108,7 @@ class HerodataController extends Controller {
 
             $datatable['data'] = $data;
 
-            $redis->cacheString($query, json_encode($datatable), self::CACHE_TIME);
+            $redis->cacheString($cachekey, json_encode($datatable), self::CACHE_TIME);
         }
 
         $redis->close();

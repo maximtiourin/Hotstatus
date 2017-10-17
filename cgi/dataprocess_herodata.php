@@ -4,8 +4,10 @@ namespace Fizzik;
 
 require_once 'includes/include.php';
 
+use Fizzik\Database\RedisDatabase;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Database\MySqlDatabase;
+use MongoDB\GridFS\ReadableStream;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -20,6 +22,7 @@ $database_credentials = [
     "user" => $creds[Credentials::KEY_DB_USER],
     "password" => $creds[Credentials::KEY_DB_PASSWORD],
     "database" => $creds[Credentials::KEY_DB_DATABASE],
+    "redis" => $creds[Credentials::KEY_REDIS_URI]
 ];
 
 //The json array that holds all of the heroes
@@ -115,6 +118,7 @@ $heromodsDataNames = [
     "garrosh" => TRUE,
     "genji" => TRUE,
     "guldan" => TRUE,
+    "junkrat" => TRUE,
     "kelthuzad" => TRUE,
     "lucio" => TRUE,
     "malthael" => TRUE,
@@ -230,6 +234,7 @@ $heroCustomRoleMappings = [
     "Illidan" => CROLE_DMG_SUSTAIN,
     "Jaina" => CROLE_DMG_BURST,
     "Crusader" => CROLE_TANK, //Johanna
+    "Junkrat" => CROLE_DMG_BURST,
     "Kaelthas" => CROLE_DMG_BURST, //Kael'thas
     "KelThuzad" => CROLE_DMG_BURST, //Kel'Thuzad
     "Kerrigan" => CROLE_DMG_AMBUSHER,
@@ -1059,7 +1064,7 @@ function extractData() {
 
 function listfileImagesHelper($imagestr, &$imagearr) {
     if ($imagestr !== NOIMAGE) {
-        $imagearr[htmlspecialchars_decode($imagestr)] = TRUE;
+        $imagearr[htmlspecialchars_decode($imagestr, ENT_QUOTES)] = TRUE;
     }
 }
 
@@ -1425,7 +1430,7 @@ $validargs = [
         "count" => 1,
         "shouldExtract" => TRUE,
         "syntax" => "--dbout --mode=[clean]^[upsert]",
-        "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.\n\nMode Options [Required to specify]:\n\n"
+        "desc" => "Ensures all relevant data exists in the predefined database through a variety of operations.\nWill invalidate cached requests that make use of relevant data.\n\nMode Options [Required to specify]:\n\n"
             . "[clean] : --mode=clean : Clears all herodata in the database before updating it with newly parsed data. Should really only be used for development.\n"
             . "[upsert] : --mode=upsert : Attempts to insert newly parsed data to the database, if unique keys already exist for that data, only non-unique fields are updated.\n",
         "exec" => function (...$args) {
@@ -1562,6 +1567,13 @@ $validargs = [
                         $db->execute("UpsertTalent");
                     }
                 }
+
+                //Invalidate any cached requests that made use of data generated from this operation
+                $redis = new RedisDatabase();
+                $redis->connect($database_credentials['redis']);
+
+                //Go through the cache requests to expire
+                $redis->expire(HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST);
 
                 $log("[--dbout $mode] Updated database with new herodata...".E);
             }
