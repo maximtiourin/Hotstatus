@@ -738,7 +738,6 @@ function updateHeroes(&$match, &$bannedHeroes) {
         $op = [
             $filter,        //Filter Array
             [               //Update Array
-                '$set' => $set,
                 '$setOnInsert' => $setOnInsert,
                 '$max' => $max,
                 '$inc' => $inc,
@@ -771,9 +770,9 @@ function updateHeroes(&$match, &$bannedHeroes) {
         // >>>.>>>.>>> granular #@@#
         $scope = "summary_data.matches.granular";
         // >>>.>>>.>>>.>>> "MapId"
-        $scope .= $match['map'];
+        $scope .= ".".$match['map'];
         // >>>.>>>.>>>.>>>.>>> "GameTypeId"
-        $scope .= $match['type'];
+        $scope .= ".".$match['type'];
         // >>>.>>>.>>>.>>>.>>>.>>> banned
         $inc["$scope.banned"] = 1;
         // >>> weekly_data #@@#
@@ -893,6 +892,7 @@ while (true) {
                 //No parse error, add all relevant match data to database in needed collections
                 $inserterror = FALSE;
                 $msg = "";
+                $write_errors = [];
                 try {
                     //Matches
                     $insertResult = insertMatch($parse);
@@ -924,6 +924,9 @@ while (true) {
                 catch (BulkWriteException $e) {
                     $inserterror = TRUE;
                     $msg = $e->getMessage();
+                    foreach ($e->getWriteResult()->getWriteErrors() as $error) {
+                        $write_errors[] = ['msg' => $error->getMessage(), 'index' => $error->getIndex()];
+                    }
                 }
                 catch (RuntimeException $e) {
                     $inserterror = TRUE;
@@ -932,8 +935,15 @@ while (true) {
 
                 if ($inserterror) {
                     //Error adding to collection, cancel parsing, long sleep to potentially account for hitting mongodb size limit
-                    echo 'Failed to ingest parsed data into MongoDB collection...'.E;
-                    echo $msg.E;
+                    echo 'Failed to ingest parsed data into MongoDB collection...'.E.E;
+                    if (count($write_errors) > 0) {
+                        foreach ($write_errors as $error) {
+                            echo $error['index'].": ".$error['msg'].E;
+                        }
+                    }
+                    else {
+                        echo $msg.E.E;
+                    }
 
                     $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
                 }
