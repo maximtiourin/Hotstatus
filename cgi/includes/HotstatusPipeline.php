@@ -12,6 +12,7 @@ class HotstatusPipeline {
     const REPLAY_DOWNLOAD_LIMIT = 10; //How many replays can be downloaded to disk at any one time
     const REPLAY_EXECUTABLE_DIRECTORY = "/bin/"; //Where the executables for processing replays are located
     const REPLAY_EXECUTABLE_ID_REPLAYPARSER = "ReplayParser.exe"; //String id of the replay parser executable, relative to exec dir
+    const REPLAY_EXECUTABLE_ID_MMRCALCULATOR = "MMRCalculator.exe"; //String id of the mmr calculator executable, relative to exec dir
     const REPLAY_STATUS_QUEUED = "queued"; //status value for when a replay is queued to be downloaded
     const REPLAY_STATUS_DOWNLOADING = "downloading"; //status value for when a replay is in the process of being downloaded
     const REPLAY_STATUS_DOWNLOADED = "downloaded"; //status value for when a replay has been downloaded
@@ -29,13 +30,13 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     public static $SEASONS = [
-        "2017 Season 2" => [
-            "start" =>  "2017-06-13 07:00:00",
-            "end" =>    "2017-09-05 06:59:99"
-        ],
         "2017 Season 3" => [
             "start" =>  "2017-09-05 07:00:00",
-            "end" =>    "2017-12-12 06:59:99"
+            "end" =>    "2017-12-12 06:59:59"
+        ],
+        "2017 Season 2" => [
+            "start" =>  "2017-06-13 07:00:00",
+            "end" =>    "2017-09-05 06:59:59"
         ]
     ];
 

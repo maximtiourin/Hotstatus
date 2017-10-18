@@ -8,6 +8,7 @@ namespace Fizzik;
 
 require_once 'includes/include.php';
 require_once 'includes/ReplayParser.php';
+require_once 'includes/MMRCalculator.php';
 
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\MongoDBDatabase;
@@ -62,7 +63,7 @@ $db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
  * ['match'] = Updated parse data with new fields added
  * ['match_id'] = The official match id tied to the match data
  */
-function insertMatch(&$parse) {
+function insertMatch(&$parse, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
     global $mongo, $r_id;
 
     $parse['_id'] = $r_id; //Set document id to be the match id
@@ -70,6 +71,43 @@ function insertMatch(&$parse) {
     /* Update document with additional relevant data */
     //Week Data
     $parse['week_info'] = HotstatusPipeline::getWeekDataOfReplay($parse['date']);
+
+    //Team MMR
+    $parse['mmr'] = [
+        '0' => [
+            'old' => [
+                'rating' => $mmrcalc['team_ratings']['initial'][0]
+            ],
+            'new' => [
+                'rating' => $mmrcalc['team_ratings']['final'][0]
+            ]
+        ],
+        '1' => [
+            'old' => [
+                'rating' => $mmrcalc['team_ratings']['initial'][1]
+            ],
+            'new' => [
+                'rating' => $mmrcalc['team_ratings']['final'][1]
+            ]
+        ],
+        'quality' => $mmrcalc['match_quality']
+    ];
+
+    //Player MMR
+    foreach ($parse['players'] as &$player) {
+        $player['mmr'] = [
+            'old' => [
+                'rating' => $old_mmrs['team'.$player['team']][$player['id'].""]['rating'],
+                'mu' => $old_mmrs['team'.$player['team']][$player['id'].""]['mu'],
+                'sigma' => $old_mmrs['team'.$player['team']][$player['id'].""]['sigma'],
+            ],
+            'new' => [
+                'rating' => $new_mmrs['team'.$player['team']][$player['id'].""]['rating'],
+                'mu' => $new_mmrs['team'.$player['team']][$player['id'].""]['mu'],
+                'sigma' => $new_mmrs['team'.$player['team']][$player['id'].""]['sigma'],
+            ]
+        ];
+    }
 
     //Begin inserting 'match' document
     /** @var Collection $clc */
@@ -89,7 +127,7 @@ function insertMatch(&$parse) {
 /*
  * Updates the 'players' collection with all relevant player data
  */
-function updatePlayers(&$match) {
+function updatePlayers(&$match, $seasonid, &$new_mmrs) {
     global $mongo;
 
     //A assoc array of bulk write operations, {'OP_NAME' => ['PARAMETERS', ...]}
@@ -108,6 +146,7 @@ function updatePlayers(&$match) {
 
         //Multi Calc values
         $inc_wonMatch = ($player['team'] === $match['winner']) ? (1) : (0); //Did player win the match?
+        $set_playermmr = $new_mmrs['team'.$player['team']][$player['id'].""]; //The player's new mmr object
 
         //Init Arrays
         $filter = [];
@@ -130,6 +169,19 @@ function updatePlayers(&$match) {
         // >>> account_level
         $max['account_level'] = $player['account_level'];
         // >>> summary_data
+        // >>>.>>> mmr
+        // >>>.>>>.>>> granular
+        $scope = "summary_data.mmr.granular";
+        // >>>.>>>.>>>.>>> "SeasonId"
+        $scope .= ".".$seasonid;
+        // >>>.>>>.>>>.>>>.>>> "GameTypeId"
+        $scope .= ".".$match['type'];
+        // >>>.>>>.>>>.>>>.>>>.>>> rating
+        $set["$scope.rating"] = $set_playermmr['rating'];
+        // >>>.>>>.>>>.>>>.>>>.>>> mu
+        $set["$scope.mu"] = $set_playermmr['mu'];
+        // >>>.>>>.>>>.>>>.>>>.>>> sigma
+        $set["$scope.sigma"] = $set_playermmr['sigma'];
         // >>>.>>> matches
         // >>>.>>>.>>> total
         $scope = "summary_data.matches.total";
@@ -877,8 +929,14 @@ while (true) {
                 $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                 $matchtype = $parse['type'];
 
-                //Get current mmrs if any
-                $player_old_mmrs = [];
+                $team0rank = ($parse['winner'] === 0) ? (1) : (2);
+                $team1rank = ($parse['winner'] === 1) ? (1) : (2);
+
+                //Get old mmrs if any
+                $player_old_mmrs = [
+                    "team0" => [],
+                    "team1" => []
+                ];
                 foreach ($parse['players'] as $player) {
                     /** @var Collection $clc_players */
                     $clc_players = $mongo->selectCollection('players');
@@ -895,97 +953,134 @@ while (true) {
                         ]
                     );
                     if ($res !== null) {
-                        //Found player
+                        //Found player mmr
                         $obj = $res['summary_data']['mmr']['granular'][$seasonid][$matchtype];
 
                         $mmr = [
                             'rating' => $obj['rating'],
                             'mu' => $obj['mu'],
-                            'sigma' => $obj['sigma'],
+                            'sigma' => $obj['sigma']
                         ];
 
-                        $player_old_mmrs[] = $mmr;
+                        $player_old_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
                     }
                     else {
+                        //Did not find an mmr for player
+                        $mmr = [
+                            'rating' => "?",
+                            'mu' => "?",
+                            'sigma' => "?"
+                        ];
 
+                        $player_old_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
                     }
                 }
 
+                //Calculate new mmrs
+                echo 'Calculating MMR...'.E;
+                $calc = MMRCalculator::Calculate(__DIR__, $team0rank, $team1rank, $player_old_mmrs);
 
-                //Collect mapping of ban attributes to hero names
-                $bannedHeroes = [];
-                foreach ($parse['bans'] as $teambans) {
-                    foreach ($teambans as $heroban) {
-                        $r_name_attribute = $heroban;
+                //Check if mmr calculation was a success
+                if (!key_exists('error', $calc)) {
+                    //Collect new player mmrs
+                    $player_new_mmrs = [
+                        "team0" => [],
+                        "team1" => []
+                    ];
+                    foreach ($parse['players'] as $player) {
+                        $obj = $calc['players'][$player['id'].""];
 
-                        $result3 = $db->execute("GetHeroNameFromAttribute");
-                        $resrows3 = $db->countResultRows($result3);
-                        if ($resrows3 > 0) {
-                            $row2 = $db->fetchArray($result3);
+                        $mmr = [
+                            'rating' => $obj['mmr'],
+                            'mu' => $obj['mu'],
+                            'sigma' => $obj['sigma']
+                        ];
 
-                            $bannedHeroes[] = $row2['name'];
-                        }
-                        $db->freeResult($result3);
-                    }
-                }
-
-                //No parse error, add all relevant match data to database in needed collections
-                $inserterror = FALSE;
-                $msg = "";
-                $write_errors = [];
-                try {
-                    //Matches
-                    $insertResult = insertMatch($parse);
-                    //Players
-                    updatePlayers($insertResult['match']);
-                    //Heroes
-                    updateHeroes($insertResult['match'], $bannedHeroes);
-                    //WeeklyMatches
-
-                    //Delete local file
-                    if (file_exists($r_filepath)) {
-                        FileHandling::deleteAllFilesMatchingPattern($r_filepath);
+                        $player_new_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
                     }
 
-                    //Update mysql
-                    $r_id = $row['id'];
-                    $r_match_id = $insertResult['match_id'];
-                    $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
-                    $r_timestamp = time();
+                    //Collect mapping of ban attributes to hero names
+                    $bannedHeroes = [];
+                    foreach ($parse['bans'] as $teambans) {
+                        foreach ($teambans as $heroban) {
+                            $r_name_attribute = $heroban;
 
-                    $db->execute("UpdateReplayParsed");
+                            $result3 = $db->execute("GetHeroNameFromAttribute");
+                            $resrows3 = $db->countResultRows($result3);
+                            if ($resrows3 > 0) {
+                                $row2 = $db->fetchArray($result3);
 
-                    echo 'Successfully parsed replay #'.$r_id.'...'.E;
-                }
-                catch (InvalidArgumentException $e) {
-                    $inserterror = TRUE;
-                    $msg = $e->getMessage();
-                }
-                catch (BulkWriteException $e) {
-                    $inserterror = TRUE;
-                    $msg = $e->getMessage();
-                    foreach ($e->getWriteResult()->getWriteErrors() as $error) {
-                        $write_errors[] = ['msg' => $error->getMessage(), 'index' => $error->getIndex()];
-                    }
-                }
-                catch (RuntimeException $e) {
-                    $inserterror = TRUE;
-                    $msg = $e->getMessage();
-                }
-
-                if ($inserterror) {
-                    //Error adding to collection, cancel parsing, long sleep to potentially account for hitting mongodb size limit
-                    echo 'Failed to ingest parsed data into MongoDB collection...'.E.E;
-                    if (count($write_errors) > 0) {
-                        foreach ($write_errors as $error) {
-                            echo $error['index'].": ".$error['msg'].E;
+                                $bannedHeroes[] = $row2['name'];
+                            }
+                            $db->freeResult($result3);
                         }
                     }
-                    else {
-                        echo $msg.E.E;
+
+                    //No parse error, add all relevant match data to database in needed collections
+                    $inserterror = FALSE;
+                    $msg = "";
+                    $write_errors = [];
+                    try {
+                        //Matches
+                        $insertResult = insertMatch($parse, $calc, $player_old_mmrs, $player_new_mmrs);
+                        //Players
+                        updatePlayers($insertResult['match'], $seasonid, $player_new_mmrs);
+                        //Heroes
+                        updateHeroes($insertResult['match'], $bannedHeroes);
+                        //WeeklyMatches
+                        //TODO Implement updating of weekly matches
+
+                        //Delete local file
+                        if (file_exists($r_filepath)) {
+                            FileHandling::deleteAllFilesMatchingPattern($r_filepath);
+                        }
+
+                        //Update mysql
+                        $r_id = $row['id'];
+                        $r_match_id = $insertResult['match_id'];
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
+                        $r_timestamp = time();
+
+                        $db->execute("UpdateReplayParsed");
+
+                        echo 'Successfully parsed replay #'.$r_id.'...'.E;
+                    }
+                    catch (InvalidArgumentException $e) {
+                        $inserterror = TRUE;
+                        $msg = $e->getMessage();
+                    }
+                    catch (BulkWriteException $e) {
+                        $inserterror = TRUE;
+                        $msg = $e->getMessage();
+                        foreach ($e->getWriteResult()->getWriteErrors() as $error) {
+                            $write_errors[] = ['msg' => $error->getMessage(), 'index' => $error->getIndex()];
+                        }
+                    }
+                    catch (RuntimeException $e) {
+                        $inserterror = TRUE;
+                        $msg = $e->getMessage();
                     }
 
-                    $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
+                    if ($inserterror) {
+                        //Error adding to collection, cancel parsing, long sleep to potentially account for hitting mongodb size limit
+                        echo 'Failed to ingest parsed data into MongoDB collection...'.E.E;
+                        if (count($write_errors) > 0) {
+                            foreach ($write_errors as $error) {
+                                echo $error['index'].": ".$error['msg'].E;
+                            }
+                        }
+                        else {
+                            echo $msg.E.E;
+                        }
+
+                        $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
+                    }
+                }
+                else {
+                    //Encountered an error parsing replay, output it and cancel parsing
+                    echo 'Failed to calculate mmr #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E;
+
+                    $sleep->add(MINI_SLEEP_DURATION);
                 }
             }
             else {
