@@ -871,7 +871,47 @@ while (true) {
 
             $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath);
 
+            //Check if parse was a success
             if (!key_exists('error', $parse)) {
+                /* Collect player mmrs and calculate new mmr for match season */
+                $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
+                $matchtype = $parse['type'];
+
+                //Get current mmrs if any
+                $player_old_mmrs = [];
+                foreach ($parse['players'] as $player) {
+                    /** @var Collection $clc_players */
+                    $clc_players = $mongo->selectCollection('players');
+                    $res = $clc_players->findOne(
+                        [               //Filter Array
+                            '_id' => $player['id'],
+                            "summary_data.mmr.granular.$seasonid.$matchtype" => ['$exists' => true]
+                        ],
+                        [               //Options Array
+                            'projection' => [
+                                '_id' => 0,
+                                "summary_data.mmr.granular.$seasonid.$matchtype" => 1
+                            ]
+                        ]
+                    );
+                    if ($res !== null) {
+                        //Found player
+                        $obj = $res['summary_data']['mmr']['granular'][$seasonid][$matchtype];
+
+                        $mmr = [
+                            'rating' => $obj['rating'],
+                            'mu' => $obj['mu'],
+                            'sigma' => $obj['sigma'],
+                        ];
+
+                        $player_old_mmrs[] = $mmr;
+                    }
+                    else {
+
+                    }
+                }
+
+
                 //Collect mapping of ban attributes to hero names
                 $bannedHeroes = [];
                 foreach ($parse['bans'] as $teambans) {

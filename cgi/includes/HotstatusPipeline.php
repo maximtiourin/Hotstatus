@@ -3,6 +3,7 @@
 namespace Fizzik;
 
 class HotstatusPipeline {
+    //General constants
     const STATS_WEEK_RANGE = 15; //How many weeks of match data to keep alive in the database
     const REPLAY_AGE_LIMIT = 7 * self::STATS_WEEK_RANGE; //Relevant replays are those that are less than or equal to days of age
     const REPLAY_TIMEZONE = "UTC"; //Default timezone used for dating replays as well as process locks
@@ -21,6 +22,22 @@ class HotstatusPipeline {
 
     //Enums
     public static $ENUM_REGIONS = ['PTR', 'US', 'EU']; //Regen indexes for use with converting replay data
+
+    /*
+     * Season information
+     * All dates are UTC, so when looking up Blizzard's season start and end dates, add 7 hours to PST time accordingly
+     */
+    const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
+    public static $SEASONS = [
+        "2017 Season 2" => [
+            "start" =>  "2017-06-13 07:00:00",
+            "end" =>    "2017-09-05 06:59:99"
+        ],
+        "2017 Season 3" => [
+            "start" =>  "2017-09-05 07:00:00",
+            "end" =>    "2017-12-12 06:59:99"
+        ]
+    ];
 
     /*
      * Cached Requests - Collection of keys to specific cached redis data, should be used to cache or invalidate
@@ -66,6 +83,27 @@ class HotstatusPipeline {
      */
     public static function getRegionString($regionid) {
         return self::$ENUM_REGIONS[$regionid];
+    }
+
+    /*
+     * Returns the season id string that a given date time string belongs within.
+     * Returns const SEASON_UNKNOWN if the datetime doesn't fall within a known season time range
+     */
+    public static function getSeasonStringForDateTime($datetimestring) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $date = new \DateTime($datetimestring);
+
+        foreach (self::$SEASONS as $season => $times) {
+            $startdate = new \DateTime($times['start']);
+            $enddate = new \DateTime($times['end']);
+
+            if ($date >= $startdate && $date <= $enddate) {
+                return $season;
+            }
+        }
+
+        return self::SEASON_UNKNOWN;
     }
 
     /*
