@@ -53,6 +53,12 @@ $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 $db->prepare("GetHeroNameFromAttribute",
     "SELECT name FROM herodata_heroes WHERE name_attribute = ?");
 $db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
+$db->prepare("GetHeroNameSortFromHeroName",
+    "SELECT name_sort FROM herodata_heroes WHERE name = ?");
+$db->bind("GetHeroNameSortFromHeroName", "s", $r_name);
+$db->prepare("GetMapNameSortFromMapName",
+    "SELECT name_sort FROM herodata_maps WHERE name = ?");
+$db->bind("GetMapNameSortFromMapName", "s", $r_name);
 
 //Helper functions
 
@@ -63,7 +69,7 @@ $db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
  * ['match'] = Updated parse data with new fields added
  * ['match_id'] = The official match id tied to the match data
  */
-function insertMatch(&$parse, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
+function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
     global $mongo, $r_id;
 
     $parse['_id'] = $r_id; //Set document id to be the match id
@@ -93,8 +99,13 @@ function insertMatch(&$parse, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
         'quality' => $mmrcalc['match_quality']
     ];
 
-    //Player MMR
+    //Map mapping
+    $parse['map'] = $mapMapping;
+
+    //Player MMR && Hero Name mappings
     foreach ($parse['players'] as &$player) {
+        $player['hero'] = $heroNameMappings[$player['hero']];
+
         $player['mmr'] = [
             'old' => [
                 'rating' => $old_mmrs['team'.$player['team']][$player['id'].""]['rating'],
@@ -125,6 +136,51 @@ function insertMatch(&$parse, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
 }
 
 /*
+ * Updates the 'weeklyMatches' collection with relevant match data
+ */
+function updateWeeklyMatches(&$match) {
+    global $mongo;
+
+    /** @var Collection $clc_weeklyMatches */
+    $clc_weeklyMatches = $mongo->selectCollection('weeklyMatches');
+
+    $scope = "";
+
+    //Multi Calc values
+    $weekinfo = $match['week_info'];
+    $mapid = $match['map'];
+    $gametypeid = $match['type'];
+
+    //Init Arrays
+    $filter = [];
+    $addToSet = [];
+
+    $filter['_id'] = [
+        'year' => $weekinfo['year'],
+        'week' => $weekinfo['week'],
+    ];
+    $set["date_start"] = $weekinfo['date_start'];
+    $set["date_end"] = $weekinfo['date_end'];
+    $scope = "matches.$mapid.$gametypeid";
+    $addToSet[$scope] = $match['_id'];
+
+    $res = $clc_weeklyMatches->updateOne(
+        $filter,        //Filter Array
+        [               //Update Array
+            '$addToSet' => $addToSet
+        ],
+        [               //Options Array
+            'upsert' => true
+        ]
+    );
+
+    $upsertedCount = $res->getUpsertedCount();
+    $modifiedCount = $res->getModifiedCount();
+
+    echo "$modifiedCount modified, $upsertedCount upserted, into 'weeklyMatches' collection".E;
+}
+
+/*
  * Updates the 'players' collection with all relevant player data
  */
 function updatePlayers(&$match, $seasonid, &$new_mmrs) {
@@ -151,7 +207,6 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
         //Init Arrays
         $filter = [];
         $set = [];
-        $setOnInsert = [];
         $max = [];
         $inc = [];
         $addToSet = [];
@@ -290,7 +345,7 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
         $w_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $setOnInsert["$w_scope.talents"] = $player['talents'];
+        $set["$w_scope.talents"] = $player['talents'];
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
         $inc["$w_scope.played"] = 1;
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
@@ -302,9 +357,9 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
         // >>>.>>>.>>> "ISO_WEEK"
         $scope .= ".".$match['week_info']['week'];
         // >>>.>>>.>>>.>>> date_start
-        $setOnInsert["$scope.date_start"] = $match['week_info']['date_start'];
+        $set["$scope.date_start"] = $match['week_info']['date_start'];
         // >>>.>>>.>>>.>>> date_end
-        $setOnInsert["$scope.date_end"] = $match['week_info']['date_end'];
+        $set["$scope.date_end"] = $match['week_info']['date_end'];
         // >>>.>>>.>>>.>>> matches
         $scope .= ".matches";
         // >>>.>>>.>>>.>>>.>>> total
@@ -410,7 +465,7 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
         $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $setOnInsert["$b_scope.talents"] = $player['talents'];
+        $set["$b_scope.talents"] = $player['talents'];
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
         $inc["$b_scope.played"] = 1;
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
@@ -421,7 +476,7 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
             // >>>.>>>.>>>.>>>.>>>.>>> "PartyHashKey"
             $w_scope .= "." . HotstatusPipeline::getPerPlayerPartyHash($player['party']);
             // >>>.>>>.>>>.>>>.>>>.>>>.>>> players
-            $setOnInsert["$w_scope.players"] = HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']);
+            $set["$w_scope.players"] = HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']);
             // >>>.>>>.>>>.>>>.>>>.>>>.>>> played
             $inc["$w_scope.played"] = 1;
             // >>>.>>>.>>>.>>>.>>>.>>>.>>> won
@@ -436,7 +491,6 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
             $filter,        //Filter Array
             [               //Update Array
                 '$set' => $set,
-                '$setOnInsert' => $setOnInsert,
                 '$max' => $max,
                 '$inc' => $inc,
                 '$addToSet' => $addToSet
@@ -455,8 +509,9 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
     ]);
 
     $upsertedCount = $res->getUpsertedCount();
+    $modifiedCount = $res->getModifiedCount();
 
-    echo $upsertedCount.' documents upserted into \'players\' collection'.E;
+    echo "$modifiedCount modified, $upsertedCount upserted, into 'players' collection".E;
 }
 
 /*
@@ -485,7 +540,6 @@ function updateHeroes(&$match, &$bannedHeroes) {
         //Init Arrays
         $filter = [];
         $set = [];
-        $setOnInsert = [];
         $max = [];
         $inc = [];
         $addToSet = [];
@@ -597,7 +651,7 @@ function updateHeroes(&$match, &$bannedHeroes) {
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
         $w_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $setOnInsert["$w_scope.talents"] = $player['talents'];
+        $set["$w_scope.talents"] = $player['talents'];
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
         $inc["$w_scope.played"] = 1;
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
@@ -609,9 +663,9 @@ function updateHeroes(&$match, &$bannedHeroes) {
         // >>>.>>>.>>> "ISO_WEEK"
         $scope .= ".".$match['week_info']['week'];
         // >>>.>>>.>>>.>>> date_start
-        $setOnInsert["$scope.date_start"] = $match['week_info']['date_start'];
+        $set["$scope.date_start"] = $match['week_info']['date_start'];
         // >>>.>>>.>>>.>>> date_end
-        $setOnInsert["$scope.date_end"] = $match['week_info']['date_end'];
+        $set["$scope.date_end"] = $match['week_info']['date_end'];
         // >>>.>>>.>>>.>>> matches #@@#
         $scope .= ".matches";
         // >>>.>>>.>>>.>>>.>>> total #@@#
@@ -711,7 +765,7 @@ function updateHeroes(&$match, &$bannedHeroes) {
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
         $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $setOnInsert["$b_scope.talents"] = $player['talents'];
+        $set["$b_scope.talents"] = $player['talents'];
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
         $inc["$b_scope.played"] = 1;
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
@@ -776,7 +830,7 @@ function updateHeroes(&$match, &$bannedHeroes) {
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
         $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $setOnInsert["$b_scope.talents"] = $player['talents'];
+        $set["$b_scope.talents"] = $player['talents'];
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
         $inc["$b_scope.played"] = 1;
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
@@ -790,7 +844,6 @@ function updateHeroes(&$match, &$bannedHeroes) {
         $op = [
             $filter,        //Filter Array
             [               //Update Array
-                '$setOnInsert' => $setOnInsert,
                 '$max' => $max,
                 '$inc' => $inc,
                 '$addToSet' => $addToSet
@@ -870,10 +923,10 @@ function updateHeroes(&$match, &$bannedHeroes) {
     ]);
 
     $upsertedCount = $res->getUpsertedCount();
+    $modifiedCount = $res->getModifiedCount();
 
-    echo $upsertedCount.' documents upserted into \'heroes\' collection'.E;
+    echo "$modifiedCount modified, $upsertedCount upserted, into 'heroes' collection".E;
 }
-
 
 
 
@@ -1016,19 +1069,50 @@ while (true) {
                         }
                     }
 
+                    //Collect mapping of hero name to hero name sort
+                    $heroNameMappings = [];
+                    foreach ($parse['players'] as $player) {
+                        $r_name = $player['hero'];
+
+                        $heroNameMappings[$r_name] = $r_name; //Default Value
+
+                        $result3 = $db->execute("GetHeroNameSortFromHeroName");
+                        $resrows3 = $db->countResultRows($result3);
+                        if ($resrows3 > 0) {
+                            $row2 = $db->fetchArray($result3);
+
+                            $heroNameMappings[$r_name] = $row2['name_sort'];
+                        }
+                        $db->freeResult($result3);
+                    }
+
+                    //Collect mapping of map names to map name sort
+                    $mapMapping = $parse['map']; //Default Value
+
+                    $r_name = $parse['map'];
+
+                    $result3 = $db->execute("GetMapNameSortFromMapName");
+                    $resrows3 = $db->countResultRows($result3);
+                    if ($resrows3 > 0) {
+                        $row2 = $db->fetchArray($result3);
+
+                        $mapMapping[$r_name] = $row2['name_sort'];
+                    }
+                    $db->freeResult($result3);
+
                     //No parse error, add all relevant match data to database in needed collections
                     $inserterror = FALSE;
                     $msg = "";
                     $write_errors = [];
                     try {
                         //Matches
-                        $insertResult = insertMatch($parse, $calc, $player_old_mmrs, $player_new_mmrs);
+                        $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
+                        //WeeklyMatches
+                        updateWeeklyMatches($insertResult['match']);
                         //Players
                         updatePlayers($insertResult['match'], $seasonid, $player_new_mmrs);
                         //Heroes
                         updateHeroes($insertResult['match'], $bannedHeroes);
-                        //WeeklyMatches
-                        //TODO Implement updating of weekly matches
 
                         //Delete local file
                         if (file_exists($r_filepath)) {

@@ -48,6 +48,8 @@ const IDX = "index";
 const PATH_DATA = "/data/heroesdata/";
 //Buildata
 const FILE_BUILDDATA = "mods/core.stormmod/base.stormdata/BuildId.txt";
+//Mapdata
+const FILE_MAPDATA = "/data/maps.json";
 //Stormdata
 const PATH_STORMDATA = "mods/heroesdata.stormmod/base.stormdata/GameData/";
 const PATH_STORMDATA_STRINGS = "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
@@ -1501,7 +1503,16 @@ $validargs = [
                 $db->bind("UpsertTalent",
                     "sssssii",
                     $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_tier_row, $r_tier_column);
-
+                // UpsertMap
+                $db->prepare("UpsertMap",
+                    "INSERT INTO herodata_maps "
+                    . "(name, name_sort) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name = VALUES(name), name_sort = VALUES(name_sort)");
+                $db->bind("UpsertMap",
+                    "ss",
+                    $r_name, $r_name_sort);
 
                 /*
                  * Empty tables if specified
@@ -1510,6 +1521,7 @@ $validargs = [
                     $db->query("TRUNCATE TABLE herodata_talents");
                     $db->query("TRUNCATE TABLE herodata_abilities");
                     $db->query("TRUNCATE TABLE herodata_heroes");
+                    $db->query("TRUNCATE TABLE herodata_maps");
 
                     $log("[--dbout $mode] Emptied herodata tables...");
                 }
@@ -1566,6 +1578,20 @@ $validargs = [
 
                         $db->execute("UpsertTalent");
                     }
+                }
+
+                //Upsert Maps
+                $filepath = __DIR__ . FILE_MAPDATA;
+                if (file_exists($filepath)) {
+                    $json = json_decode(file_get_contents($filepath), true);
+                    foreach ($json as $map) {
+                        $r_name = $map['PrimaryName'];
+                        $r_name_sort = $map['ImageURL'];
+                        $db->execute("UpsertMap");
+                    }
+                }
+                else {
+                    $log("[--dbout $mode] Could not find map data file (" . $filepath . ")...".E);
                 }
 
                 //Invalidate any cached requests that made use of data generated from this operation

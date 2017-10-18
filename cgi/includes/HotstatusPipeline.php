@@ -45,7 +45,6 @@ class HotstatusPipeline {
      */
     const CACHE_REQUEST_DATATABLE_HEROES_STATSLIST = "Cache_Request_DataTable_Heroes_Statslist";
 
-
     /*
      * Takes a date time string, converts it to a date time, and returns an assoc array
      * that contains the following fields:
