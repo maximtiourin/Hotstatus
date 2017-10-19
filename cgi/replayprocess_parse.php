@@ -50,9 +50,9 @@ $db->bind("UpdateReplayParsed", "isii", $r_match_id, $r_status, $r_timestamp, $r
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY id ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
-$db->prepare("GetHeroNameFromAttribute",
-    "SELECT name FROM herodata_heroes WHERE name_attribute = ?");
-$db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
+$db->prepare("GetHeroNameSortFromAttribute",
+    "SELECT name_sort FROM herodata_heroes WHERE name_attribute = ?");
+$db->bind("GetHeroNameSortFromAttribute", "s", $r_name_attribute);
 $db->prepare("GetHeroNameSortFromHeroName",
     "SELECT name_sort FROM herodata_heroes WHERE name = ?");
 $db->bind("GetHeroNameSortFromHeroName", "s", $r_name);
@@ -203,6 +203,7 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
         //Multi Calc values
         $inc_wonMatch = ($player['team'] === $match['winner']) ? (1) : (0); //Did player win the match?
         $set_playermmr = $new_mmrs['team'.$player['team']][$player['id'].""]; //The player's new mmr object
+        $talents = $player['talents'];
 
         //Init Arrays
         $filter = [];
@@ -331,25 +332,27 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
             $inc["$l_scope.count"] = 1;
         }
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $w_scope = "$scope.talents";
-        foreach ($player['talents'] as $talent) {
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
-            $l_scope = "$w_scope.$talent";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-            $inc["$l_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-            $inc["$l_scope.won"] = $inc_wonMatch;
+        if (count($talents) > 0) {
+            $w_scope = "$scope.talents";
+            foreach ($talents as $talent) {
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+                $l_scope = "$w_scope.$talent";
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+                $inc["$l_scope.played"] = 1;
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+                $inc["$l_scope.won"] = $inc_wonMatch;
+            }
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+            $w_scope = "$scope.builds";
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+            $w_scope .= "." . HotstatusPipeline::getTalentBuildHash($talents);
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+            $set["$w_scope.talents"] = $talents;
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+            $inc["$w_scope.played"] = 1;
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+            $inc["$w_scope.won"] = $inc_wonMatch;
         }
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
-        $w_scope = "$scope.builds";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
-        $w_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $set["$w_scope.talents"] = $player['talents'];
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-        $inc["$w_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-        $inc["$w_scope.won"] = $inc_wonMatch;
         // >>> weekly_data
         $scope = "weekly_data";
         // >>>.>>> "ISO_YEAR"
@@ -451,25 +454,27 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
             $inc["$l_scope.count"] = 1;
         }
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $b_scope = "$w_scope.talents";
-        foreach ($player['talents'] as $talent) {
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
-            $l_scope = "$b_scope.$talent";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-            $inc["$l_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-            $inc["$l_scope.won"] = $inc_wonMatch;
+        if (count($talents) > 0) {
+            $b_scope = "$w_scope.talents";
+            foreach ($talents as $talent) {
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+                $l_scope = "$b_scope.$talent";
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+                $inc["$l_scope.played"] = 1;
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+                $inc["$l_scope.won"] = $inc_wonMatch;
+            }
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+            $b_scope = "$w_scope.builds";
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+            $b_scope .= "." . HotstatusPipeline::getTalentBuildHash($talents);
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+            $set["$b_scope.talents"] = $talents;
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+            $inc["$b_scope.played"] = 1;
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+            $inc["$b_scope.won"] = $inc_wonMatch;
         }
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
-        $b_scope = "$w_scope.builds";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
-        $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $set["$b_scope.talents"] = $player['talents'];
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-        $inc["$b_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-        $inc["$b_scope.won"] = $inc_wonMatch;
         if (count($player['party']) > 0) {
             // >>>.>>>.>>>.>>>.>>> parties
             $w_scope = "$scope.parties";
@@ -536,6 +541,7 @@ function updateHeroes(&$match, &$bannedHeroes) {
 
         //Multi Calc values
         $inc_wonMatch = ($player['team'] === $match['winner']) ? (1) : (0); //Did player win the match?
+        $talents = $player['talents'];
 
         //Init Arrays
         $filter = [];
@@ -637,25 +643,27 @@ function updateHeroes(&$match, &$bannedHeroes) {
             $inc["$l_scope.count"] = 1;
         }
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $w_scope = "$scope.talents";
-        foreach ($player['talents'] as $talent) {
-            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
-            $l_scope = "$w_scope.$talent";
+        if (count($talents) > 0) {
+            $w_scope = "$scope.talents";
+            foreach ($talents as $talent) {
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+                $l_scope = "$w_scope.$talent";
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+                $inc["$l_scope.played"] = 1;
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+                $inc["$l_scope.won"] = $inc_wonMatch;
+            }
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+            $w_scope = "$scope.builds";
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+            $w_scope .= "." . HotstatusPipeline::getTalentBuildHash($talents);
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+            $set["$w_scope.talents"] = $talents;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-            $inc["$l_scope.played"] = 1;
+            $inc["$w_scope.played"] = 1;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-            $inc["$l_scope.won"] = $inc_wonMatch;
+            $inc["$w_scope.won"] = $inc_wonMatch;
         }
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
-        $w_scope = "$scope.builds";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
-        $w_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $set["$w_scope.talents"] = $player['talents'];
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-        $inc["$w_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-        $inc["$w_scope.won"] = $inc_wonMatch;
         // >>> weekly_data #@@#
         $scope = "weekly_data";
         // >>>.>>> "ISO_YEAR"
@@ -751,25 +759,27 @@ function updateHeroes(&$match, &$bannedHeroes) {
             $inc["$l_scope.count"] = 1;
         }
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $b_scope = "$w_scope.talents";
-        foreach ($player['talents'] as $talent) {
-            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
-            $l_scope = "$b_scope.$talent";
+        if (count($talents) > 0) {
+            $b_scope = "$w_scope.talents";
+            foreach ($talents as $talent) {
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+                $l_scope = "$b_scope.$talent";
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+                $inc["$l_scope.played"] = 1;
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+                $inc["$l_scope.won"] = $inc_wonMatch;
+            }
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+            $b_scope = "$w_scope.builds";
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+            $b_scope .= "." . HotstatusPipeline::getTalentBuildHash($talents);
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+            $set["$b_scope.talents"] = $talents;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-            $inc["$l_scope.played"] = 1;
+            $inc["$b_scope.played"] = 1;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-            $inc["$l_scope.won"] = $inc_wonMatch;
+            $inc["$b_scope.won"] = $inc_wonMatch;
         }
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
-        $b_scope = "$w_scope.builds";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
-        $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $set["$b_scope.talents"] = $player['talents'];
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-        $inc["$b_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-        $inc["$b_scope.won"] = $inc_wonMatch;
         // >>>.>>>.>>>.>>>.>>> granular #@@#
         $w_scope = "$scope.granular";
         // >>>.>>>.>>>.>>>.>>>.>>>.>>> "MapId"
@@ -816,25 +826,27 @@ function updateHeroes(&$match, &$bannedHeroes) {
             $inc["$l_scope.count"] = 1;
         }
         // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $b_scope = "$w_scope.talents";
-        foreach ($player['talents'] as $talent) {
-            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
-            $l_scope = "$b_scope.$talent";
+        if (count($talents) > 0) {
+            $b_scope = "$w_scope.talents";
+            foreach ($talents as $talent) {
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "TalentId"
+                $l_scope = "$b_scope.$talent";
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
+                $inc["$l_scope.played"] = 1;
+                // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
+                $inc["$l_scope.won"] = $inc_wonMatch;
+            }
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
+            $b_scope = "$w_scope.builds";
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
+            $b_scope .= "." . HotstatusPipeline::getTalentBuildHash($talents);
+            // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
+            $set["$b_scope.talents"] = $talents;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-            $inc["$l_scope.played"] = 1;
+            $inc["$b_scope.played"] = 1;
             // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-            $inc["$l_scope.won"] = $inc_wonMatch;
+            $inc["$b_scope.won"] = $inc_wonMatch;
         }
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< builds
-        $b_scope = "$w_scope.builds";
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< "BuildTalentHashKey"
-        $b_scope .= ".".HotstatusPipeline::getTalentBuildHash($player['talents']);
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< talents
-        $set["$b_scope.talents"] = $player['talents'];
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< played
-        $inc["$b_scope.played"] = 1;
-        // <<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<<.<<< won
-        $inc["$b_scope.won"] = $inc_wonMatch;
         // >>>.>>>.>>>.>>>.>>> list
         $addToSet["$scope.list"] = $match['_id'];
 
@@ -844,6 +856,7 @@ function updateHeroes(&$match, &$bannedHeroes) {
         $op = [
             $filter,        //Filter Array
             [               //Update Array
+                '$set' => $set,
                 '$max' => $max,
                 '$inc' => $inc,
                 '$addToSet' => $addToSet
@@ -1052,18 +1065,18 @@ while (true) {
                         $player_new_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
                     }
 
-                    //Collect mapping of ban attributes to hero names
+                    //Collect mapping of ban attributes to hero name sorts
                     $bannedHeroes = [];
                     foreach ($parse['bans'] as $teambans) {
                         foreach ($teambans as $heroban) {
                             $r_name_attribute = $heroban;
 
-                            $result3 = $db->execute("GetHeroNameFromAttribute");
+                            $result3 = $db->execute("GetHeroNameSortFromAttribute");
                             $resrows3 = $db->countResultRows($result3);
                             if ($resrows3 > 0) {
                                 $row2 = $db->fetchArray($result3);
 
-                                $bannedHeroes[] = $row2['name'];
+                                $bannedHeroes[] = $row2['name_sort'];
                             }
                             $db->freeResult($result3);
                         }
@@ -1096,7 +1109,7 @@ while (true) {
                     if ($resrows3 > 0) {
                         $row2 = $db->fetchArray($result3);
 
-                        $mapMapping[$r_name] = $row2['name_sort'];
+                        $mapMapping = $row2['name_sort'];
                     }
                     $db->freeResult($result3);
 
@@ -1127,7 +1140,7 @@ while (true) {
 
                         $db->execute("UpdateReplayParsed");
 
-                        echo 'Successfully parsed replay #'.$r_id.'...'.E;
+                        echo 'Successfully parsed replay #'.$r_id.'...'.E.E;
                     }
                     catch (InvalidArgumentException $e) {
                         $inserterror = TRUE;
@@ -1162,14 +1175,14 @@ while (true) {
                 }
                 else {
                     //Encountered an error parsing replay, output it and cancel parsing
-                    echo 'Failed to calculate mmr #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E;
+                    echo 'Failed to calculate mmr #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E.E;
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }
             }
             else {
                 //Encountered an error parsing replay, output it and cancel parsing
-                echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.E;
+                echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.E.E;
 
                 $sleep->add(MINI_SLEEP_DURATION);
             }

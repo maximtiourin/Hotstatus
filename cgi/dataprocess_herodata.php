@@ -197,6 +197,30 @@ $actorImageMappings = [
 $buttonImageMappings = [];
 
 /*
+ * Map is populated of mappings of
+ * ['AWARD ID'] => [
+ *      'name' => "AWARD NAME",
+ *      'desc' => "AWARD DESCRIPTION"
+ * ]
+ *
+ * if a field of a mapping is stated explicitly here, its values wont be overwritten
+ */
+$awardMappings = [
+    "MostTimeOnPoint" => [
+        "desc" => "High Time on Point"
+    ]
+];
+
+/*
+ * List of award ids to ignore
+ */
+$awardMappingsExceptions = [
+    "BooleanValue" => TRUE,
+    "GivenToNonwinner" => TRUE,
+    "MapSpecific" => TRUE
+];
+
+/*
  * Custom Role Mappings for Heroes, if an internal named hero isn't defined here, the const UNKNOWN will be used for their custom role
  */
 const CROLE_HEALER = "Healer";
@@ -514,7 +538,53 @@ function extractButtonImages($filepath) {
     }
 }
 
-function extractHero_xmlToJson($filepath, $file_strings) {
+function extractAwards(&$file_strings) {
+    global $awardMappings, $awardMappingsExceptions;
+
+    $str = $file_strings; //Line seperated localization strings
+
+    /* Look through GameStrings to find valid award strings to extract the award name and description */
+
+    //Award Ids to Award Names
+    $res = [];
+    $ret = preg_match_all('@ScoreValue/Name/EndOfMatchAward(.*?)(?:Boolean)?=(?:.*?>)?(.*?)(?:,.*)?(?:<.*$|$)@m', $str, $res);
+
+    if ($ret !== FALSE) {
+        for ($i = 0; $i < count($res[0]); $i++) {
+            $awardid = $res[1][$i];
+            $awardname = $res[2][$i];
+
+            if (!key_exists($awardid, $awardMappingsExceptions)) {
+                if (!key_exists($awardid, $awardMappings)) $awardMappings[$awardid] = [];
+                if (!key_exists('name', $awardMappings[$awardid])) $awardMappings[$awardid]['name'] = $awardname;
+            }
+        }
+    }
+
+    //Award Ids to Award Descrptions
+    $res = [];
+    $ret = preg_match_all('@ScoreValue/Tooltip/EndOfMatchAward(.*?)(?:Boolean)?=(.*)$@m', $str, $res);
+
+    if ($ret !== FALSE) {
+        for ($i = 0; $i < count($res[0]); $i++) {
+            $awardid = $res[1][$i];
+            $awarddesc = $res[2][$i];
+
+            if (!key_exists($awardid, $awardMappingsExceptions)) {
+                if (!key_exists($awardid, $awardMappings)) $awardMappings[$awardid] = [];
+                if (!key_exists('desc', $awardMappings[$awardid])) $awardMappings[$awardid]['desc'] = $awarddesc;
+            }
+        }
+    }
+
+    //Go through all valid award ids found and enter default values as necessary
+    foreach ($awardMappings as &$award) {
+        if (!key_exists('name', $award)) $award['name'] = UNKNOWN;
+        if (!key_exists('desc', $award)) $award['desc'] = NONE;
+    }
+}
+
+function extractHero_xmlToJson($filepath, &$file_strings) {
     global $ignoreNames, $global_json, $heroCustomRoleMappings, $heroCustomSortMappings, $abilityNameExceptions, $talentMappings, $actorImageMappings, $buttonImageMappings;
 
     $str = file_get_contents($filepath); //Xml string of hero data
@@ -990,6 +1060,9 @@ function extractData() {
         die("Old Hero Index String File does not exist: " . $strfp);
     }
 
+    //Extract Award Information
+    extractAwards($strfile);
+
     if (file_exists($fp)) {
         extractHero_xmlToJson($fp, $strfile);
     }
@@ -1436,7 +1509,7 @@ $validargs = [
             . "[clean] : --mode=clean : Clears all herodata in the database before updating it with newly parsed data. Should really only be used for development.\n"
             . "[upsert] : --mode=upsert : Attempts to insert newly parsed data to the database, if unique keys already exist for that data, only non-unique fields are updated.\n",
         "exec" => function (...$args) {
-            global $validargs, $database_credentials, $global_json;
+            global $validargs, $database_credentials, $global_json, $awardMappings;
 
             if (count($args) == 1) {
                 //Init logging info
@@ -1509,10 +1582,20 @@ $validargs = [
                     . "(name, name_sort) "
                     . "VALUES (?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name = VALUES(name), name_sort = VALUES(name_sort)");
+                    . "name_sort = VALUES(name_sort)");
                 $db->bind("UpsertMap",
                     "ss",
                     $r_name, $r_name_sort);
+                // UpsertAward
+                $db->prepare("UpsertAward",
+                    "INSERT INTO herodata_awards "
+                    . "(id, name, desc_simple) "
+                    . "VALUES (?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name = VALUES(name), desc_simple = VALUES(desc_simple)");
+                $db->bind("UpsertAward",
+                    "sss",
+                    $r_id, $r_name, $r_desc_simple);
 
                 /*
                  * Empty tables if specified
@@ -1522,6 +1605,7 @@ $validargs = [
                     $db->query("TRUNCATE TABLE herodata_abilities");
                     $db->query("TRUNCATE TABLE herodata_heroes");
                     $db->query("TRUNCATE TABLE herodata_maps");
+                    $db->query("TRUNCATE TABLE herodata_awards");
 
                     $log("[--dbout $mode] Emptied herodata tables...");
                 }
@@ -1592,6 +1676,19 @@ $validargs = [
                 }
                 else {
                     $log("[--dbout $mode] Could not find map data file (" . $filepath . ")...".E);
+                }
+
+                //Upsert Awards
+                if (count($awardMappings) > 0) {
+                    foreach ($awardMappings as $awardid => $award) {
+                        $r_id = $awardid;
+                        $r_name =$award['name'];
+                        $r_desc_simple = $award['desc'];
+                        $db->execute("UpsertAward");
+                    }
+                }
+                else {
+                    $log("[--dbout $mode] No award mappings were found...".E);
                 }
 
                 //Invalidate any cached requests that made use of data generated from this operation
