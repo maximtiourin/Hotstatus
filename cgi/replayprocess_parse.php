@@ -12,12 +12,12 @@ require_once 'includes/MMRCalculator.php';
 
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\MongoDBDatabase;
+use Fizzik\Utility\Console;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Utility\SleepHandler;
 use MongoDB\Collection;
 use MongoDB\Driver\Exception\BulkWriteException;
-use MongoDB\Exception\InvalidArgumentException;
-use MongoDB\Exception\RuntimeException;
+use MongoDB\Driver\WriteResult;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -39,6 +39,7 @@ const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
 const UNLOCK_PARSING_DURATION = 60; //Must be unlocked for atleast 1 minute while parsing status
 const E = PHP_EOL;
 $sleep = new SleepHandler();
+$console = new Console();
 
 //Prepare statements
 $db->prepare("UpdateReplayStatus",
@@ -62,12 +63,43 @@ $db->bind("GetMapNameSortFromMapName", "s", $r_name);
 
 //Helper functions
 
+/*
+ * Handles the outputting of information about a bulkwrite exception
+ */
+function BulkWriteExceptionHandler(BulkWriteException $e) {
+    $res = $e->getWriteResult();
+
+    echo "MongoDB Bulk Write errors:".E.E;
+    foreach ($res->getWriteErrors() as $error) {
+        $index = $error->getIndex();
+        $msg = $error->getMessage();
+
+        echo "$index: $msg".E.E;
+    }
+
+    return $res;
+}
+
+function BulkWriteHandler(\MongoDB\Collection $collection, WriteResult $res) {
+    $collectionName = $collection->getCollectionName();
+
+    $upsertedCount = $res->getUpsertedCount();
+    $modifiedCount = $res->getModifiedCount();
+    $insertedCount = $res->getInsertedCount();
+    $matchedCount = $res->getMatchedCount();
+    $deletedCount = $res->getDeletedCount();
+
+    echo "Matched $matchedCount: Inserted $insertedCount, Upserted $upsertedCount, Modified $modifiedCount, Deleted $deletedCount, in '$collectionName' collection".E;
+}
 
 /*
- * Upserts relevant match data into 'matches' collection
- * Returns assoc array:
+ * Inserts match into 'matches' collection
+ *
+ * If operations are successful, Returns assoc array:
  * ['match'] = Updated parse data with new fields added
  * ['match_id'] = The official match id tied to the match data
+ *
+ * Otherwise, returns FALSE
  */
 function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
     global $mongo, $r_id;
@@ -124,19 +156,30 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
     /** @var Collection $clc */
     $clc = $mongo->selectCollection('matches');
 
-    $clcres = $clc->insertOne($parse);
+    try {
+        $res = $clc->insertOne($parse);
 
-    $affectedCount = $clcres->getInsertedCount();
-    $affectedId = $clcres->getInsertedId();
+        $ret = true;
+    }
+    catch (BulkWriteException $e) {
+        $res = BulkWriteExceptionHandler($e);
 
-    echo $affectedCount.' documents inserted into \'matches\' collection'.E;
-    //echo 'Inserted parsed replay #'.$r_id.' as match #'.$affectedId.' into \'matches\' collection...'.E;
+        $ret = false;
+    }
 
-    return ['match' => $parse, 'match_id' => $affectedId];
+    BulkWriteHandler($clc, $res);
+
+    if ($ret) {
+        return ['match' => $parse, 'match_id' => $res->getInsertedId()];
+    }
+    else {
+        return FALSE;
+    }
 }
 
 /*
- * Updates the 'weeklyMatches' collection with relevant match data
+ * Upserts the 'weeklyMatches' collection with relevant match data
+ * Returns TRUE on complete success, FALSE if any errors occurred
  */
 function updateWeeklyMatches(&$match) {
     global $mongo;
@@ -164,24 +207,34 @@ function updateWeeklyMatches(&$match) {
     $scope = "matches.$mapid.$gametypeid";
     $addToSet[$scope] = $match['_id'];
 
-    $res = $clc_weeklyMatches->updateOne(
-        $filter,        //Filter Array
-        [               //Update Array
-            '$addToSet' => $addToSet
-        ],
-        [               //Options Array
-            'upsert' => true
-        ]
-    );
+    //Execute write and handle displaying info about it
+    try {
+        $res = $clc_weeklyMatches->updateOne(
+            $filter,        //Filter Array
+            [               //Update Array
+                '$addToSet' => $addToSet
+            ],
+            [               //Options Array
+                'upsert' => true
+            ]
+        );
 
-    $upsertedCount = $res->getUpsertedCount();
-    $modifiedCount = $res->getModifiedCount();
+        $ret = TRUE;
+    }
+    catch (BulkWriteException $e) {
+        $res = BulkWriteExceptionHandler($e);
 
-    echo "$modifiedCount modified, $upsertedCount upserted, into 'weeklyMatches' collection".E;
+        $ret = FALSE;
+    }
+
+    BulkWriteHandler($clc_weeklyMatches, $res);
+
+    return $ret;
 }
 
 /*
  * Updates the 'players' collection with all relevant player data
+ * Returns TRUE on complete success, FALSE if any errors occurred
  */
 function updatePlayers(&$match, $seasonid, &$new_mmrs) {
     global $mongo;
@@ -509,18 +562,27 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
     }
 
     //Bulk write out all operations with unordered option (Failed operations do not impact other operations)
-    $res = $clc_players->bulkWrite($bulkWrites, [
-        'ordered' => false
-    ]);
+    try {
+        $res = $clc_players->bulkWrite($bulkWrites, [
+            'ordered' => false
+        ]);
 
-    $upsertedCount = $res->getUpsertedCount();
-    $modifiedCount = $res->getModifiedCount();
+        $ret = TRUE;
+    }
+    catch (BulkWriteException $e) {
+        $res = BulkWriteExceptionHandler($e);
 
-    echo "$modifiedCount modified, $upsertedCount upserted, into 'players' collection".E;
+        $ret = FALSE;
+    }
+
+    BulkWriteHandler($clc_players, $res);
+
+    return $ret;
 }
 
 /*
  * Updates the 'heroes' collection with all relevant hero data
+ * Returns TRUE on complete success, FALSE if any errors occurred
  */
 function updateHeroes(&$match, &$bannedHeroes) {
     global $mongo;
@@ -931,14 +993,22 @@ function updateHeroes(&$match, &$bannedHeroes) {
     }
 
     //Bulk write out all operations with unordered option (Failed operations do not impact other operations)
-    $res = $clc_heroes->bulkWrite($bulkWrites, [
-        'ordered' => false
-    ]);
+    try {
+        $res = $clc_heroes->bulkWrite($bulkWrites, [
+            'ordered' => false
+        ]);
 
-    $upsertedCount = $res->getUpsertedCount();
-    $modifiedCount = $res->getModifiedCount();
+        $ret = TRUE;
+    }
+    catch (BulkWriteException $e) {
+        $res = BulkWriteExceptionHandler($e);
 
-    echo "$modifiedCount modified, $upsertedCount upserted, into 'heroes' collection".E;
+        $ret = FALSE;
+    }
+
+    BulkWriteHandler($clc_heroes, $res);
+
+    return $ret;
 }
 
 
@@ -986,8 +1056,11 @@ while (true) {
             echo 'Parsing replay #' . $r_id . '...'.E;
 
             $r_filepath = $row['file'];
+            $r_fingerprint = $row['fingerprint'];
 
             $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath);
+
+            $createReplayCopy = FALSE;
 
             //Check if parse was a success
             if (!key_exists('error', $parse)) {
@@ -1082,7 +1155,7 @@ while (true) {
                         }
                     }
 
-                    //Collect mapping of hero name to hero name sort
+                    //Collect mapping of hero names to hero name sorts
                     $heroNameMappings = [];
                     foreach ($parse['players'] as $player) {
                         $r_name = $player['hero'];
@@ -1114,82 +1187,121 @@ while (true) {
                     $db->freeResult($result3);
 
                     //No parse error, add all relevant match data to database in needed collections
-                    $inserterror = FALSE;
-                    $msg = "";
-                    $write_errors = [];
-                    try {
-                        //Matches
-                        $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
-                        //WeeklyMatches
-                        updateWeeklyMatches($insertResult['match']);
-                        //Players
-                        updatePlayers($insertResult['match'], $seasonid, $player_new_mmrs);
-                        //Heroes
-                        updateHeroes($insertResult['match'], $bannedHeroes);
+                    $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
 
-                        //Delete local file
-                        if (file_exists($r_filepath)) {
-                            FileHandling::deleteAllFilesMatchingPattern($r_filepath);
-                        }
+                    if ($insertResult === FALSE) {
+                        //Error parsing match and inserting into 'matches', cancel parsing
+                        //Copy local file into replay error directory for debugging purposes
+                        $createReplayCopy = TRUE;
 
-                        //Update mysql
+                        //Flag replay match status as 'mongodb_match_error'
                         $r_id = $row['id'];
-                        $r_match_id = $insertResult['match_id'];
-                        $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_MONGODB_MATCH_WRITE_ERROR;
                         $r_timestamp = time();
 
-                        $db->execute("UpdateReplayParsed");
-
-                        echo 'Successfully parsed replay #'.$r_id.'...'.E.E;
-                    }
-                    catch (InvalidArgumentException $e) {
-                        $inserterror = TRUE;
-                        $msg = $e->getMessage();
-                    }
-                    catch (BulkWriteException $e) {
-                        $inserterror = TRUE;
-                        $msg = $e->getMessage();
-                        foreach ($e->getWriteResult()->getWriteErrors() as $error) {
-                            $write_errors[] = ['msg' => $error->getMessage(), 'index' => $error->getIndex()];
-                        }
-                    }
-                    catch (RuntimeException $e) {
-                        $inserterror = TRUE;
-                        $msg = $e->getMessage();
-                    }
-
-                    if ($inserterror) {
-                        //Error adding to collection, cancel parsing, long sleep to potentially account for hitting mongodb size limit
-                        echo 'Failed to ingest parsed data into MongoDB collection...'.E.E;
-                        if (count($write_errors) > 0) {
-                            foreach ($write_errors as $error) {
-                                echo $error['index'].": ".$error['msg'].E;
-                            }
-                        }
-                        else {
-                            echo $msg.E.E;
-                        }
+                        $db->execute("UpdateReplayStatus");
 
                         $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
                     }
+                    else {
+                        //No error parsing match, continue with upserting of players, heroes, and weeklyMatches
+                        $success_weeklymatches = false;
+                        $success_players = false;
+                        $success_heroes = false;
+
+                        //WeeklyMatches
+                        $success_weeklymatches = updateWeeklyMatches($insertResult['match']);
+                        //Players
+                        $success_players = updatePlayers($insertResult['match'], $seasonid, $player_new_mmrs);
+                        //Heroes
+                        $success_heroes = updateHeroes($insertResult['match'], $bannedHeroes);
+
+                        $hadError = !$success_weeklymatches || !$success_players || !$success_heroes;
+
+                        $errorstr = "";
+                        if (!$success_weeklymatches) $errorstr .= "weeklyMatches";
+                        if (!$success_players) $errorstr .= ", players";
+                        if (!$success_heroes) $errorstr .= ", heroes";
+
+                        if (!$hadError) {
+                            //Flag replay as fully parsed
+                            $r_id = $row['id'];
+                            $r_match_id = $insertResult['match_id'];
+                            $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
+                            $r_timestamp = time();
+
+                            $db->execute("UpdateReplayParsed");
+
+                            echo 'Successfully parsed replay #'.$r_id.'...'.E.E;
+                        }
+                        else {
+                            //Copy local file into replay error directory for debugging purposes
+                            $createReplayCopy = TRUE;
+
+                            //Flag replay as partially parsed with mongodb_matchdata_error
+                            $r_id = $row['id'];
+                            $r_match_id = $insertResult['match_id'];
+                            $r_status = HotstatusPipeline::REPLAY_STATUS_MONGODB_MATCHDATA_WRITE_ERROR;
+                            $r_timestamp = time();
+
+                            $db->execute("UpdateReplayParsed");
+
+                            echo 'Semi-Successfully parsed replay #'.$r_id.'. MongoDB had trouble with portions of : '. $errorstr .'...'.E.E;
+                        }
+                    }
                 }
                 else {
-                    //Encountered an error parsing replay, output it and cancel parsing
-                    echo 'Failed to calculate mmr #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E.E;
+                    //Copy local file into replay error directory for debugging purposes
+                    $createReplayCopy = TRUE;
+
+                    //Encountered an error parsing replay, output it, and flag replay as 'parse_mmr_error'
+                    $r_id = $row['id'];
+                    $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_MMR_ERROR;
+                    $r_timestamp = time();
+
+                    $db->execute("UpdateReplayStatus");
+
+                    echo 'Failed to calculate mmr for replay #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E.E;
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }
             }
             else {
-                //Encountered an error parsing replay, output it and cancel parsing
+                //Copy local file into replay error directory for debugging purposes
+                $createReplayCopy = TRUE;
+
+                //Encountered an error parsing replay, output it and flag replay as 'parse_replay_error'
+                $r_id = $row['id'];
+                $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_REPLAY_ERROR;
+                $r_timestamp = time();
+
+                $db->execute("UpdateReplayStatus");
+
                 echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.E.E;
 
                 $sleep->add(MINI_SLEEP_DURATION);
             }
+
+            if ($createReplayCopy) {
+                //Copy local file into replay error directory for debugging purposes
+                if (file_exists($r_filepath)) {
+                    $errordir = __DIR__ . '/' . HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY_ERROR;
+
+                    FileHandling::ensureDirectory($errordir);
+
+                    $newfilepath = $errordir . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
+                    FileHandling::copyFile($r_filepath, $newfilepath);
+                }
+            }
+
+            //Delete local file
+            if (file_exists($r_filepath)) {
+                FileHandling::deleteAllFilesMatchingPattern($r_filepath);
+            }
         }
         else {
             //No unlocked downloaded replays to parse, sleep
-            echo 'No unlocked downloaded replays found... '.E;
+            echo 'No unlocked downloaded replays found'. $console->animateDotDotDot() .'      \r';
 
             $sleep->add(SLEEP_DURATION);
         }

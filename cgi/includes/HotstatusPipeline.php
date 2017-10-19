@@ -8,6 +8,7 @@ class HotstatusPipeline {
     const REPLAY_AGE_LIMIT = 7 * self::STATS_WEEK_RANGE; //Relevant replays are those that are less than or equal to days of age
     const REPLAY_TIMEZONE = "UTC"; //Default timezone used for dating replays as well as process locks
     const REPLAY_DOWNLOAD_DIRECTORY = "replays/"; //Where the replays are downloaded relative to the replayprocess scripts
+    const REPLAY_DOWNLOAD_DIRECTORY_ERROR = "replays/error/"; //Where the replays are copied to if an error occurs during replayprocess, for debugging purposes
     const REPLAY_DOWNLOAD_EXTENSION = ".StormReplay"; //Extension of the replays downloaded
     const REPLAY_DOWNLOAD_LIMIT = 10; //How many replays can be downloaded to disk at any one time
     const REPLAY_EXECUTABLE_DIRECTORY = "/bin/"; //Where the executables for processing replays are located
@@ -18,6 +19,10 @@ class HotstatusPipeline {
     const REPLAY_STATUS_DOWNLOADED = "downloaded"; //status value for when a replay has been downloaded
     const REPLAY_STATUS_PARSING = "parsing"; //status value for when a replay is being parsed
     const REPLAY_STATUS_PARSED = "parsed"; //status value for when a replay is done being parsed
+    const REPLAY_STATUS_PARSE_MMR_ERROR = "parse_mmr_error"; //status value for when a replay had an unknown error during mmr parsing
+    const REPLAY_STATUS_PARSE_REPLAY_ERROR = "parse_replay_error"; //status value for when a replay had an unknown error during mmr parsing
+    const REPLAY_STATUS_MONGODB_MATCH_WRITE_ERROR = "mongodb_match_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match insertion
+    const REPLAY_STATUS_MONGODB_MATCHDATA_WRITE_ERROR = "mongodb_matchdata_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match data insertion
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const DATABASE_CHARSET = "utf8mb4";
 
