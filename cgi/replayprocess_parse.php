@@ -15,9 +15,13 @@ use Fizzik\Database\MongoDBDatabase;
 use Fizzik\Utility\Console;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Utility\SleepHandler;
+use MongoDB\BulkWriteResult;
 use MongoDB\Collection;
+use MongoDB\DeleteResult;
 use MongoDB\Driver\Exception\BulkWriteException;
-use MongoDB\Driver\WriteResult;
+use MongoDB\InsertManyResult;
+use MongoDB\InsertOneResult;
+use MongoDB\UpdateResult;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -80,16 +84,37 @@ function BulkWriteExceptionHandler(BulkWriteException $e) {
     return $res;
 }
 
-function BulkWriteHandler(\MongoDB\Collection $collection, WriteResult $res) {
+function BulkWriteHandler(\MongoDB\Collection $collection, $res) {
     $collectionName = $collection->getCollectionName();
 
-    $upsertedCount = $res->getUpsertedCount();
-    $modifiedCount = $res->getModifiedCount();
-    $insertedCount = $res->getInsertedCount();
-    $matchedCount = $res->getMatchedCount();
-    $deletedCount = $res->getDeletedCount();
+    if ($res instanceof BulkWriteResult) {
+        $upsertedCount = $res->getUpsertedCount();
+        $modifiedCount = $res->getModifiedCount();
+        $insertedCount = $res->getInsertedCount();
+        $matchedCount = $res->getMatchedCount();
+        $deletedCount = $res->getDeletedCount();
 
-    echo "Matched $matchedCount: Inserted $insertedCount, Upserted $upsertedCount, Modified $modifiedCount, Deleted $deletedCount, in '$collectionName' collection".E;
+        echo "Matched $matchedCount: Inserted $insertedCount, Upserted $upsertedCount, Modified $modifiedCount, Deleted $deletedCount documents in '$collectionName' collection".E;
+    }
+    else if ($res instanceof DeleteResult) {
+        $deletedCount = $res->getDeletedCount();
+
+        echo "Deleted $deletedCount documents in '$collectionName' collection".E;
+    }
+    else if ($res instanceof InsertManyResult) {
+        $insertedCount = $res->getInsertedCount();
+        echo "Inserted $insertedCount documents in '$collectionName' collection".E;
+    }
+    else if ($res instanceof InsertOneResult) {
+        $insertedCount = $res->getInsertedCount();
+        echo "Inserted $insertedCount documents in '$collectionName' collection".E;
+    }
+    else if ($res instanceof UpdateResult) {
+        $upsertedCount = $res->getUpsertedCount();
+        $modifiedCount = $res->getModifiedCount();
+        $matchedCount = $res->getMatchedCount();
+        echo "Matched $matchedCount: Upserted $upsertedCount, Modified $modifiedCount documents in '$collectionName' collection".E;
+    }
 }
 
 /*
@@ -1053,7 +1078,7 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
-            echo 'Parsing replay #' . $r_id . '...'.E;
+            echo 'Parsing replay #' . $r_id . '...                                       '.E;
 
             $r_filepath = $row['file'];
             $r_fingerprint = $row['fingerprint'];
@@ -1301,7 +1326,8 @@ while (true) {
         }
         else {
             //No unlocked downloaded replays to parse, sleep
-            echo 'No unlocked downloaded replays found'. $console->animateDotDotDot() .'      \r';
+            $dots = $console->animateDotDotDot();
+            echo "No unlocked downloaded replays found$dots                           \r";
 
             $sleep->add(SLEEP_DURATION);
         }

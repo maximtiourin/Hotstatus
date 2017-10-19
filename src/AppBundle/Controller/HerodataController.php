@@ -5,12 +5,10 @@ namespace AppBundle\Controller;
 use Fizzik\HotstatusPipeline;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Doctrine\DBAL\Statement;
 use Symfony\Component\Asset;
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
+use Fizzik\Credentials;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
@@ -31,13 +29,15 @@ class HerodataController extends Controller {
      * @Route("/herodata/datatable/heroes/statslist", name="herodata_datatable_heroes_statslist")
      */
     public function getDataTableHeroesStatsListAction() {
+        $creds = Credentials::getHotstatusWebCredentials();
+
         $cachekey = HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST;
 
         $datatable = [];
 
         //Get redis cache
         $redis = new RedisDatabase();
-        $redis->connect($this->getParameter("hotstatus_redis_uri"));
+        $redis->connect($creds[Credentials::KEY_REDIS_URI]);
 
         //Try to get cached value
         $cacheval = $redis->getCachedString($cachekey);
@@ -48,16 +48,8 @@ class HerodataController extends Controller {
             //Get mysql db connection
             $db = new MysqlDatabase();
 
-            $creds = [
-                'host' => $this->getParameter("hotstatus_mysql_host"),
-                'user' => $this->getParameter("hotstatus_mysql_user"),
-                'pass' => $this->getParameter("hotstatus_mysql_password"),
-                'database' => $this->getParameter("hotstatus_mysql_dbname"),
-                'port' => $this->getParameter("hotstatus_mysql_port")
-            ];
-
-            $db->connect($creds['host'], $creds['user'], $creds['pass'], $creds['database'], $creds['port']);
-            $db->setEncoding($this->getParameter('hotstatus_mysql_encoding'));
+            $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+            $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
             //Prepare statements
             $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");

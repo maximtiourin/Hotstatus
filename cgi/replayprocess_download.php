@@ -13,6 +13,7 @@ require_once 'includes/include.php';
 require_once 'includes/Hotsapi.php';
 
 use Fizzik\Database\MySqlDatabase;
+use Fizzik\Utility\Console;
 use Fizzik\Utility\SleepHandler;
 use Fizzik\Utility\FileHandling;
 
@@ -39,8 +40,9 @@ const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
 const UNLOCK_DOWNLOADING_DURATION = 120; //Must be unlocked for atleast 2 minutes while downloading status
-$e = PHP_EOL;
+const E = PHP_EOL;
 $sleep = new SleepHandler();
+$console = new Console();
 
 //Prepare statements
 $db->prepare("UpdateReplayStatus",
@@ -58,9 +60,9 @@ $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 //Helper functions
 
 //Begin main script
-echo '--------------------------------------'.$e
-    .'Replay process <<DOWNLOAD>> has started'.$e
-    .'--------------------------------------'.$e;
+echo '--------------------------------------'.E
+    .'Replay process <<DOWNLOAD>> has started'.E
+    .'--------------------------------------'.E;
 
 //Look for replays to download and handle
 while (true) {
@@ -68,7 +70,7 @@ while (true) {
     $resrows = $db->countResultRows($result);
     if ($resrows >= HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT) {
         //Reached download limit
-        echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for downloaded replays to be processed...'.$e;
+        echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for downloaded replays to be processed...'.E.E;
         $sleep->add(DOWNLOADLIMIT_SLEEP_DURATION);
     }
     else {
@@ -81,7 +83,7 @@ while (true) {
             //Found a failed replay download, reset it to queued
             $row = $db->fetchArray($result2);
 
-            echo 'Found a failed replay download at replay #' . $row['id'] . ', resetting status to \'' . HotstatusPipeline::REPLAY_STATUS_QUEUED . '\'...'.$e;
+            echo 'Found a failed replay download at replay #' . $row['id'] . ', resetting status to \'' . HotstatusPipeline::REPLAY_STATUS_QUEUED . '\'...'.E.E;
 
             $r_id = $row['id'];
             $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
@@ -105,7 +107,7 @@ while (true) {
 
                 $db->execute("UpdateReplayStatus");
 
-                echo 'Downloading replay #' . $r_id . '...'.$e;
+                echo 'Downloading replay #' . $r_id . '...                              '.E;
 
                 $r_fingerprint = $row['fingerprint'];
                 $r_url = $row['hotsapi_url'];
@@ -121,7 +123,7 @@ while (true) {
 
                 if ($api['success'] == TRUE) {
                     //Replay downloaded successfully
-                    echo 'Replay #' . $r_id . ' (' . round($api['bytes_downloaded'] / FileHandling::getBytesForMegabytes(1), 2) . ' MB) downloaded to "' . $r_filepath . '"'.$e;
+                    echo 'Replay #' . $r_id . ' (' . round($api['bytes_downloaded'] / FileHandling::getBytesForMegabytes(1), 2) . ' MB) downloaded to "' . $r_filepath . '"'.E.E;
 
                     $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
                     $r_timestamp = time();
@@ -130,14 +132,15 @@ while (true) {
                 }
                 else {
                     //Error with downloading the replay
-                    echo 'Failed to download replay #' . $r_id . ', HTTP Code : ' . $api['code'] . '...'.$e;
+                    echo 'Failed to download replay #' . $r_id . ', HTTP Code : ' . $api['code'] . '...'.E.E;
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }
             }
             else {
                 //No unlocked queued replays to download, sleep
-                echo 'No unlocked queued replays found...'.$e;
+                $dots = $console->animateDotDotDot();
+                echo "No unlocked queued replays found$dots                           \r";
 
                 $sleep->add(SLEEP_DURATION);
             }

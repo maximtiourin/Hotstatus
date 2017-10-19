@@ -26,7 +26,7 @@ const UNKNOWN_ERROR_CODE = 300; //seconds
 const TOO_MANY_REQUEST_SLEEP_DURATION = 60; //seconds
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
-$e = PHP_EOL;
+const E = PHP_EOL;
 $sleep = new SleepHandler();
 
 //Prepare statements
@@ -51,9 +51,9 @@ function setPageIndex($amount) {
 }
 
 //Begin main script
-echo '--------------------------------------'.$e
-    .'Replay process <<FIND>> has started'.$e
-    .'--------------------------------------'.$e;
+echo '--------------------------------------'.E
+    .'Replay process <<FIND>> has started'.E
+    .'--------------------------------------'.E;
 
 //Get newest replay if there is one to determine where to start looking in hotsapi
 $result = $db->execute("SelectNewestReplay");
@@ -72,7 +72,7 @@ $db->freeResult($result);
 
 //Look for replays to download and handle
 while (true) {
-    echo 'Requesting page '.$pagenum.' from hotsapi, starting at page index '.$pageindex.'...'.$e;
+    echo 'Requesting page '.$pagenum.' from hotsapi, starting at page index '.$pageindex.'...'.E;
 
     $api = Hotsapi::getPagedReplays($pagenum);
 
@@ -97,27 +97,27 @@ while (true) {
                     $db->execute("InsertNewReplay");
                 }
                 addToPageIndex($replaylen); //Finished with page, rollover page index
-                echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).'.$e;
+                echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).'.E.E;
             }
             else {
                 //No relevant replays found here, set next replayid to be greater than the highest id in the replayset
                 addToPageIndex($replaylen); //Finished with page, rollover page index
-                echo 'Page #' . $prevpage . ' had no more relevant replays.'.$e;
+                echo 'Page #' . $prevpage . ' had no more relevant replays.'.E.E;
             }
         }
         else {
             //No more replay pages to process! Long sleep
-            echo 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.$e;
+            echo 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.E;
             $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
         }
     }
     else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
         //Error too many requests, wait awhile before trying again
-        echo 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.$e;
+        echo 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.E.E;
         $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
     }
     else {
-        echo 'Error: HTTP Code ' . $api['code'].'.'.$e;
+        echo 'Error: HTTP Code ' . $api['code'].'.'.E.E;
         $sleep->add(UNKNOWN_ERROR_CODE);
     }
 
