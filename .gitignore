@@ -16,7 +16,8 @@
 /web/bundles/
 
 PSD/
-/cgi/
+/cgi/*
+!/cgi/README.md
 
 /node_modules/
 /.idea/
