@@ -1,7 +1,7 @@
 # Heroes of the Storm Data Web Application
 ### Working Name = 'Hotstatus'
 
-Contains src for the web application built in symfony3, as well as the php cgi files used for the replay ETL pipeline.
+Contains src for the web application built in symfony3.
 
 Hotstatus is a web application that aggregates statistics from Heroes of the Storm matches
 parsed from replay files. It provides a way to relate useful statistics about Heroes, Talents, Maps, and Players. One major
@@ -15,17 +15,8 @@ Inspirations for this project are [na.op.gg](http://na.op.gg), [champion.gg](htt
 could not exist without the work done by Roman Semenov in setting up [hotsapi.net](http://hotsapi.net), which provides a centralized
 replay dataset.
 
-<b>CGI Libraries (cgi/lib)</b>
-- [AWS Php SDK](https://aws.amazon.com/sdk-for-php/)
-- [Fizzik](https://github.com/maximtiourin/Fizzik)
-
-<b>CGI Utilities (System Path)</b>
-- [ImageMagick](https://www.imagemagick.org/script/index.php)
-- [wdiff (Windows)](https://www.di-mgt.com.au/wdiff-for-windows.html) | [wdiff (Linux)](https://www.gnu.org/software/wdiff/)
-
-<b>CGI Additional Binaries (cgi/bin)</b>
-- [ReplayParser](https://github.com/maximtiourin/Heroes.ReplayParser) (Compile ConsoleApplication and point HotstatusPipeline to its executable)
-- [Skills](https://github.com/maximtiourin/Skills) (Compile ConsoleApplication and point HotstatusPipeline to its executable)
+<b>CGI (/cgi/)</b>
+- [Hotstatus-CGI](https://github.com/maximtiourin/Hotstatus-CGI)
 
 <b>Special Thanks</b>:
 - Roman Semenov [poma] (Heroes of the Storm replay API - Hotsapi.net)
