@@ -2,7 +2,9 @@
 
 namespace AppBundle\Controller;
 
+use Fizzik\Database\MongoDBDatabase;
 use Fizzik\HotstatusPipeline;
+use Fizzik\Utility\AssocArray;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Asset;
@@ -45,7 +47,12 @@ class HerodataController extends Controller {
             $datatable = json_decode($cacheval, true);
         }
         else {
-            //Get mysql db connection
+            //Mongo
+            $mongo = new MongoDBDatabase();
+            $mongo->connect($creds[Credentials::KEY_MONGODB_URI]);
+            $mongo->selectDatabase("hotstatus");
+
+            //Mysql
             $db = new MysqlDatabase();
 
             $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
@@ -60,9 +67,122 @@ class HerodataController extends Controller {
             $pkg = $pkgs->getPackage("images");
             $imgbasepath = $pkg->getUrl('');
 
+            //Determine time range
+            date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+            //$datetime = new \DateTime("now");
+            //TODO Debug use weeks from the past instead of now
+            $datetime = new \DateTime();
+            $datetime->setISODate("2017", "30");
+            //
+            $last2weeks = HotstatusPipeline::getLastISOWeeksInclusive(2, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
+            $old2weeks = HotstatusPipeline::getLastISOWeeksInclusive(2, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 2);
+            $filter = [];
+            $weekprojection = [];
+            $weekprojection['_id'] = 0;
+            foreach ($last2weeks as $isoweek) {
+                $y = $isoweek['year'];
+                $w = $isoweek['week'];
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.played"] = 1;
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.banned"] = 1;
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.won"] = 1;
+            }
+            foreach ($old2weeks as $isoweek) {
+                $y = $isoweek['year'];
+                $w = $isoweek['week'];
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.played"] = 1;
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.banned"] = 1;
+                $weekprojection["weekly_data.$y.$w.matches.Hero League.won"] = 1;
+            }
+
+            //Select heroes collection
+            $clc_heroes = $mongo->selectCollection("heroes");
+
+            //Iterate through heroes
             $data = [];
             $result = $db->execute("SelectHeroes");
             while ($row = $db->fetchArray($result)) {
+                /*
+                 * Collect hero data
+                 */
+                $dt_playrate = 0;
+                $dt_banrate = 0;
+                $dt_winrate = 0.0;
+                $dt_windelta = 0.0;
+
+                $filter['_id'] = $row['name_sort'];
+                $res = $clc_heroes->findOne(
+                    $filter,
+                    [               //Options Array
+                        'projection' => $weekprojection
+                    ]
+                );
+                if ($res !== NULL) {
+                    $won = 0;
+                    $old_playrate = 0;
+                    $old_won = 0;
+                    $old_winrate = 0.0;
+
+                    foreach ($last2weeks as $isoweek) {
+                        $y = $isoweek['year'];
+                        $w = $isoweek['week'];
+
+                        if (AssocArray::keyChainExists($res, 'weekly_data', $y.'', $w.'', 'matches', 'Hero League')) {
+                            $obj = $res['weekly_data'][$y.""][$w.""]['matches']['Hero League'];
+
+                            //Playrate
+                            if (key_exists('played', $obj)) {
+                                $dt_playrate += $obj['played'];
+                            }
+
+                            //Banrate
+                            if (key_exists('banned', $obj)) {
+                                $dt_banrate += $obj['banned'];
+                            }
+
+                            //Won
+                            if (key_exists('won', $obj)) {
+                                $won += $obj['won'];
+                            }
+                        }
+                    }
+
+                    foreach ($old2weeks as $isoweek) {
+                        $y = $isoweek['year'];
+                        $w = $isoweek['week'];
+
+                        if (AssocArray::keyChainExists($res, 'weekly_data', $y.'', $w.'', 'matches', 'Hero League')) {
+                            $obj = $res['weekly_data'][$y.""][$w.""]['matches']['Hero League'];
+
+                            //Playrate
+                            if (key_exists('played', $obj)) {
+                                $old_playrate += $obj['played'];
+                            }
+
+                            //Won
+                            if (key_exists('won', $obj)) {
+                                $old_won += $obj['won'];
+                            }
+                        }
+                    }
+
+                    //Winrate
+                    if ($dt_playrate > 0) {
+                        $dt_winrate = round(($won / ($dt_playrate * 1.00)) * 100.0, 1);
+                    }
+
+                    //Old Winrate
+                    if ($old_playrate > 0) {
+                        $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
+                    }
+
+                    //Win Delta
+                    $dt_windelta = $dt_winrate - $old_winrate;
+                }
+
+
+                /*
+                 * Construct row
+                 */
                 $dtrow = [];
 
                 //Hero Portrait
@@ -80,17 +200,21 @@ class HerodataController extends Controller {
                 //Hero Specific role
                 $dtrow[] = $row['role_specific'];
 
-                //Temp Playrate
-                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 20.0, 1);
+                //Playrate
+                $dtrow[] = $dt_playrate;
 
-                //Temp Banrate
-                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 12.0, 1);
+                //Banrate
+                $dtrow[] = $dt_banrate;
 
-                //Temp Winrate
-                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 80.0, 1);
+                //Winrate
+                $colorclass = "hsl-number-winrate-red";
+                if ($dt_winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+                $dtrow[] = '<span class="'.$colorclass.'">'.sprintf("%03.1f %%", $dt_winrate).'</span>';
 
-                //Temp win delta (This is the % change in winrate from this iso week to last iso week)
-                $dtrow[] = round((mt_rand() / mt_getrandmax()) * 8.0, 1);
+                //Win Delta (This is the % change in winrate from this last 2 iso weeks to previous 2 iso weeks)
+                $colorclass = "hsl-number-delta-red";
+                if ($dt_windelta >= 0) $colorclass = "hsl-number-delta-green";
+                $dtrow[] = '<span class="'.$colorclass.'">'.sprintf("%+-03.1f %%", $dt_windelta).'</span>';
 
                 $data[] = $dtrow;
             }

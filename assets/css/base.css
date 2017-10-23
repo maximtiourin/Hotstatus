@@ -253,6 +253,30 @@ body {
     color: #FFFFFF;
 }
 
+.hsl-number-delta-red {
+    color: #af3733;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.hsl-number-delta-green {
+    color: #4a9b4e;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.hsl-number-winrate-red {
+    color: #e13f3b;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.hsl-number-winrate-green {
+    color: #5ce181;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
 /* DataTable sort icons using font awesome */
 table.dataTable thead .sorting::before {
     font-family: FontAwesome !important;
