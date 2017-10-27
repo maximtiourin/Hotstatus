@@ -197,10 +197,25 @@ body {
 }
 
 #hsl-table thead, th {
-    /* background-color: #813da8 !important; */
+    /*background-color: rgba(46, 57, 59, 0.81) !important;*/
     text-align: left;
     white-space: normal!important;
     overflow: hidden!important;
+}
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: #10042B !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
 }
 
 .hsl-portrait {
@@ -339,6 +354,15 @@ table.dataTable thead .sorting_asc {
     content: "";
 }
 
+/* FixedHeader */
+table.dataTable.fixedHeader-floating thead .sorting_asc {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
 table.dataTable thead .sorting_asc::after {
     font-family: FontAwesome !important;
     font-style: normal;
@@ -355,6 +379,15 @@ table.dataTable thead .sorting_desc::before {
 
 table.dataTable thead .sorting_desc {
     background-color: rgba(0,0,0,0.21);
+    font-family: FontAwesome !important;
+    font-style: normal;
+    font-weight: normal;
+    content: "";
+}
+
+/* FixedHeader */
+table.dataTable.fixedHeader-floating thead .sorting_desc {
+    background-color: rgba(255, 255, 255, 0.1) !important;
     font-family: FontAwesome !important;
     font-style: normal;
     font-weight: normal;

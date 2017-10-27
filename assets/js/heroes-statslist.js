@@ -26,8 +26,7 @@ heroes_statslist.ajax = {
     dataSrc: 'data', //The array of data is found in .data field
     cache: true //Cache ajax response
 };
-heroes_statslist.ajax.url = herodata_heroes_path; //Requests data from the path
-heroes_statslist.ajax.cache = true; //Caches the ajax response
+heroes_statslist.fixedHeader = true;
 //heroes_statslist.pageLength = 25; //Controls how many rows per page
 heroes_statslist.paging = false; //Controls whether or not the table is allowed to paginate data by page length
 heroes_statslist.responsive = true; //Controls whether or not the table collapses responsively as need
