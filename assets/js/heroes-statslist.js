@@ -1,5 +1,7 @@
 var heroes_statslist = {};
 
+var useFixedHeader = false;
+
 heroes_statslist.columns = [
     {"width": "10%", "sClass": "hsl-table-portrait-td", "bSortable": false, "searchable": false, "responsivePriority": 1},
     {"title": 'Hero', "width": "18%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc'], "responsivePriority": 1}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
@@ -26,7 +28,6 @@ heroes_statslist.ajax = {
     dataSrc: 'data', //The array of data is found in .data field
     cache: true //Cache ajax response
 };
-heroes_statslist.fixedHeader = true;
 //heroes_statslist.pageLength = 25; //Controls how many rows per page
 heroes_statslist.paging = false; //Controls whether or not the table is allowed to paginate data by page length
 heroes_statslist.responsive = true; //Controls whether or not the table collapses responsively as need
@@ -36,6 +37,9 @@ heroes_statslist.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from t
 heroes_statslist.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
 $(document).ready(function() {
+    useFixedHeader = document.documentElement.clientWidth >= 525;
+    heroes_statslist.fixedHeader = useFixedHeader;
+
     $('#hsl-table').DataTable(heroes_statslist);
 
     $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
