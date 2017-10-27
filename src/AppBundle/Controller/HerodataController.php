@@ -47,19 +47,11 @@ class HerodataController extends Controller {
             $datatable = json_decode($cacheval, true);
         }
         else {
-            //Mongo
-            $mongo = new MongoDBDatabase();
-            $mongo->connect($creds[Credentials::KEY_MONGODB_URI]);
-            $mongo->selectDatabase("hotstatus");
-
             //Mysql
             $db = new MysqlDatabase();
 
             $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
             $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
-
-            //Prepare statements
-            $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
             //Get image path from packages
             /** @var Asset\Packages $pkgs */
@@ -72,35 +64,26 @@ class HerodataController extends Controller {
             //$datetime = new \DateTime("now");
             //TODO Debug use weeks from the past instead of now
             $datetime = new \DateTime();
-            $datetime->setISODate("2017", "30");
+            $datetime->setISODate(2017, 28, 1);
             //
-            $last2weeks = HotstatusPipeline::getLastISOWeeksInclusive(2, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
-            $old2weeks = HotstatusPipeline::getLastISOWeeksInclusive(2, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 2);
-            $filter = [];
-            $weekprojection = [];
-            $weekprojection['_id'] = 0;
-            foreach ($last2weeks as $isoweek) {
-                $y = $isoweek['year'];
-                $w = $isoweek['week'];
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.played"] = 1;
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.banned"] = 1;
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.won"] = 1;
-            }
-            foreach ($old2weeks as $isoweek) {
-                $y = $isoweek['year'];
-                $w = $isoweek['week'];
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.played"] = 1;
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.banned"] = 1;
-                $weekprojection["weekly_data.$y.$w.matches.Hero League.won"] = 1;
-            }
+            $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
+            $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
 
-            //Select heroes collection
-            $clc_heroes = $mongo->selectCollection("heroes");
+            //Prepare statements
+            $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
+
+            $db->prepare("SelectHeroesMatches",
+                "SELECT `played`, `won`, `banned` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+            $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
+
+            $r_gameType = "Hero League";
 
             //Iterate through heroes
             $data = [];
             $result = $db->execute("SelectHeroes");
             while ($row = $db->fetchArray($result)) {
+                $r_hero = $row['name'];
+
                 /*
                  * Collect hero data
                  */
@@ -109,75 +92,56 @@ class HerodataController extends Controller {
                 $dt_winrate = 0.0;
                 $dt_windelta = 0.0;
 
-                $filter['_id'] = $row['name_sort'];
-                $res = $clc_heroes->findOne(
-                    $filter,
-                    [               //Options Array
-                        'projection' => $weekprojection
-                    ]
-                );
-                if ($res !== NULL) {
-                    $won = 0;
-                    $old_playrate = 0;
-                    $old_won = 0;
-                    $old_winrate = 0.0;
+                $old_playrate = 0;
+                $old_won = 0;
+                $old_winrate = 0.0;
 
-                    foreach ($last2weeks as $isoweek) {
-                        $y = $isoweek['year'];
-                        $w = $isoweek['week'];
+                $won = 0;
 
-                        if (AssocArray::keyChainExists($res, 'weekly_data', $y.'', $w.'', 'matches', 'Hero League')) {
-                            $obj = $res['weekly_data'][$y.""][$w.""]['matches']['Hero League'];
+                /*
+                 * Calculate statistics for hero
+                 */
+                //Last 7 Days
+                $date_range_start = $last7days_range['date_start'];
+                $date_range_end = $last7days_range['date_end'];
 
-                            //Playrate
-                            if (key_exists('played', $obj)) {
-                                $dt_playrate += $obj['played'];
-                            }
-
-                            //Banrate
-                            if (key_exists('banned', $obj)) {
-                                $dt_banrate += $obj['banned'];
-                            }
-
-                            //Won
-                            if (key_exists('won', $obj)) {
-                                $won += $obj['won'];
-                            }
-                        }
+                $statsResult = $db->execute("SelectHeroesMatches");
+                $statsResult_rows = $db->countResultRows($statsResult);
+                if ($statsResult_rows > 0) {
+                    while ($statsrow = $db->fetchArray($statsResult)) {
+                        $dt_playrate += $statsrow['played'];
+                        $dt_banrate += $statsrow['banned'];
+                        $won += $statsrow['won'];
                     }
-
-                    foreach ($old2weeks as $isoweek) {
-                        $y = $isoweek['year'];
-                        $w = $isoweek['week'];
-
-                        if (AssocArray::keyChainExists($res, 'weekly_data', $y.'', $w.'', 'matches', 'Hero League')) {
-                            $obj = $res['weekly_data'][$y.""][$w.""]['matches']['Hero League'];
-
-                            //Playrate
-                            if (key_exists('played', $obj)) {
-                                $old_playrate += $obj['played'];
-                            }
-
-                            //Won
-                            if (key_exists('won', $obj)) {
-                                $old_won += $obj['won'];
-                            }
-                        }
-                    }
-
-                    //Winrate
-                    if ($dt_playrate > 0) {
-                        $dt_winrate = round(($won / ($dt_playrate * 1.00)) * 100.0, 1);
-                    }
-
-                    //Old Winrate
-                    if ($old_playrate > 0) {
-                        $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
-                    }
-
-                    //Win Delta
-                    $dt_windelta = $dt_winrate - $old_winrate;
                 }
+                $db->freeResult($statsResult);
+
+                //Old 7 Days
+                $date_range_start = $old7days_range['date_start'];
+                $date_range_end = $old7days_range['date_end'];
+
+                $statsResult = $db->execute("SelectHeroesMatches");
+                $statsResult_rows = $db->countResultRows($statsResult);
+                if ($statsResult_rows > 0) {
+                    while ($statsrow = $db->fetchArray($statsResult)) {
+                        $old_playrate += $statsrow['played'];
+                        $old_won += $statsrow['won'];
+                    }
+                }
+                $db->freeResult($statsResult);
+
+                //Winrate
+                if ($dt_playrate > 0) {
+                    $dt_winrate = round(($won / ($dt_playrate * 1.00)) * 100.0, 1);
+                }
+
+                //Old Winrate
+                if ($old_playrate > 0) {
+                    $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
+                }
+
+                //Win Delta
+                $dt_windelta = $dt_winrate - $old_winrate;
 
 
                 /*
