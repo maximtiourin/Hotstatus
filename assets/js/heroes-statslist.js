@@ -13,12 +13,18 @@ heroes_statslist.columns = [
 ];
 
 heroes_statslist.order = [[7, 'desc']]; //The default ordering of the table on load => column 8 at index 7 descending
-heroes_statslist.processing = false; //Displays an indicator whenever the table is processing data
-heroes_statslist.deferRender = true; //Defers rendering the table until data starts coming in
+heroes_statslist.language = {
+    processing: '<i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span>', //Change content of processing indicator
+    loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+    zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+    emptyTable: ' ' //Message when table is empty regardless of filtering
+};
+heroes_statslist.processing = true; //Displays an indicator whenever the table is processing data
+heroes_statslist.deferRender = false; //Defers rendering the table until data starts coming in
 heroes_statslist.ajax = {
-    url: herodata_heroes_path,
-    dataSrc: 'data',
-    cache: true
+    url: herodata_heroes_path, //url to get a response from
+    dataSrc: 'data', //The array of data is found in .data field
+    cache: true //Cache ajax response
 };
 heroes_statslist.ajax.url = herodata_heroes_path; //Requests data from the path
 heroes_statslist.ajax.cache = true; //Caches the ajax response
