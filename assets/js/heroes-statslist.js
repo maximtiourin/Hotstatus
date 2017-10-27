@@ -15,7 +15,13 @@ heroes_statslist.columns = [
 heroes_statslist.order = [[7, 'desc']]; //The default ordering of the table on load => column 8 at index 7 descending
 heroes_statslist.processing = false; //Displays an indicator whenever the table is processing data
 heroes_statslist.deferRender = true; //Defers rendering the table until data starts coming in
-heroes_statslist.ajax = herodata_heroes_path; //Requests data from the path
+heroes_statslist.ajax = {
+    url: herodata_heroes_path,
+    dataSrc: 'data',
+    cache: true
+};
+heroes_statslist.ajax.url = herodata_heroes_path; //Requests data from the path
+heroes_statslist.ajax.cache = true; //Caches the ajax response
 //heroes_statslist.pageLength = 25; //Controls how many rows per page
 heroes_statslist.paging = false; //Controls whether or not the table is allowed to paginate data by page length
 heroes_statslist.responsive = true; //Controls whether or not the table collapses responsively as need

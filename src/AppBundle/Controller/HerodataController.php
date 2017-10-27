@@ -39,7 +39,7 @@ class HerodataController extends Controller {
 
         //Get redis cache
         $redis = new RedisDatabase();
-        $redis->connect($creds[Credentials::KEY_REDIS_URI]);
+        $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusPipeline::CACHE_DEFAULT_DATABASE_INDEX);
 
         //Try to get cached value
         $cacheval = $redis->getCachedString($cachekey);
@@ -62,7 +62,7 @@ class HerodataController extends Controller {
             //Determine time range
             date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
             //$datetime = new \DateTime("now");
-            //TODO Debug use weeks from the past instead of now
+            //TODO Debug use weeks from the past instead of now for testing
             $datetime = new \DateTime();
             $datetime->setISODate(2017, 28, 1);
             //
@@ -188,12 +188,28 @@ class HerodataController extends Controller {
 
             $datatable['data'] = $data;
 
-            $redis->cacheString($cachekey, json_encode($datatable), self::CACHE_TIME);
+            $encoded = json_encode($datatable);
+
+            $redis->cacheString($cachekey, $encoded, self::CACHE_TIME);
         }
 
         $redis->close();
 
-        return $this->json($datatable);
+        $jsonResponse = $this->json($datatable);
+        $jsonResponse->setPublic();
+
+        //Determine expire date
+        date_default_timezone_set(HotstatusPipeline::HTTPCACHE_DEFAULT_TIMEZONE);
+        $expiredate = new \DateTime("now");
+        $expiredate->setTime(0, 0, 0);
+        $hours = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['hours'];
+        $minutes = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['minutes'];
+        $seconds = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['seconds'];
+        $expiredate->add(new \DateInterval("PT".$hours."H".$minutes."M".$seconds."S"));
+
+        $jsonResponse->setExpires($expiredate);
+
+        return $jsonResponse;
     }
 
     private static function buildQuerySelectString($key, &$str) {
