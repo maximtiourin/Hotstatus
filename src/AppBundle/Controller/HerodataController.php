@@ -37,160 +37,176 @@ class HerodataController extends Controller {
 
         $datatable = [];
 
+        $validResponse = FALSE;
+
         //Get redis cache
         $redis = new RedisDatabase();
-        $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusPipeline::CACHE_DEFAULT_DATABASE_INDEX);
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusPipeline::CACHE_DEFAULT_DATABASE_INDEX);
 
         //Try to get cached value
-        $cacheval = $redis->getCachedString($cachekey);
-        if ($cacheval !== NULL) {
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = $redis->getCachedString($cachekey);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
             $datatable = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
         }
         else {
             //Mysql
             $db = new MysqlDatabase();
 
-            $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
-            $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+            $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 
-            //Get image path from packages
-            /** @var Asset\Packages $pkgs */
-            $pkgs = $this->get("assets.packages");
-            $pkg = $pkgs->getPackage("images");
-            $imgbasepath = $pkg->getUrl('');
-
-            //Determine time range
-            date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-            //$datetime = new \DateTime("now");
-            //TODO Debug use weeks from the past instead of now for testing
-            $datetime = new \DateTime();
-            $datetime->setISODate(2017, 28, 1);
-            //
-            $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
-            $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
-
-            //Prepare statements
-            $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
-
-            $db->prepare("SelectHeroesMatches",
-                "SELECT `played`, `won`, `banned` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
-            $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
-
-            $r_gameType = "Hero League";
-
-            //Iterate through heroes
             $data = [];
-            $result = $db->execute("SelectHeroes");
-            while ($row = $db->fetchArray($result)) {
-                $r_hero = $row['name'];
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                /*
-                 * Collect hero data
-                 */
-                $dt_playrate = 0;
-                $dt_banrate = 0;
-                $dt_winrate = 0.0;
-                $dt_windelta = 0.0;
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
 
-                $old_playrate = 0;
-                $old_won = 0;
-                $old_winrate = 0.0;
+                //Determine time range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                //$datetime = new \DateTime("now");
+                //TODO Debug use weeks from the past instead of now for testing
+                $datetime = new \DateTime();
+                $datetime->setISODate(2017, 28, 1);
+                //
+                $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
+                $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
 
-                $won = 0;
+                //Prepare statements
+                $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
-                /*
-                 * Calculate statistics for hero
-                 */
-                //Last 7 Days
-                $date_range_start = $last7days_range['date_start'];
-                $date_range_end = $last7days_range['date_end'];
+                $db->prepare("SelectHeroesMatches",
+                    "SELECT `played`, `won`, `banned` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
-                $statsResult = $db->execute("SelectHeroesMatches");
-                $statsResult_rows = $db->countResultRows($statsResult);
-                if ($statsResult_rows > 0) {
-                    while ($statsrow = $db->fetchArray($statsResult)) {
-                        $dt_playrate += $statsrow['played'];
-                        $dt_banrate += $statsrow['banned'];
-                        $won += $statsrow['won'];
+                $r_gameType = "Hero League";
+
+                //Iterate through heroes
+                $result = $db->execute("SelectHeroes");
+                while ($row = $db->fetchArray($result)) {
+                    $r_hero = $row['name'];
+
+                    /*
+                     * Collect hero data
+                     */
+                    $dt_playrate = 0;
+                    $dt_banrate = 0;
+                    $dt_winrate = 0.0;
+                    $dt_windelta = 0.0;
+
+                    $old_playrate = 0;
+                    $old_won = 0;
+                    $old_winrate = 0.0;
+
+                    $won = 0;
+
+                    /*
+                     * Calculate statistics for hero
+                     */
+                    //Last 7 Days
+                    $date_range_start = $last7days_range['date_start'];
+                    $date_range_end = $last7days_range['date_end'];
+
+                    $statsResult = $db->execute("SelectHeroesMatches");
+                    $statsResult_rows = $db->countResultRows($statsResult);
+                    if ($statsResult_rows > 0) {
+                        while ($statsrow = $db->fetchArray($statsResult)) {
+                            $dt_playrate += $statsrow['played'];
+                            $dt_banrate += $statsrow['banned'];
+                            $won += $statsrow['won'];
+                        }
                     }
-                }
-                $db->freeResult($statsResult);
+                    $db->freeResult($statsResult);
 
-                //Old 7 Days
-                $date_range_start = $old7days_range['date_start'];
-                $date_range_end = $old7days_range['date_end'];
+                    //Old 7 Days
+                    $date_range_start = $old7days_range['date_start'];
+                    $date_range_end = $old7days_range['date_end'];
 
-                $statsResult = $db->execute("SelectHeroesMatches");
-                $statsResult_rows = $db->countResultRows($statsResult);
-                if ($statsResult_rows > 0) {
-                    while ($statsrow = $db->fetchArray($statsResult)) {
-                        $old_playrate += $statsrow['played'];
-                        $old_won += $statsrow['won'];
+                    $statsResult = $db->execute("SelectHeroesMatches");
+                    $statsResult_rows = $db->countResultRows($statsResult);
+                    if ($statsResult_rows > 0) {
+                        while ($statsrow = $db->fetchArray($statsResult)) {
+                            $old_playrate += $statsrow['played'];
+                            $old_won += $statsrow['won'];
+                        }
                     }
+                    $db->freeResult($statsResult);
+
+                    //Winrate
+                    if ($dt_playrate > 0) {
+                        $dt_winrate = round(($won / ($dt_playrate * 1.00)) * 100.0, 1);
+                    }
+
+                    //Old Winrate
+                    if ($old_playrate > 0) {
+                        $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
+                    }
+
+                    //Win Delta
+                    $dt_windelta = $dt_winrate - $old_winrate;
+
+
+                    /*
+                     * Construct row
+                     */
+                    $dtrow = [];
+
+                    //Hero Portrait
+                    $dtrow[] = '<img src="' . $imgbasepath . $row['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
+
+                    //Hero proper name
+                    $dtrow[] = $row['name'];
+
+                    //Hero name sort helper
+                    $dtrow[] = $row['name_sort'];
+
+                    //Hero Blizzard role
+                    $dtrow[] = $row['role_blizzard'];
+
+                    //Hero Specific role
+                    $dtrow[] = $row['role_specific'];
+
+                    //Playrate
+                    $dtrow[] = $dt_playrate;
+
+                    //Banrate
+                    $dtrow[] = $dt_banrate;
+
+                    //Winrate
+                    $colorclass = "hsl-number-winrate-red";
+                    if ($dt_winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+                    $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $dt_winrate) . '</span>';
+
+                    //Win Delta (This is the % change in winrate from this last 2 iso weeks to previous 2 iso weeks)
+                    $colorclass = "hsl-number-delta-red";
+                    if ($dt_windelta >= 0) $colorclass = "hsl-number-delta-green";
+                    $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%+-03.1f %%", $dt_windelta) . '</span>';
+
+                    $data[] = $dtrow;
                 }
-                $db->freeResult($statsResult);
-
-                //Winrate
-                if ($dt_playrate > 0) {
-                    $dt_winrate = round(($won / ($dt_playrate * 1.00)) * 100.0, 1);
-                }
-
-                //Old Winrate
-                if ($old_playrate > 0) {
-                    $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
-                }
-
-                //Win Delta
-                $dt_windelta = $dt_winrate - $old_winrate;
 
 
-                /*
-                 * Construct row
-                 */
-                $dtrow = [];
+                $db->freeResult($result);
+                $db->close();
 
-                //Hero Portrait
-                $dtrow[] = '<img src="' . $imgbasepath . $row['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
-
-                //Hero proper name
-                $dtrow[] = $row['name'];
-
-                //Hero name sort helper
-                $dtrow[] = $row['name_sort'];
-
-                //Hero Blizzard role
-                $dtrow[] = $row['role_blizzard'];
-
-                //Hero Specific role
-                $dtrow[] = $row['role_specific'];
-
-                //Playrate
-                $dtrow[] = $dt_playrate;
-
-                //Banrate
-                $dtrow[] = $dt_banrate;
-
-                //Winrate
-                $colorclass = "hsl-number-winrate-red";
-                if ($dt_winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
-                $dtrow[] = '<span class="'.$colorclass.'">'.sprintf("%03.1f %%", $dt_winrate).'</span>';
-
-                //Win Delta (This is the % change in winrate from this last 2 iso weeks to previous 2 iso weeks)
-                $colorclass = "hsl-number-delta-red";
-                if ($dt_windelta >= 0) $colorclass = "hsl-number-delta-green";
-                $dtrow[] = '<span class="'.$colorclass.'">'.sprintf("%+-03.1f %%", $dt_windelta).'</span>';
-
-                $data[] = $dtrow;
+                $validResponse = TRUE;
             }
-
-            $db->freeResult($result);
-            $db->close();
 
             $datatable['data'] = $data;
 
             $encoded = json_encode($datatable);
 
-            $redis->cacheString($cachekey, $encoded, self::CACHE_TIME);
+            if ($connected_redis) {
+                $redis->cacheString($cachekey, $encoded, self::CACHE_TIME);
+            }
         }
 
         $redis->close();
@@ -198,16 +214,10 @@ class HerodataController extends Controller {
         $jsonResponse = $this->json($datatable);
         $jsonResponse->setPublic();
 
-        //Determine expire date
-        date_default_timezone_set(HotstatusPipeline::HTTPCACHE_DEFAULT_TIMEZONE);
-        $expiredate = new \DateTime("now");
-        $expiredate->setTime(0, 0, 0);
-        $hours = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['hours'];
-        $minutes = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['minutes'];
-        $seconds = HotstatusPipeline::HTTPCACHE_DEFAULT_EXPIRES_TIME['seconds'];
-        $expiredate->add(new \DateInterval("PT".$hours."H".$minutes."M".$seconds."S"));
-
-        $jsonResponse->setExpires($expiredate);
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $jsonResponse->setExpires(HotstatusPipeline::getHTTPCacheDefaultExpirationDateForToday());
+        }
 
         return $jsonResponse;
     }
