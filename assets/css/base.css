@@ -292,6 +292,22 @@ table.dataTable.fixedHeader-locked {
     white-space: nowrap;
 }
 
+.hsl-number-popularity {
+
+}
+
+.hsl-percentbar {
+    height: 4px;
+}
+
+.hsl-percentbar-winrate {
+    background-color: #227d25;
+}
+
+.hsl-percentbar-popularity {
+    background-color: #4da7ca;
+}
+
 /* DataTable Processing Hoverup */
 .dataTables_processing{
     position:absolute;

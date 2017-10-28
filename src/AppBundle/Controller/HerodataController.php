@@ -2,15 +2,14 @@
 
 namespace AppBundle\Controller;
 
-use Fizzik\Database\MongoDBDatabase;
 use Fizzik\HotstatusPipeline;
-use Fizzik\Utility\AssocArray;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Asset;
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 use Fizzik\Credentials;
+use Fizzik\HotstatusCache;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
@@ -18,7 +17,6 @@ use Fizzik\Credentials;
 class HerodataController extends Controller {
     const CODE_OK = 200;
     const SELECT_ALL = "*";
-    const CACHE_TIME = PHP_INT_MAX; //INT_MAX cache time ensures keys are only removed when the volatile-lru eviction policy does it, or manually
     private static $herodata_heroes_keys = [
         "name", "name_internal", "name_sort", "name_attribute", "difficulty", "role_blizzard", "role_specific", "universe",
         "title", "desc_tagline", "desc_bio", "rarity", "image_hero", "image_minimap", "rating_damage", "rating_utility",
@@ -31,37 +29,43 @@ class HerodataController extends Controller {
      * @Route("/herodata/datatable/heroes/statslist", name="herodata_datatable_heroes_statslist")
      */
     public function getDataTableHeroesStatsListAction() {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_DATATABLE;
+        $_ID = "getDataTableHeroesStatsListAction";
+        $_VERSION = 0;
+
+        //Get credentials
         $creds = Credentials::getHotstatusWebCredentials();
 
-        $cachekey = HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST;
-
+        //Set up main vars
         $datatable = [];
-
         $validResponse = FALSE;
 
         //Get redis cache
         $redis = new RedisDatabase();
-        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusPipeline::CACHE_DEFAULT_DATABASE_INDEX);
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
 
         //Try to get cached value
         $cacheval = NULL;
         if ($connected_redis !== FALSE) {
-            $cacheval = $redis->getCachedString($cachekey);
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $_ID, $_VERSION);
         }
 
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
             $datatable = json_decode($cacheval, true);
 
             $validResponse = TRUE;
         }
         else {
-            //Mysql
+            //Try to get Mysql value
             $db = new MysqlDatabase();
 
             $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
 
             $data = [];
             if ($connected_mysql !== FALSE) {
+                //Use mysql value
+
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 //Get image path from packages
@@ -89,7 +93,12 @@ class HerodataController extends Controller {
 
                 $r_gameType = "Hero League";
 
-                //Iterate through heroes
+                //Iterate through heroes to collect data
+                $herodata = [];
+                $maxWinrate = PHP_INT_MIN;
+                $minWinrate = PHP_INT_MAX;
+                $totalPlayed = 0;
+                $totalBanned = 0;
                 $result = $db->execute("SelectHeroes");
                 while ($row = $db->fetchArray($result)) {
                     $r_hero = $row['name'];
@@ -153,42 +162,93 @@ class HerodataController extends Controller {
                     //Win Delta
                     $dt_windelta = $dt_winrate - $old_winrate;
 
+                    //Max, mins, and totals
+                    if ($maxWinrate < $dt_winrate) $maxWinrate = $dt_winrate;
+                    if ($minWinrate > $dt_winrate) $minWinrate = $dt_winrate;
+                    $totalPlayed += $dt_playrate;
+                    $totalBanned += $dt_banrate;
 
                     /*
-                     * Construct row
+                     * Construct hero object
                      */
+                    $hero = [];
+                    $hero['name'] = $row['name'];
+                    $hero['name_sort'] = $row['name_sort'];
+                    $hero['role_blizzard'] = $row['role_blizzard'];
+                    $hero['role_specific'] = $row['role_specific'];
+                    $hero['image_hero'] =  $row['image_hero'];
+                    $hero['dt_playrate'] = $dt_playrate;
+                    $hero['dt_banrate'] = $dt_banrate;
+                    $hero['dt_winrate'] = $dt_winrate;
+                    $hero['dt_windelta'] = $dt_windelta;
+
+                    $herodata[] = $hero;
+                }
+
+                //Calculate popularities
+                $maxPopularity = PHP_INT_MIN;
+                $minPopularity = PHP_INT_MAX;
+                foreach ($herodata as &$hero) {
+                    $dt_popularity = round(((($hero['dt_playrate'] + $hero['dt_banrate']) * 1.00) / (($totalPlayed + $totalBanned) * 1.00)) * 100.0, 1);
+
+                    //Max, mins
+                    if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
+                    if ($minPopularity > $dt_popularity) $minPopularity = $dt_popularity;
+
+                    $hero['dt_popularity'] = $dt_popularity;
+                }
+
+                //Iterate through heroes to create dtrows from previously collected data
+                foreach ($herodata as $hero) {
                     $dtrow = [];
 
                     //Hero Portrait
-                    $dtrow[] = '<img src="' . $imgbasepath . $row['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
+                    $dtrow[] = '<img src="' . $imgbasepath . $hero['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
 
                     //Hero proper name
-                    $dtrow[] = $row['name'];
+                    $dtrow[] = $hero['name'];
 
                     //Hero name sort helper
-                    $dtrow[] = $row['name_sort'];
+                    $dtrow[] = $hero['name_sort'];
 
                     //Hero Blizzard role
-                    $dtrow[] = $row['role_blizzard'];
+                    $dtrow[] = $hero['role_blizzard'];
 
                     //Hero Specific role
-                    $dtrow[] = $row['role_specific'];
+                    $dtrow[] = $hero['role_specific'];
 
                     //Playrate
-                    $dtrow[] = $dt_playrate;
+                    $dtrow[] = $hero['dt_playrate'];
 
                     //Banrate
-                    $dtrow[] = $dt_banrate;
+                    $dtrow[] = $hero['dt_banrate'];
+
+                    //Popularity
+                    $percentOnRange = ((($hero['dt_popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
+                    $dtrow[] = '<span class="hsl-number-popularity">' . sprintf("%03.1f %%", $hero['dt_popularity'])
+                        . '</span><div class="hsl-percentbar hsl-percentbar-popularity" style="width:'.$percentOnRange.'%;"></div>';
 
                     //Winrate
-                    $colorclass = "hsl-number-winrate-red";
-                    if ($dt_winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
-                    $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $dt_winrate) . '</span>';
+                    if ($hero['dt_playrate'] > 0) {
+                        $colorclass = "hsl-number-winrate-red";
+                        if ($hero['dt_winrate'] >= 50.0) $colorclass = "hsl-number-winrate-green";
+                        $percentOnRange = ((($hero['dt_winrate'] - $minWinrate) * 1.00) / (($maxWinrate - $minWinrate) * 1.00)) * 100.0;
+                        $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $hero['dt_winrate'])
+                            . '</span><div class="hsl-percentbar hsl-percentbar-winrate" style="width:' . $percentOnRange . '%;"></div>';
+                    }
+                    else {
+                        $dtrow[] = '';
+                    }
 
-                    //Win Delta (This is the % change in winrate from this last 2 iso weeks to previous 2 iso weeks)
-                    $colorclass = "hsl-number-delta-red";
-                    if ($dt_windelta >= 0) $colorclass = "hsl-number-delta-green";
-                    $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%+-03.1f %%", $dt_windelta) . '</span>';
+                    //Win Delta (This is the % change in winrate from this last granularity and the older next recent granularity)
+                    if ($hero['dt_windelta'] > 0 || $hero['dt_windelta'] < 0) {
+                        $colorclass = "hsl-number-delta-red";
+                        if ($hero['dt_windelta'] >= 0) $colorclass = "hsl-number-delta-green";
+                        $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%+-03.1f %%", $hero['dt_windelta']) . '</span>';
+                    }
+                    else {
+                        $dtrow[] = '';
+                    }
 
                     $data[] = $dtrow;
                 }
@@ -204,19 +264,23 @@ class HerodataController extends Controller {
 
             $encoded = json_encode($datatable);
 
+            //Store mysql value in cache
             if ($connected_redis) {
-                $redis->cacheString($cachekey, $encoded, self::CACHE_TIME);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $_ID, $_VERSION, $encoded);
             }
         }
 
         $redis->close();
 
+        /*
+         * Build response
+         */
         $jsonResponse = $this->json($datatable);
         $jsonResponse->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $jsonResponse->setExpires(HotstatusPipeline::getHTTPCacheDefaultExpirationDateForToday());
+            $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
         }
 
         return $jsonResponse;
