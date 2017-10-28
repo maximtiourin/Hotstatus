@@ -205,14 +205,14 @@ class HerodataController extends Controller {
                 //Calculate popularities
                 $maxPopularity = PHP_INT_MIN;
                 $minPopularity = PHP_INT_MAX;
-                foreach ($herodata as &$hero) {
-                    $dt_popularity = round(((($hero['dt_playrate'] + $hero['dt_banrate']) * 1.00) / (($matchesPlayed) * 1.00)) * 100.0, 1);
+                foreach ($herodata as &$rhero) {
+                    $dt_popularity = round(((($rhero['dt_playrate'] + $rhero['dt_banrate']) * 1.00) / (($matchesPlayed) * 1.00)) * 100.0, 1);
 
                     //Max, mins
                     if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
                     if ($minPopularity > $dt_popularity) $minPopularity = $dt_popularity;
 
-                    $hero['dt_popularity'] = $dt_popularity;
+                    $rhero['dt_popularity'] = $dt_popularity;
                 }
 
                 //Iterate through heroes to create dtrows from previously collected data
