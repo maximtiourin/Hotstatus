@@ -10,8 +10,6 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 use Fizzik\Credentials;
 use Fizzik\HotstatusCache;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
