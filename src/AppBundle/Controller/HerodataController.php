@@ -10,6 +10,8 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 use Fizzik\Credentials;
 use Fizzik\HotstatusCache;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
@@ -91,7 +93,24 @@ class HerodataController extends Controller {
                     "SELECT `played`, `won`, `banned` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
+                $db->prepare("CountMatches",
+                    "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `date` >= ? AND `date` <= ?");
+                $db->bind("CountMatches", "ss", $date_range_start, $date_range_end);
+
                 $r_gameType = "Hero League";
+
+                //Determine matches played for recent granularity
+                $matchesPlayed = 0;
+                $date_range_start = $last7days_range['date_start'];
+                $date_range_end = $last7days_range['date_end'];
+
+                $matchCountResult = $db->execute("CountMatches");
+                $matchCountResult_rows = $db->countResultRows($matchCountResult);
+                if ($matchCountResult_rows > 0) {
+                    $mcrow = $db->fetchArray($matchCountResult);
+
+                    $matchesPlayed = $mcrow['match_count'];
+                }
 
                 //Iterate through heroes to collect data
                 $herodata = [];
@@ -189,7 +208,7 @@ class HerodataController extends Controller {
                 $maxPopularity = PHP_INT_MIN;
                 $minPopularity = PHP_INT_MAX;
                 foreach ($herodata as &$hero) {
-                    $dt_popularity = round(((($hero['dt_playrate'] + $hero['dt_banrate']) * 1.00) / (($totalPlayed + $totalBanned) * 1.00)) * 100.0, 1);
+                    $dt_popularity = round(((($hero['dt_playrate'] + $hero['dt_banrate']) * 1.00) / (($matchesPlayed) * 1.00)) * 100.0, 1);
 
                     //Max, mins
                     if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
