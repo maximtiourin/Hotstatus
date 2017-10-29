@@ -79,7 +79,7 @@ class HerodataController extends Controller {
                 //$datetime = new \DateTime("now");
                 //TODO Debug use weeks from the past instead of now for testing
                 $datetime = new \DateTime();
-                $datetime->setISODate(2017, 28, 1);
+                $datetime->setISODate(2017, 28, 3);
                 //
                 $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
                 $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
@@ -95,7 +95,7 @@ class HerodataController extends Controller {
                     "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `date` >= ? AND `date` <= ?");
                 $db->bind("CountMatches", "ss", $date_range_start, $date_range_end);
 
-                $r_gameType = "Hero League";
+                $r_gameType = "Quick Match"; //TODO using quick match for larger data set during developement, swap to hero league later
 
                 //Determine matches played for recent granularity
                 $matchesPlayed = 0;
@@ -238,7 +238,12 @@ class HerodataController extends Controller {
                     $dtrow[] = $hero['dt_playrate'];
 
                     //Banrate
-                    $dtrow[] = $hero['dt_banrate'];
+                    if ($hero['dt_banrate'] > 0) {
+                        $dtrow[] = $hero['dt_banrate'];
+                    }
+                    else {
+                        $dtrow[] = '';
+                    }
 
                     //Popularity
                     $percentOnRange = ((($hero['dt_popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
