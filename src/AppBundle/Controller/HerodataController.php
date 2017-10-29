@@ -95,7 +95,7 @@ class HerodataController extends Controller {
                     "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `date` >= ? AND `date` <= ?");
                 $db->bind("CountMatches", "ss", $date_range_start, $date_range_end);
 
-                $r_gameType = "Quick Match"; //TODO using quick match for larger data set during developement, swap to hero league later
+                $r_gameType = "Hero League";
 
                 //Determine matches played for recent granularity
                 $matchesPlayed = 0;
