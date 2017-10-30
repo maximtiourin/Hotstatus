@@ -3,6 +3,7 @@
 {% endblock %}
 
 <div id="heroes-statslist-container" style="border-radius: 4px !important;">
+    {% block filter %}{% endblock %}
     <div id="heroes-statslist-toolbar" class="clearfix text-left">
         <div id="" class="d-inline-block float-right">
             <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Utility">Utility</button>
@@ -19,7 +20,7 @@
             <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Assassin">Assassin</button>
         </div>
         <div id="heroes-statslist-toolbar-container-search" class="d-inline-block float-none">
-            <input id="heroes-statslist-toolbar-search" class="" placeholder="Search...">
+            <input id="heroes-statslist-toolbar-search" class="" placeholder="Search...">{% block filterbutton %}{% endblock %}
         </div>
     </div>
     <div id="heroes-statslist">

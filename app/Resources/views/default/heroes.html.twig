@@ -2,7 +2,7 @@
 
 {# Include snippets and then alias their blocks so as to order them as needed #}
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
-{% use ':snippets/heroes:statslist.html.twig' with javascripts as hsljavascripts %}
+{% use ':snippets:heroes/statslist.html.twig' with javascripts as hsljavascripts %}
 
 {# Append to title #}
 {% block title %}
@@ -51,20 +51,28 @@
         <div class="row">
             <div class="col-md-1 col-xl-2"></div>
             <div class="col-sm-12 col-md-10 col-xl-8">
-                <div class="">
-                    <div class="d-inline-block">[Select Range Of Maps]</div>
-                    <div class="d-inline-block">[Select Range of Leagues]</div>
-                    <div class="d-inline-block">[Select Range of Dates]</div>
-                </div>
-            </div>
-            <div class="col-md-1 col-xl-2"></div>
-        </div>
-        <div class="row">
-            <div class="col-md-1 col-xl-2"></div>
-            <div class="col-sm-12 col-md-10 col-xl-8">
                 <div class="text-center">
                     {% embed ':snippets:heroes/statslist.html.twig' %}
                         {% block javascripts %}{% endblock %}
+                        {% block filter %}
+                            <div>
+                                <div class="d-inline-block">
+                                    {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
+                                </div>
+                                <div class="d-inline-block">
+                                    {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
+                                </div>
+                                <div class="d-inline-block">
+                                    {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
+                                </div>
+                                <div class="d-inline-block">
+                                    {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
+                                </div>
+                            </div>
+                        {% endblock %}
+                        {% block filterbutton %}
+                            <button class="btn btn-sm filter-button">Filter</button>
+                        {% endblock %}
                     {% endembed %}
                 </div>
             </div>

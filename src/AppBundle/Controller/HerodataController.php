@@ -77,9 +77,8 @@ class HerodataController extends Controller {
                 //Determine time range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 //$datetime = new \DateTime("now");
-                //TODO Debug use weeks from the past instead of now for testing
-                $datetime = new \DateTime();
-                $datetime->setISODate(2017, 28, 3);
+                $datetime = new \DateTime("2017-07-15"); //TODO Debug use weeks from the past instead of now for testing
+                //$datetime->setISODate(2017, 28, 3);
                 //
                 $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
                 $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
@@ -92,10 +91,10 @@ class HerodataController extends Controller {
                 $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
                 $db->prepare("CountMatches",
-                    "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `date` >= ? AND `date` <= ?");
-                $db->bind("CountMatches", "ss", $date_range_start, $date_range_end);
+                    "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `type` = ? AND `date` >= ? AND `date` <= ?");
+                $db->bind("CountMatches", "sss", $r_gameType, $date_range_start, $date_range_end);
 
-                $r_gameType = "Hero League";
+                $r_gameType = "Hero League"; //TODO
 
                 //Determine matches played for recent granularity
                 $matchesPlayed = 0;
@@ -112,8 +111,8 @@ class HerodataController extends Controller {
 
                 //Iterate through heroes to collect data
                 $herodata = [];
-                $maxWinrate = PHP_INT_MIN;
-                $minWinrate = PHP_INT_MAX;
+                $maxWinrate = 0.0;
+                $minWinrate = 100.0;
                 $totalPlayed = 0;
                 $totalBanned = 0;
                 $result = $db->execute("SelectHeroes");
@@ -180,8 +179,8 @@ class HerodataController extends Controller {
                     $dt_windelta = $dt_winrate - $old_winrate;
 
                     //Max, mins, and totals
-                    if ($maxWinrate < $dt_winrate) $maxWinrate = $dt_winrate;
-                    if ($minWinrate > $dt_winrate) $minWinrate = $dt_winrate;
+                    if ($maxWinrate < $dt_winrate && $dt_playrate > 0) $maxWinrate = $dt_winrate;
+                    if ($minWinrate > $dt_winrate && $dt_playrate > 0) $minWinrate = $dt_winrate;
                     $totalPlayed += $dt_playrate;
                     $totalBanned += $dt_banrate;
 
