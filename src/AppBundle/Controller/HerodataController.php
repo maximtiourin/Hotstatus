@@ -34,7 +34,7 @@ class HerodataController extends Controller {
         $_VERSION = 0;
 
         //Get credentials
-        $creds = Credentials::getHotstatusWebCredentials();
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
         //Set up main vars
         $datatable = [];
