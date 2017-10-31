@@ -552,7 +552,28 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 /* Select/Deselect buttons in dropdown */
 .actions-btn {
-    background-color: #0088CC;
+    background-color: #0088CC !important;
+    display: inline-block !important;
+    width: 50px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    border: 1px !important;
+    border-style: solid !important;
+    border-radius: 4px !important;
+    border-color: #FF0000 !important;
+}
+
+/* Custom select toggle button in dropdown */
+.bs-select-toggle {
+
+}
+
+/* Select button in dropdown */
+.bs-select-all {
+}
+
+/* Deselect button in dropdown */
+.bs-deselect-all {
 }
 
 .filter-dropdown-image {

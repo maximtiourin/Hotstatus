@@ -499,7 +499,17 @@
       (null === this.options.liveSearchPlaceholder ? '' : ' placeholder="' + htmlEscape(this.options.liveSearchPlaceholder) + '"') + ' role="textbox" aria-label="Search">' +
       '</div>'
           : '';
+      //Fizzik actionsbox - Changed select/deselect into a toggle button
       var actionsbox = this.multiple && this.options.actionsBox ?
+          '<div class="bs-actionsbox">' +
+          '<div class="btn-group btn-group-sm btn-block">' +
+          '<button type="button" class="actions-btn bs-select-toggle btn btn-default">' +
+          this.options.selectAllText +
+          '</button>' +
+          '</div>' +
+          '</div>'
+          : '';
+      /*var actionsbox = this.multiple && this.options.actionsBox ?
       '<div class="bs-actionsbox">' +
       '<div class="btn-group btn-group-sm btn-block">' +
       '<button type="button" class="actions-btn bs-select-all btn btn-default">' +
@@ -510,7 +520,7 @@
       '</button>' +
       '</div>' +
       '</div>'
-          : '';
+          : '';*/
       var donebutton = this.multiple && this.options.doneButton ?
       '<div class="bs-donebutton">' +
       '<div class="btn-group btn-block">' +
@@ -1422,11 +1432,26 @@
         e.preventDefault();
         e.stopPropagation();
 
-        if ($(this).hasClass('bs-select-all')) {
-          that.selectAll();
-        } else {
-          that.deselectAll();
+        //Fizzik - Toggle Select all Functionality
+        if ($(this).hasClass('bs-select-toggle')) {
+          if (typeof that.select_toggle === 'undefined') {
+            that.select_toggle = false;
+          }
+          
+          if (that.select_toggle === false) {
+            that.select_toggle = true;
+            that.selectAll();
+          }
+          else {
+            that.select_toggle = false;
+            that.deselectAll();
+          }
         }
+        /*if ($(this).hasClass('bs-select-all')) {
+            that.selectAll();
+        } else {
+            that.deselectAll();
+        }*/
       });
 
       this.$element.change(function () {
