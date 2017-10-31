@@ -784,6 +784,14 @@
       //Fizzik -> Count selected items first, to determine title displaying down the line
       var selectedItemsCount = $selectOptions.filter(function() { return this.selected }).length;
 
+      //Toggle select val on no selections or all selections
+      if (selectedItemsCount === 0) {
+        this.select_toggle = false;
+      }
+      else {
+        this.select_toggle = true;
+      }
+
       var selectedItems = $selectOptions.map(function () {
         if (this.selected) {
           if (that.options.hideDisabled && (this.disabled || this.parentNode.tagName === 'OPTGROUP' && this.parentNode.disabled)) return;
