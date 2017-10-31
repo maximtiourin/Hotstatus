@@ -1,0 +1,8 @@
+<select class="selectpicker" data-actions-box="true" data-width="300px" title="No Ranks Selected"
+        data-selected-text-format="values" data-multiple-separator=""
+        data-select-all-text="<i class='fa fa-check-square-o fa-2x' style='' aria-hidden='true'></i>" multiple>
+    {% for rank in filter_ranks %}
+        <option title="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-8' src='{{ asset('ui/ranked_icon_'~rank~'.png', 'images') }}'>"
+                data-content="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-8' src='{{ asset('ui/ranked_icon_'~rank~'.png', 'images') }}'>{{ rank }}">{{ rank }}</option>
+    {% endfor %}
+</select>

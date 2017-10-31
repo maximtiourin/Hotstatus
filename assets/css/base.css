@@ -519,7 +519,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-decoration: none;
 }
 .bootstrap-select > .dropdown-menu {
-    background-color: #201D26 !important;
+    background-color: #1b1821 !important;
     border-color: #10042B!important;
 }
 .bootstrap-select > .dropdown-menu > .dropdown-menu li a:hover {
@@ -551,36 +551,44 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 /* Select/Deselect buttons in dropdown */
-.actions-btn {
-    background-color: #0088CC !important;
-    display: inline-block !important;
-    width: 50px !important;
-    height: 30px !important;
-    padding: 0 !important;
-    border: 1px !important;
-    border-style: solid !important;
-    border-radius: 4px !important;
-    border-color: #FF0000 !important;
-}
 
 /* Custom select toggle button in dropdown */
 .bs-select-toggle {
-
-}
-
-/* Select button in dropdown */
-.bs-select-all {
-}
-
-/* Deselect button in dropdown */
-.bs-deselect-all {
+    position:relative!important;
+    top:0!important;
+    right:0!important;
+    float:right!important;
+    background-color: rgba(0, 136, 204, 0) !important;
+    display: inline-block !important;
+    width: 36px !important;
+    height: 32px !important;
+    line-height: 28px !important;
+    padding: 2px !important;
+    border: 1px !important;
+    border-style: none !important;
+    border-radius: 4px !important;
+    border-color: #FF0000 !important;
+    font-weight: 800 !important;
+    margin: 4px 2px !important;
+    color: #5c5e69 !important;
 }
 
 .filter-dropdown-image {
-    margin-right: 4px;
 }
 
 .filter-dropdown-image-map {
+}
+
+.filter-dropdown-image-rank {
+    width: 32px;
+    height: 32px;
+}
+
+.filter-dropdown-image-margin-right-4 {
+    margin-right: 4px;
+}
+
+.filter-dropdown-image-margin-right-8 {
     margin-right: 8px;
 }
 

@@ -503,7 +503,7 @@
       var actionsbox = this.multiple && this.options.actionsBox ?
           '<div class="bs-actionsbox">' +
           '<div class="btn-group btn-group-sm btn-block">' +
-          '<button type="button" class="actions-btn bs-select-toggle btn btn-default">' +
+          '<div class="d-inline-block" style="width:100%"></div><button type="button" class="actions-btn bs-select-toggle btn btn-default d-inline-block">' +
           this.options.selectAllText +
           '</button>' +
           '</div>' +
@@ -1437,7 +1437,7 @@
           if (typeof that.select_toggle === 'undefined') {
             that.select_toggle = false;
           }
-          
+
           if (that.select_toggle === false) {
             that.select_toggle = true;
             that.selectAll();

@@ -30,7 +30,8 @@ class DefaultController extends Controller
      */
     public function heroesAction(Request $request) {
         return $this->render('default/heroes.html.twig', [
-            "filter_maps" => HotstatusPipeline::$filter_maps
+            "filter_maps" => HotstatusPipeline::$filter_maps,
+            "filter_ranks" => HotstatusPipeline::$filter_ranks
         ]);
     }
 
