@@ -1,8 +1,7 @@
-<select class="selectpicker" data-actions-box="true" data-width="300px" multiple>
-    <option data-content="<img class='filter-dropdown-image' src='{{ asset('storm_ui_minimapicon_ragnaros.png', 'images') }}'>Mustard">Mustard</option>
-    <option>Ketchup</option>
-    <option>Relish</option>
-    <option>Relish1</option>
-    <option>Relish2</option>
-    <option>Relish3</option>
+<select class="selectpicker" data-actions-box="true" data-width="300px" title="No Maps Selected"
+        data-selected-text-format="count > 4" data-count-selected-text="{0} of {1} Maps Selected" data-multiple-separator="" multiple>
+    {% for key, map in filter_maps %}
+        <option title="<img src='{{ asset('ui/map_icon_'~map.name_sort~'.png', 'images') }}'>"
+                data-content="<img class='filter-dropdown-image-map' src='{{ asset('ui/map_icon_'~map.name_sort~'.png', 'images') }}'>{{ key }}">{{ key }}</option>
+    {% endfor %}
 </select>

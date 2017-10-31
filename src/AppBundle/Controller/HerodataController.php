@@ -77,7 +77,7 @@ class HerodataController extends Controller {
                 //Determine time range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 //$datetime = new \DateTime("now");
-                $datetime = new \DateTime("2017-07-15"); //TODO Debug use weeks from the past instead of now for testing
+                $datetime = new \DateTime("2017-07-18"); //TODO Debug use weeks from the past instead of now for testing
                 //$datetime->setISODate(2017, 28, 3);
                 //
                 $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));

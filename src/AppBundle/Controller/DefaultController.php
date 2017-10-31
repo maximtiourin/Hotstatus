@@ -2,6 +2,7 @@
 
 namespace AppBundle\Controller;
 
+use Fizzik\HotstatusPipeline;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ class DefaultController extends Controller
      */
     public function heroesAction(Request $request) {
         return $this->render('default/heroes.html.twig', [
+            "filter_maps" => HotstatusPipeline::$filter_maps
         ]);
     }
 

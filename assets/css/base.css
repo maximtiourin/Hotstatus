@@ -80,6 +80,26 @@
     background: none !important;
 }
 
+/*
+ * General look and feel
+ */
+/* Search Text boxes */
+.hotstatus-search-textbox {
+    background-color: #444652;
+    color: #FFFFFF;
+    border: 1px;
+    border-radius: 4px;
+    border-style: solid;
+    border-color: #10042B;
+    padding: 4px 8px;
+    margin: 2px 4px;
+}
+
+.hotstatus-search-textbox::placeholder {
+    color: #9b9eaf;
+    opacity: 255;
+}
+
 /* Navigation */
 #hotstatus-navbar {
     width: 100% !important;
@@ -109,6 +129,7 @@
     border: 2px;
     border-color: #3D12A1;
     border-style: solid;
+    margin-left: 6px;
 }
 .nav-stopwordwrap {
     white-space: nowrap;
@@ -251,7 +272,6 @@ table.dataTable.fixedHeader-locked {
     padding: 3px 7px;
     cursor: pointer;
     border-color: #161923;
-    border-style: outset;
     border-radius: 4px;
     color: #FFFFFF;
 }
@@ -263,7 +283,6 @@ table.dataTable.fixedHeader-locked {
     padding: 3px 9px;
     cursor: pointer;
     border-color: #1A1624;
-    border-style: outset;
     border-radius: 4px;
     color: #FFFFFF;
 }
@@ -476,6 +495,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     background-color: #444652 !important;
     border-color: #10042B!important;
     height:50px;
+    line-height: 32px;
 }
 .bootstrap-select.show > .dropdown-menu > .dropdown-menu {
     display: block;
@@ -489,6 +509,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     width: 100%;
     padding: 3px 1.5rem;
     clear: both;
+    font-size: 15px;
     font-weight: 400;
     color: #FFFFFF;
     text-align: inherit;
@@ -529,18 +550,27 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     display: inline !important;
 }
 
+/* Select/Deselect buttons in dropdown */
+.actions-btn {
+    background-color: #0088CC;
+}
+
 .filter-dropdown-image {
     margin-right: 4px;
 }
 
+.filter-dropdown-image-map {
+    margin-right: 8px;
+}
+
 .filter-button {
-    background-color: #10042B;
-    font-size: 12px !important;
+    background-color: #2c1057;
+    font-size: 16px !important;
     margin: 2px 2px 5px 2px;
     padding: 3px 7px;
+    line-height: 16px;
     cursor: pointer;
     border-color: #161923;
-    border-style: outset;
     border-radius: 4px;
     color: #FFFFFF;
     width:140px;

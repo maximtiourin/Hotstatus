@@ -19,6 +19,7 @@ Encore
 
     // will output as web/build/app.js
     //.addEntry('app', './assets/js/main.js')
+    .addEntry('hotstatus-bootstrap-select', './assets/js/hotstatus-bootstrap-select.js')
     .addEntry('hotstatus', './assets/js/hotstatus.js')
     .addEntry('heroes-statslist', './assets/js/heroes-statslist.js')
 
