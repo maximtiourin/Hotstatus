@@ -93,7 +93,7 @@ class HerodataController extends Controller {
                 $db->prepare("CountHeroesBans",
                     "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
-                
+
                 $db->prepare("CountMatches",
                     "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `type` = ? AND `date` >= ? AND `date` <= ?");
                 $db->bind("CountMatches", "sss", $r_gameType, $date_range_start, $date_range_end);
