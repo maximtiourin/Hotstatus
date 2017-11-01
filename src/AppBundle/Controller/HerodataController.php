@@ -86,10 +86,14 @@ class HerodataController extends Controller {
                 //Prepare statements
                 $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
-                $db->prepare("SelectHeroesMatches",
-                    "SELECT `played`, `won`, `banned` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
-                $db->bind("SelectHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
+                $db->prepare("CountHeroesMatches",
+                    "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("CountHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
+                $db->prepare("CountHeroesBans",
+                    "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
+                
                 $db->prepare("CountMatches",
                     "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `type` = ? AND `date` >= ? AND `date` <= ?");
                 $db->bind("CountMatches", "sss", $r_gameType, $date_range_start, $date_range_end);
@@ -134,35 +138,44 @@ class HerodataController extends Controller {
                     $won = 0;
 
                     /*
-                     * Calculate statistics for hero
+                     * Calculate match statistics for hero
                      */
                     //Last 7 Days
                     $date_range_start = $last7days_range['date_start'];
                     $date_range_end = $last7days_range['date_end'];
 
-                    $statsResult = $db->execute("SelectHeroesMatches");
-                    $statsResult_rows = $db->countResultRows($statsResult);
-                    if ($statsResult_rows > 0) {
-                        while ($statsrow = $db->fetchArray($statsResult)) {
-                            $dt_playrate += $statsrow['played'];
-                            $dt_banrate += $statsrow['banned'];
-                            $won += $statsrow['won'];
-                        }
-                    }
+                    $statsResult = $db->execute("CountHeroesMatches");
+                    $statsrow = $db->fetchArray($statsResult);
+
+                    $dt_playrate += $statsrow['played'];
+                    $won += $statsrow['won'];
+
                     $db->freeResult($statsResult);
 
                     //Old 7 Days
                     $date_range_start = $old7days_range['date_start'];
                     $date_range_end = $old7days_range['date_end'];
 
-                    $statsResult = $db->execute("SelectHeroesMatches");
-                    $statsResult_rows = $db->countResultRows($statsResult);
-                    if ($statsResult_rows > 0) {
-                        while ($statsrow = $db->fetchArray($statsResult)) {
-                            $old_playrate += $statsrow['played'];
-                            $old_won += $statsrow['won'];
-                        }
-                    }
+                    $statsResult = $db->execute("CountHeroesMatches");
+                    $statsrow = $db->fetchArray($statsResult);
+
+                    $old_playrate += $statsrow['played'];
+                    $old_won += $statsrow['won'];
+
+                    $db->freeResult($statsResult);
+
+                    /*
+                     * Calculate ban statistics for hero
+                     */
+                    //Last 7 Days
+                    $date_range_start = $last7days_range['date_start'];
+                    $date_range_end = $last7days_range['date_end'];
+
+                    $statsResult = $db->execute("CountHeroesBans");
+                    $statsrow = $db->fetchArray($statsResult);
+
+                    $dt_banrate += $statsrow['banned'];
+
                     $db->freeResult($statsResult);
 
                     //Winrate
