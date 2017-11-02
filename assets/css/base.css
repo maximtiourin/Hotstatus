@@ -594,6 +594,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .filter-error {
     border-color: #FF0000!important;
+}
+
+.filter-error .filter-option {
     font-size: 24px;
 }
 
