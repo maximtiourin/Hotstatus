@@ -10,6 +10,7 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 use Fizzik\Credentials;
 use Fizzik\HotstatusCache;
+use Symfony\Component\HttpFoundation\Request;
 
 /*
  * In charge of fetching hero data from database and returning it as requested
@@ -26,12 +27,15 @@ class HerodataController extends Controller {
     /**
      * Returns the the relevant data to populate a DataTable heroes-statslist with any necessary formatting (IE: images wrapped in image tags)
      *
-     * @Route("/herodata/datatable/heroes/statslist", name="herodata_datatable_heroes_statslist")
+     * @Route("/herodata/datatable/heroes/statslist", options={"expose"=true}, name="herodata_datatable_heroes_statslist")
      */
-    public function getDataTableHeroesStatsListAction() {
+    public function getDataTableHeroesStatsListAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_DATATABLE;
         $_ID = "getDataTableHeroesStatsListAction";
         $_VERSION = 0;
+
+        //Process Query Parameters
+        //TODO implement query parameter processing logic, modify caching to take into account query fragments
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);

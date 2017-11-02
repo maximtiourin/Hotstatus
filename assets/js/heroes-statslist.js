@@ -1,6 +1,8 @@
-var heroes_statslist = {};
+'use strict';
 
-var useFixedHeader = false;
+let heroes_statslist = {};
+
+//let herodata_heroes_path = Routing.generate('herodata_datatable_heroes_statslist');
 
 heroes_statslist.columns = [
     {"width": "10%", "sClass": "hsl-table-portrait-td", "bSortable": false, "searchable": false, "responsivePriority": 1},
@@ -25,7 +27,7 @@ heroes_statslist.language = {
 heroes_statslist.processing = true; //Displays an indicator whenever the table is processing data
 heroes_statslist.deferRender = false; //Defers rendering the table until data starts coming in
 heroes_statslist.ajax = {
-    url: herodata_heroes_path, //url to get a response from
+    url: '', //url to get a response from
     dataSrc: 'data', //The array of data is found in .data field
     cache: true //Cache ajax response
 };
@@ -40,16 +42,37 @@ heroes_statslist.info = false; //Controls displaying table control information, 
 $(document).ready(function() {
     $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
 
-    useFixedHeader = document.documentElement.clientWidth >= 525;
-    heroes_statslist.fixedHeader = useFixedHeader;
+    heroes_statslist.fixedHeader = document.documentElement.clientWidth >= 525;
 
-    $('#hsl-table').DataTable(heroes_statslist);
+    //Set the initial url based on default filters
+    let baseUrl = Routing.generate('herodata_datatable_heroes_statslist');
+    let filterTypes = ["map", "rank"];
+    heroes_statslist.ajax.url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
 
+    //Get the datatable object
+    let table = $('#hsl-table').DataTable(heroes_statslist);
+
+    //Search the table for the new value typed in by user
     $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
-        $('#hsl-table').DataTable().search($(this).val()).draw();
+        table.search($(this).val()).draw();
     });
 
-    $('.hsl-rolebutton').click(function () {
-        $('#hsl-table').DataTable().search($(this).attr("value")).draw();
+    //Search the table for the new value populated by role button
+    $('button.hsl-rolebutton').click(function () {
+        table.search($(this).attr("value")).draw();
+    });
+
+    //Track filter changes and validate
+    $('select.filter-selector').on('change', function(event, clickedIndex, newValue, oldValue) {
+        HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
+    });
+
+    //Calculate new url based on filters and load it, only if the url has changed
+    $('button.filter-button').click(function () {
+        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+        if (url !== table.ajax.url()) {
+            table.ajax.url(url).load();
+        }
     });
 });

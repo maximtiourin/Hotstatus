@@ -14,7 +14,7 @@
     {# Inject herodata array and make available to all javascript #}
     {# var herodata_imagepath = "{{ asset('', 'images')|raw }}"; #}
     {# var herodata_heroes = {{ herodata_heroes|json_encode|raw }}; #}
-    var herodata_heroes_path = "{{ path('herodata_datatable_heroes_statslist')|raw }}";
+    {#var herodata_heroes_path = "{{ path('herodata_datatable_heroes_statslist')|raw }}";#}
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}
@@ -59,15 +59,15 @@
                                 <div class="d-inline-block">
                                     {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
                                 </div>
-                                <div class="d-inline-block">
+                                {#<div class="d-inline-block">
                                     {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
-                                </div>
+                                </div>#}
                                 <div class="d-inline-block">
                                     {% include ':snippets:heroes/filter/dropdown/multiselect/ranks.html.twig' %}
                                 </div>
-                                <div class="d-inline-block">
+                                {#<div class="d-inline-block">
                                     {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
-                                </div>
+                                </div>#}
                             </div>
                         {% endblock %}
                         {% block filterbutton %}
