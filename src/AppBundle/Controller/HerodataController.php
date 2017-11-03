@@ -16,13 +16,10 @@ use Symfony\Component\HttpFoundation\Request;
  * In charge of fetching hero data from database and returning it as requested
  */
 class HerodataController extends Controller {
-    const CODE_OK = 200;
-    const SELECT_ALL = "*";
-    private static $herodata_heroes_keys = [
-        "name", "name_internal", "name_sort", "name_attribute", "difficulty", "role_blizzard", "role_specific", "universe",
-        "title", "desc_tagline", "desc_bio", "rarity", "image_hero", "image_minimap", "rating_damage", "rating_utility",
-        "rating_survivability", "rating_complexity"
-    ];
+    const QUERY_ISSET = "isSet";
+    const QUERY_RAWVALUE = "rawValue";
+    const QUERY_SQLVALUE = "sqlValue";
+    const QUERY_SQLCOLUMN = "sqlColumn";
 
     /**
      * Returns the the relevant data to populate a DataTable heroes-statslist with any necessary formatting (IE: images wrapped in image tags)
@@ -34,14 +31,37 @@ class HerodataController extends Controller {
         $_ID = "getDataTableHeroesStatsListAction";
         $_VERSION = 0;
 
-        //Process Query Parameters
-        //TODO implement query parameter processing logic, modify caching to take into account query fragments
+        /*
+         * Process Query Parameters
+         */
+        $query = self::heroesStatsList_initQueries();
+        $querySqlValues = [];
 
+        //Collect WhereOr strings from query parameters
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE]);
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
+
+        //Determine cache id from query parameters
+        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? ("_" . md5($querySql)) : (""));
+
+        /*
+         * Begin building response
+         */
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
         //Set up main vars
         $datatable = [];
+        $datatable["sqlquery"] = $querySql;
         $validResponse = FALSE;
 
         //Get redis cache
@@ -51,7 +71,7 @@ class HerodataController extends Controller {
         //Try to get cached value
         $cacheval = NULL;
         if ($connected_redis !== FALSE) {
-            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $_ID, $_VERSION);
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
         }
 
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
@@ -91,18 +111,18 @@ class HerodataController extends Controller {
                 $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
                 $db->prepare("CountHeroesMatches",
-                    "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+                    "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
                 $db->prepare("CountHeroesBans",
-                    "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? AND `date_end` >= ? AND `date_end` <= ?");
+                    "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
                 $db->prepare("CountMatches",
                     "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `type` = ? AND `date` >= ? AND `date` <= ?");
                 $db->bind("CountMatches", "sss", $r_gameType, $date_range_start, $date_range_end);
 
-                $r_gameType = "Hero League"; //TODO
+                $r_gameType = "Hero League";
 
                 //Determine matches played for recent granularity
                 $matchesPlayed = 0;
@@ -304,7 +324,7 @@ class HerodataController extends Controller {
 
             //Store mysql value in cache
             if ($connected_redis) {
-                HotstatusCache::writeCacheRequest($redis, $_TYPE, $_ID, $_VERSION, $encoded);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
             }
         }
 
@@ -324,19 +344,69 @@ class HerodataController extends Controller {
         return $jsonResponse;
     }
 
-    private static function buildQuerySelectString($key, &$str) {
-        //EXAMPLE: Build select string based on query parameters in the request
-        /*$selectstr = "";
-        foreach (self::$herodata_heroes_keys as $field) {
-            if ($request->query->has($field)) self::buildQuerySelectString($field, $selectstr);
-        }
-        if (strlen($selectstr) == 0) $selectstr = self::SELECT_ALL;*/
+    /*
+     * Initializes the queries object for the heroesStatsList
+     */
+    private static function heroesStatsList_initQueries() {
+        $q = [
+            "map" => [
+                "isSet" => false,
+                "rawValue" => null,
+                "sqlValue" => null,
+                "sqlColumn" => "map"
+            ],
+            "rank" => [
+                "isSet" => false,
+                "rawValue" => null,
+                "sqlValue" => null,
+                "sqlColumn" => "mmr_average"
+            ],
+        ];
 
-        if (strlen($str) > 0) {
-            $str .= ", $key";
+        return $q;
+    }
+
+    private static function buildQuery_WhereAnd_String($whereors) {
+        $ret = "";
+
+
+        $i = 0;
+        $count = count($whereors);
+        if ($count > 0) $ret = " AND ";
+        foreach ($whereors as $or) {
+            $ret .= $or;
+
+            if ($i < count($count) - 1) {
+                $ret .= " AND ";
+            }
+
+            $i++;
         }
-        else {
-            $str = $key;
+
+        return $ret;
+    }
+
+    private static function buildQuery_WhereOr_String($field, $str) {
+        $decode = htmlspecialchars_decode($str);
+
+        $values = explode("+", $decode);
+
+        $ret = "(";
+
+        $i = 0;
+        $count = count($values);
+        foreach ($values as $value) {
+            $ret .= "`$field` = $value";
+
+            if ($i < $count - 1) {
+                $ret .= " OR ";
+            }
+
+            $i++;
         }
+
+        $ret .= ")";
+
+        return $ret;
     }
 }

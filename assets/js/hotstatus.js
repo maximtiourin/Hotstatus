@@ -104,7 +104,7 @@
             }
         },
         countSelectorOptions: function(selector_type) {
-            return $('select.filter-selector-' + selector_type + ' option').length;
+            return $('select.filter-selector-' + selector_type).first().find('option').length;
         }
     };
 
