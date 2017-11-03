@@ -1,7 +1,7 @@
 //Google Ads Define
 (adsbygoogle = window.adsbygoogle || []).push({});
 
-//Begin htostatus definitions
+//Begin hotstatus definitions
 (function ($) {
     let HotstatusFilter = {
         /*
@@ -67,7 +67,6 @@
 
             if (filterCount > 0) {
                 let url = baseUrl + '?';
-
 
                 Object.keys(filterFragments).forEach(function(key,index) {
                     url += filterFragments[key];
