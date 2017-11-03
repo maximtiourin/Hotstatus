@@ -59,7 +59,7 @@
 
                     if (fvals !== null && fvals.length > 0) {
                         //Construct filter fragment for these values
-                        filterFragments[type] = type + '=' + fvals.join('+');
+                        filterFragments[type] = type + '=' + fvals.join(',');
                         filterCount++;
                     }
                 }

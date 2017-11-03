@@ -330,7 +330,7 @@ table.dataTable.fixedHeader-locked {
 /* DataTable Processing Hoverup */
 .dataTables_processing{
     position:absolute;
-    top:50% !important;
+    top:0% !important;
     left:50% !important;
     width:100% !important;
     margin-left:-50% !important;

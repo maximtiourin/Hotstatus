@@ -20,6 +20,9 @@ class HerodataController extends Controller {
     const QUERY_RAWVALUE = "rawValue";
     const QUERY_SQLVALUE = "sqlValue";
     const QUERY_SQLCOLUMN = "sqlColumn";
+    const QUERY_TYPE = "mappingType";
+    const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
+    const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
     /**
      * Returns the the relevant data to populate a DataTable heroes-statslist with any necessary formatting (IE: images wrapped in image tags)
@@ -42,7 +45,7 @@ class HerodataController extends Controller {
             if ($request->query->has($qkey)) {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE]);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
                 $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
             }
         }
@@ -61,7 +64,6 @@ class HerodataController extends Controller {
 
         //Set up main vars
         $datatable = [];
-        $datatable["sqlquery"] = $querySql;
         $validResponse = FALSE;
 
         //Get redis cache
@@ -118,9 +120,9 @@ class HerodataController extends Controller {
                     "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
-                $db->prepare("CountMatches",
-                    "SELECT COUNT(`id`) AS match_count FROM `matches` WHERE `type` = ? AND `date` >= ? AND `date` <= ?");
-                $db->bind("CountMatches", "sss", $r_gameType, $date_range_start, $date_range_end);
+                $db->prepare("EstimateMatchCountForGranularity",
+                    "SELECT ROUND(COALESCE(SUM(`played`), 0) / 10, 0) AS 'match_count' FROM `heroes_matches_recent_granular` WHERE `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("EstimateMatchCountForGranularity", "sss", $r_gameType, $date_range_start, $date_range_end);
 
                 $r_gameType = "Hero League";
 
@@ -129,7 +131,7 @@ class HerodataController extends Controller {
                 $date_range_start = $last7days_range['date_start'];
                 $date_range_end = $last7days_range['date_end'];
 
-                $matchCountResult = $db->execute("CountMatches");
+                $matchCountResult = $db->execute("EstimateMatchCountForGranularity");
                 $matchCountResult_rows = $db->countResultRows($matchCountResult);
                 if ($matchCountResult_rows > 0) {
                     $mcrow = $db->fetchArray($matchCountResult);
@@ -242,7 +244,12 @@ class HerodataController extends Controller {
                 $maxPopularity = PHP_INT_MIN;
                 $minPopularity = PHP_INT_MAX;
                 foreach ($herodata as &$rhero) {
-                    $dt_popularity = round(((($rhero['dt_playrate'] + $rhero['dt_banrate']) * 1.00) / (($matchesPlayed) * 1.00)) * 100.0, 1);
+                    if ($matchesPlayed > 0) {
+                        $dt_popularity = round(((($rhero['dt_playrate'] + $rhero['dt_banrate']) * 1.00) / (($matchesPlayed) * 1.00)) * 100.0, 1);
+                    }
+                    else {
+                        $dt_popularity = 0;
+                    }
 
                     //Max, mins
                     if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
@@ -282,7 +289,10 @@ class HerodataController extends Controller {
                     }
 
                     //Popularity
-                    $percentOnRange = ((($hero['dt_popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
+                    $percentOnRange = 0;
+                    if ($maxPopularity - $minPopularity > 0) {
+                        $percentOnRange = ((($hero['dt_popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
+                    }
                     $dtrow[] = '<span class="hsl-number-popularity">' . sprintf("%03.1f %%", $hero['dt_popularity'])
                         . '</span><div class="hsl-percentbar hsl-percentbar-popularity" style="width:'.$percentOnRange.'%;"></div>';
 
@@ -349,17 +359,19 @@ class HerodataController extends Controller {
      */
     private static function heroesStatsList_initQueries() {
         $q = [
-            "map" => [
-                "isSet" => false,
-                "rawValue" => null,
-                "sqlValue" => null,
-                "sqlColumn" => "map"
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "map",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
-            "rank" => [
-                "isSet" => false,
-                "rawValue" => null,
-                "sqlValue" => null,
-                "sqlColumn" => "mmr_average"
+            HotstatusPipeline::FILTER_KEY_RANK => [
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "mmr_average",
+                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
             ],
         ];
 
@@ -369,14 +381,13 @@ class HerodataController extends Controller {
     private static function buildQuery_WhereAnd_String($whereors) {
         $ret = "";
 
-
         $i = 0;
         $count = count($whereors);
         if ($count > 0) $ret = " AND ";
         foreach ($whereors as $or) {
             $ret .= $or;
 
-            if ($i < count($count) - 1) {
+            if ($i < $count - 1) {
                 $ret .= " AND ";
             }
 
@@ -386,17 +397,35 @@ class HerodataController extends Controller {
         return $ret;
     }
 
-    private static function buildQuery_WhereOr_String($field, $str) {
+    private static function buildQuery_WhereOr_String($key, $field, $str, $mappingType = self::QUERY_TYPE_RAW) {
         $decode = htmlspecialchars_decode($str);
 
-        $values = explode("+", $decode);
+        $values = explode(",", $str);
 
         $ret = "(";
 
         $i = 0;
         $count = count($values);
         foreach ($values as $value) {
-            $ret .= "`$field` = $value";
+            if ($mappingType === self::QUERY_TYPE_RAW) {
+                $val = $value;
+                if (!is_numeric($value)) {
+                    $val = '"' . $value . '"';
+                }
+
+                $ret .= "`$field` = $val";
+            }
+            else if ($mappingType === self::QUERY_TYPE_RANGE) {
+                $obj = HotstatusPipeline::$filter[$key][$value];
+                $min = $obj["min"];
+                $max = $obj["max"];
+
+                if ($count > 1) $ret .= "(";
+
+                $ret .= "`$field` >= $min AND `$field` <= $max";
+
+                if ($count > 1) $ret .= ")";
+            }
 
             if ($i < $count - 1) {
                 $ret .= " OR ";
