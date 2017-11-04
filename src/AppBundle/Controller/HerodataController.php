@@ -120,24 +120,11 @@ class HerodataController extends Controller {
                     "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
 
-                $db->prepare("EstimateMatchCountForGranularity",
+                /*$db->prepare("EstimateMatchCountForGranularity",
                     "SELECT ROUND(COALESCE(SUM(`played`), 0) / 10, 0) AS 'match_count' FROM `heroes_matches_recent_granular` WHERE `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
-                $db->bind("EstimateMatchCountForGranularity", "sss", $r_gameType, $date_range_start, $date_range_end);
+                $db->bind("EstimateMatchCountForGranularity", "sss", $r_gameType, $date_range_start, $date_range_end);*/
 
                 $r_gameType = "Hero League";
-
-                //Determine matches played for recent granularity
-                $matchesPlayed = 0;
-                $date_range_start = $last7days_range['date_start'];
-                $date_range_end = $last7days_range['date_end'];
-
-                $matchCountResult = $db->execute("EstimateMatchCountForGranularity");
-                $matchCountResult_rows = $db->countResultRows($matchCountResult);
-                if ($matchCountResult_rows > 0) {
-                    $mcrow = $db->fetchArray($matchCountResult);
-
-                    $matchesPlayed = $mcrow['match_count'];
-                }
 
                 //Iterate through heroes to collect data
                 $herodata = [];
@@ -241,6 +228,7 @@ class HerodataController extends Controller {
                 }
 
                 //Calculate popularities
+                $matchesPlayed = $totalPlayed / 10; //Estimate matches played for granularity
                 $maxPopularity = PHP_INT_MIN;
                 $minPopularity = PHP_INT_MAX;
                 foreach ($herodata as &$rhero) {
