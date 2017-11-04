@@ -336,7 +336,7 @@ class HerodataController extends Controller {
             $encoded = json_encode($datatable);
 
             //Store mysql value in cache
-            if ($connected_redis) {
+            if ($validResponse && $connected_redis) {
                 HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
             }
         }
