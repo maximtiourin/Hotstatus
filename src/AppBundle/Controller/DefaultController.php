@@ -29,9 +29,13 @@ class DefaultController extends Controller
      * @Route("/heroes", name="heroes")
      */
     public function heroesAction(Request $request) {
+        HotstatusPipeline::filter_generate_date();
+
         return $this->render('default/heroes.html.twig', [
+            "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
             "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
-            "filter_ranks" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK]
+            "filter_ranks" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK],
+            "filter_dates" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE]
         ]);
     }
 

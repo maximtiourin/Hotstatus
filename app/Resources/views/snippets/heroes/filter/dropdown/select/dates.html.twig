@@ -1,0 +1,8 @@
+<select class="selectpicker filter-selector filter-selector-date" data-width="280px" title="No Time Range"
+        data-max-options="1" data-max-options-text="Max 1 Time Range" multiple>
+    {% for key, date in filter_dates %}
+        <option {% if date.selected == true %}selected="selected"{% endif %}
+                data-content="{{ key }}"
+                value="{{ key }}">{{ key }}</option>
+    {% endfor %}
+</select>

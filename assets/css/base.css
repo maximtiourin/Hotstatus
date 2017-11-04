@@ -576,7 +576,17 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .filter-dropdown-image {
 }
 
+.filter-dropdown-image-gameType {
+    width: 32px;
+    height: 32px;
+}
+
 .filter-dropdown-image-map {
+}
+
+.filter-dropdown-image-map-title {
+    margin-right: -38px;
+    height: 32px;
 }
 
 .filter-dropdown-image-rank {
@@ -597,7 +607,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .filter-error .filter-option {
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .filter-button {

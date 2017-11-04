@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
  * In charge of fetching hero data from database and returning it as requested
  */
 class HerodataController extends Controller {
+    const QUERY_IGNORE_AFTER_CACHE = "ignoreAfterCache";
     const QUERY_ISSET = "isSet";
     const QUERY_RAWVALUE = "rawValue";
     const QUERY_SQLVALUE = "sqlValue";
@@ -24,10 +25,12 @@ class HerodataController extends Controller {
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
+    const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
+
     /**
      * Returns the the relevant data to populate a DataTable heroes-statslist with any necessary formatting (IE: images wrapped in image tags)
      *
-     * @Route("/herodata/datatable/heroes/statslist", options={"expose"=true}, name="herodata_datatable_heroes_statslist")
+     * @Route("/herodata/datatable/heroes/statslist", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="herodata_datatable_heroes_statslist")
      */
     public function getDataTableHeroesStatsListAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_DATATABLE;
@@ -38,23 +41,33 @@ class HerodataController extends Controller {
          * Process Query Parameters
          */
         $query = self::heroesStatsList_initQueries();
+        $queryCacheSqlValues = [];
         $querySqlValues = [];
+        $queryDateKey = $request->query->get(HotstatusPipeline::FILTER_KEY_DATE);
 
-        //Collect WhereOr strings from query parameters
+        //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
                 $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
 
         //Determine cache id from query parameters
-        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? ("_" . md5($querySql)) : (""));
+        $CACHE_ID = $_ID . ((strlen($queryCacheSql) > 0) ? ("_" . md5($queryCacheSql)) : (""));
 
         /*
          * Begin building response
@@ -102,29 +115,27 @@ class HerodataController extends Controller {
 
                 //Determine time range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-                //$datetime = new \DateTime("now");
-                $datetime = new \DateTime("2017-07-18"); //TODO Debug use weeks from the past instead of now for testing
-                //$datetime->setISODate(2017, 28, 3);
-                //
-                $last7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
-                $old7days_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive(7, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), 7);
+                $dateobj = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE][$queryDateKey];
+                $offset_date = $dateobj['offset_date'];
+                $offset_amount = $dateobj['offset_amount'];
+                $datetime = new \DateTime($offset_date);
+                $recent_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive($offset_amount, $datetime->format(HotstatusPipeline::FORMAT_DATETIME));
+                $old_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive($offset_amount, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), $offset_amount);
 
                 //Prepare statements
                 $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
 
                 $db->prepare("CountHeroesMatches",
-                    "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
-                $db->bind("CountHeroesMatches", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
+                    "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("CountHeroesMatches", "sss", $r_hero, $date_range_start, $date_range_end);
 
                 $db->prepare("CountHeroesBans",
-                    "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? AND `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
-                $db->bind("CountHeroesBans", "ssss", $r_hero, $r_gameType, $date_range_start, $date_range_end);
+                    "SELECT COALESCE(SUM(`banned`), 0) AS `banned` FROM `heroes_bans_recent_granular` WHERE `hero` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
+                $db->bind("CountHeroesBans", "sss", $r_hero, $date_range_start, $date_range_end);
 
                 /*$db->prepare("EstimateMatchCountForGranularity",
                     "SELECT ROUND(COALESCE(SUM(`played`), 0) / 10, 0) AS 'match_count' FROM `heroes_matches_recent_granular` WHERE `gameType` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("EstimateMatchCountForGranularity", "sss", $r_gameType, $date_range_start, $date_range_end);*/
-
-                $r_gameType = "Hero League";
 
                 //Iterate through heroes to collect data
                 $herodata = [];
@@ -153,9 +164,9 @@ class HerodataController extends Controller {
                     /*
                      * Calculate match statistics for hero
                      */
-                    //Last 7 Days
-                    $date_range_start = $last7days_range['date_start'];
-                    $date_range_end = $last7days_range['date_end'];
+                    //Recent Time Range
+                    $date_range_start = $recent_range['date_start'];
+                    $date_range_end = $recent_range['date_end'];
 
                     $statsResult = $db->execute("CountHeroesMatches");
                     $statsrow = $db->fetchArray($statsResult);
@@ -165,24 +176,26 @@ class HerodataController extends Controller {
 
                     $db->freeResult($statsResult);
 
-                    //Old 7 Days
-                    $date_range_start = $old7days_range['date_start'];
-                    $date_range_end = $old7days_range['date_end'];
+                    //Old Time Range (Only if offset is WINDELTA_MAX_DAYS or less, otherwise don't calculate windelta)
+                    if ($offset_amount <= self::WINDELTA_MAX_DAYS) {
+                        $date_range_start = $old_range['date_start'];
+                        $date_range_end = $old_range['date_end'];
 
-                    $statsResult = $db->execute("CountHeroesMatches");
-                    $statsrow = $db->fetchArray($statsResult);
+                        $statsResult = $db->execute("CountHeroesMatches");
+                        $statsrow = $db->fetchArray($statsResult);
 
-                    $old_playrate += $statsrow['played'];
-                    $old_won += $statsrow['won'];
+                        $old_playrate += $statsrow['played'];
+                        $old_won += $statsrow['won'];
 
-                    $db->freeResult($statsResult);
+                        $db->freeResult($statsResult);
+                    }
 
                     /*
                      * Calculate ban statistics for hero
                      */
-                    //Last 7 Days
-                    $date_range_start = $last7days_range['date_start'];
-                    $date_range_end = $last7days_range['date_end'];
+                    //Recent Time Range
+                    $date_range_start = $recent_range['date_start'];
+                    $date_range_end = $recent_range['date_end'];
 
                     $statsResult = $db->execute("CountHeroesBans");
                     $statsrow = $db->fetchArray($statsResult);
@@ -201,8 +214,10 @@ class HerodataController extends Controller {
                         $old_winrate = round(($old_won / ($old_playrate * 1.00)) * 100.0, 1);
                     }
 
-                    //Win Delta
-                    $dt_windelta = $dt_winrate - $old_winrate;
+                    //Win Delta (Only if offset is WINDELTA_MAX_DAYS or less, otherwise don't calculate windelta)
+                    if ($offset_amount <= self::WINDELTA_MAX_DAYS) {
+                        $dt_windelta = $dt_winrate - $old_winrate;
+                    }
 
                     //Max, mins, and totals
                     if ($maxWinrate < $dt_winrate && $dt_playrate > 0) $maxWinrate = $dt_winrate;
@@ -346,8 +361,19 @@ class HerodataController extends Controller {
      * Initializes the queries object for the heroesStatsList
      */
     private static function heroesStatsList_initQueries() {
+        HotstatusPipeline::filter_generate_date();
+
         $q = [
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
             HotstatusPipeline::FILTER_KEY_MAP => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
@@ -355,10 +381,19 @@ class HerodataController extends Controller {
                 self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_RANK => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
                 self::QUERY_SQLCOLUMN => "mmr_average",
+                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
+            ],
+            HotstatusPipeline::FILTER_KEY_DATE => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "date_end",
                 self::QUERY_TYPE => self::QUERY_TYPE_RANGE
             ],
         ];
@@ -366,6 +401,16 @@ class HerodataController extends Controller {
         return $q;
     }
 
+    /*
+     * Given an array of query string fragments of type 'WhereOr', will construct a query string fragment joining them
+     * with AND keywords, while prepending a single AND keyword. Will return an empty string if supplied an empty array.
+     *
+     * EX:
+     *
+     * 0 fragments : ''
+     * 1 fragment  : ' AND frag1'
+     * 3 fragments : ' AND frag1 AND frag2 AND frag3'
+     */
     private static function buildQuery_WhereAnd_String($whereors) {
         $ret = "";
 
@@ -385,6 +430,13 @@ class HerodataController extends Controller {
         return $ret;
     }
 
+    /*
+     * Given a comma separated string of values for a given field, will construct a query string fragment,
+     * taking into account mapping type and filter key, non-numeric values are surrounded by quotes EX:
+     *
+     * Map Type 'Raw'   : '(`field` = val1 OR `field` = val2 OR `field` = "val3")'
+     * Map Type 'Range' : '((`field` >= valmin1 AND `field` <= valmax1) OR (`field` >= valmin2 AND `field` <= valmax2) OR (`field` >= "valmin3" AND `field` <= "valmax3"))'
+     */
     private static function buildQuery_WhereOr_String($key, $field, $str, $mappingType = self::QUERY_TYPE_RAW) {
         $decode = htmlspecialchars_decode($str);
 
@@ -407,6 +459,13 @@ class HerodataController extends Controller {
                 $obj = HotstatusPipeline::$filter[$key][$value];
                 $min = $obj["min"];
                 $max = $obj["max"];
+
+                if (!is_numeric($min)) {
+                    $min = '"' . $min . '"';
+                }
+                if (!is_numeric($max)) {
+                    $max = '"' . $max . '"';
+                }
 
                 if ($count > 1) $ret .= "(";
 

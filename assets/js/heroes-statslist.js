@@ -46,7 +46,7 @@ $(document).ready(function() {
 
     //Set the initial url based on default filters
     let baseUrl = Routing.generate('herodata_datatable_heroes_statslist');
-    let filterTypes = ["map", "rank"];
+    let filterTypes = ["gameType", "map", "rank", "date"];
     heroes_statslist.ajax.url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
 
     //Get the datatable object

@@ -1,9 +1,9 @@
-<select class="selectpicker filter-selector filter-selector-map" data-actions-box="true" data-width="300px" title="No Maps Selected"
-        data-selected-text-format="count > 4" data-count-selected-text="{0} of {1} Maps Selected" data-multiple-separator=""
+<select class="selectpicker filter-selector filter-selector-map" data-actions-box="true" data-width="340px" title="No Maps Selected"
+        data-selected-text-format="count > 14" data-count-selected-text="{0} of {1} Maps Selected" data-multiple-separator=""
         data-select-all-text="<i class='fa fa-check-square-o fa-2x' style='' aria-hidden='true'></i>" multiple>
     {% for key, map in filter_maps %}
         <option {% if map.selected == true %}selected="selected"{% endif %}
-                title="<img class='filter-dropdown-image-map' src='{{ asset('ui/map_icon_'~map.name_sort~'.png', 'images') }}'>"
+                title="<img class='filter-dropdown-image-map filter-dropdown-image-map-title' src='{{ asset('ui/map_icon_'~map.name_sort~'.png', 'images') }}'>"
                 data-content="<img class='filter-dropdown-image-map filter-dropdown-image-margin-right-8' src='{{ asset('ui/map_icon_'~map.name_sort~'.png', 'images') }}'>{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}

@@ -57,7 +57,11 @@
                     //Attempt to find the filter and get its values
                     let fvals = self.getSelectorValues(type);
 
-                    if (fvals !== null && fvals.length > 0) {
+                    if (typeof fvals === "string" || fvals instanceof String) {
+                        filterFragments[type] = type + '=' + fvals;
+                        filterCount++;
+                    }
+                    else if (fvals !== null && fvals.length > 0) {
                         //Construct filter fragment for these values
                         filterFragments[type] = type + '=' + fvals.join(',');
                         filterCount++;
