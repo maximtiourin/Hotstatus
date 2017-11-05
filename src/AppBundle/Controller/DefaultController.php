@@ -40,6 +40,26 @@ class DefaultController extends Controller
     }
 
     /**
+     * @Route("/heroes/{heroProperName}", name="hero")
+     */
+    public function heroAction($heroProperName) {
+        if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
+            HotstatusPipeline::filter_generate_date();
+
+            return $this->render('default/hero.html.twig', [
+                "hero_name" => $heroProperName,
+                "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
+                "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
+                "filter_ranks" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK],
+                "filter_dates" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE]
+            ]);
+        }
+        else {
+            return $this->redirectToRoute("heroes");
+        }
+    }
+
+    /**
      * @Route("/talents", name="talents")
      */
     public function talentsAction() {

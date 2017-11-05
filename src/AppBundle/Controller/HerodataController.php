@@ -28,66 +28,82 @@ class HerodataController extends Controller {
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
 
     /**
-     * Builds a hero's stats page, if the hero isn't valid, redirect to 404 route
+     * Returns the relevant hero data for a hero necessary to build a hero page
      *
-     * @Route("/heroes/{heroProperName}", name="hero")
+     * @Route("/herodata/pagedata/hero", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="herodata_pagedata_hero")
      */
-    public function heroAction($heroProperName) {
+    public function getPageDataHeroAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
-        $_ID = "heroAction";
+        $_ID = "getPageDataHeroAction";
         $_VERSION = 0;
 
         /*
          * Begin building response
          */
         //Main vars
+        $pagedata = [];
         $validResponse = FALSE;
 
-        //Check to make sure this is a valid hero name
-        if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
-            //Determine Cache Id
-            $CACHE_ID = $_ID . '_' . $heroProperName;
+        //Determine Cache Id
+        $CACHE_ID = $_ID; //TODO
+        //$CACHE_ID = $_ID . '_' . $heroProperName; TODO
 
-            //Get credentials
-            $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
-            //Get redis cache
-            $redis = new RedisDatabase();
-            $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
 
-            //Try to get cached value
-            $cacheval = NULL;
-            if ($connected_redis !== FALSE) {
-                $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
-            }
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
 
-            if ($connected_redis !== FALSE && $cacheval !== NULL) {
-                //Use cached value
-                //$datatable = json_decode($cacheval, true);
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            //$datatable = json_decode($cacheval, true); TODO
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+
+
+                //$db->freeResult($result); TODO
+                $db->close();
 
                 $validResponse = TRUE;
             }
-            else {
 
-            }
+            //$encoded = json_encode($datatable); TODO
 
-            $response = $this->render('default/hero.html.twig', [
-                "hero_name" => $heroProperName
-            ]);
-
-            $response->setPublic();
-
-            //Determine expire date on valid response
-            /*if ($validResponse) {
-                $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+            //Store mysql value in cache TODO
+            /*if ($validResponse && $connected_redis) {
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
             }*/
+        }
 
-            return $response;
-        }
-        else {
-            //Invalid Hero Name, redirect to Heroes page
-            return $this->redirectToRoute("heroes");
-        }
+        $redis->close();
+
+        $response = $this->render('default/hero.html.twig', $pagedata);
+
+        $response->setPublic();
+
+        //Determine expire date on valid response TODO
+        /*if ($validResponse) {
+            $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+        }*/
+
+        return $response;
     }
 
     /**
