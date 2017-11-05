@@ -631,3 +631,15 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .filter-button:active:enabled {
     transform:scale(.9, .9);
 }
+
+.filter-selector {
+    display: inline-block;
+}
+
+/* At very small portrait size, make all filters blocks that scale to 100% width of their container, to keep things looking nice for mobile */
+@media screen and (max-width: 392px) {
+    div .filter-selector {
+        display: block !important;
+        width: 100% !important;
+    }
+}
