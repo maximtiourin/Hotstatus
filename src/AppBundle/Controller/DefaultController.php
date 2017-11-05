@@ -13,14 +13,14 @@ class DefaultController extends Controller
     /**
      * @Route("/", name="homepage")
      */
-    public function indexAction(Request $request) {
+    public function indexAction() {
         return $this->redirectToRoute("heroes");
     }
 
     /**
      * @Route("/news", name="news")
      */
-    public function newsAction(Request $request) {
+    public function newsAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -28,7 +28,7 @@ class DefaultController extends Controller
     /**
      * @Route("/heroes", name="heroes")
      */
-    public function heroesAction(Request $request) {
+    public function heroesAction() {
         HotstatusPipeline::filter_generate_date();
 
         return $this->render('default/heroes.html.twig', [
@@ -42,7 +42,7 @@ class DefaultController extends Controller
     /**
      * @Route("/talents", name="talents")
      */
-    public function talentsAction(Request $request) {
+    public function talentsAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -50,7 +50,7 @@ class DefaultController extends Controller
     /**
      * @Route("/rankings", name="rankings")
      */
-    public function rankingsAction(Request $request) {
+    public function rankingsAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -58,7 +58,7 @@ class DefaultController extends Controller
     /**
      * @Route("/upload", name="upload")
      */
-    public function uploadAction(Request $request) {
+    public function uploadAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -66,7 +66,7 @@ class DefaultController extends Controller
     /**
      * @Route("/contact", name="contact")
      */
-    public function contactAction(Request $request) {
+    public function contactAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }
@@ -74,7 +74,7 @@ class DefaultController extends Controller
     /**
      * @Route("/faq", name="faq")
      */
-    public function faqAction(Request $request) {
+    public function faqAction() {
         return $this->render('default/index.html.twig', [
         ]);
     }

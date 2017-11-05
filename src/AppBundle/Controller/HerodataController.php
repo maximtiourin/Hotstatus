@@ -28,6 +28,69 @@ class HerodataController extends Controller {
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
 
     /**
+     * Builds a hero's stats page, if the hero isn't valid, redirect to 404 route
+     *
+     * @Route("/heroes/{heroProperName}", name="hero")
+     */
+    public function heroAction($heroProperName) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "heroAction";
+        $_VERSION = 0;
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $validResponse = FALSE;
+
+        //Check to make sure this is a valid hero name
+        if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
+            //Determine Cache Id
+            $CACHE_ID = $_ID . '_' . $heroProperName;
+
+            //Get credentials
+            $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+            //Get redis cache
+            $redis = new RedisDatabase();
+            $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+
+            //Try to get cached value
+            $cacheval = NULL;
+            if ($connected_redis !== FALSE) {
+                $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+            }
+
+            if ($connected_redis !== FALSE && $cacheval !== NULL) {
+                //Use cached value
+                //$datatable = json_decode($cacheval, true);
+
+                $validResponse = TRUE;
+            }
+            else {
+
+            }
+
+            $response = $this->render('default/hero.html.twig', [
+                "hero_name" => $heroProperName
+            ]);
+
+            $response->setPublic();
+
+            //Determine expire date on valid response
+            /*if ($validResponse) {
+                $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+            }*/
+
+            return $response;
+        }
+        else {
+            //Invalid Hero Name, redirect to Heroes page
+            return $this->redirectToRoute("heroes");
+        }
+    }
+
+    /**
      * Returns the the relevant data to populate a DataTable heroes-statslist with any necessary formatting (IE: images wrapped in image tags)
      *
      * @Route("/herodata/datatable/heroes/statslist", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="herodata_datatable_heroes_statslist")
@@ -269,7 +332,7 @@ class HerodataController extends Controller {
                     $dtrow[] = '<img src="' . $imgbasepath . $hero['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
 
                     //Hero proper name
-                    $dtrow[] = $hero['name'];
+                    $dtrow[] = '<a class="hsl-link" href="'. $this->generateUrl("hero", ["heroProperName" => $hero['name']]) .'">' . $hero['name'] . '</a>';
 
                     //Hero name sort helper
                     $dtrow[] = $hero['name_sort'];
