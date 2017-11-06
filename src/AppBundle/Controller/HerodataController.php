@@ -38,15 +38,44 @@ class HerodataController extends Controller {
         $_VERSION = 0;
 
         /*
+         * Process Query Parameters
+         */
+        $query = self::hero_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
+
+        /*
          * Begin building response
          */
         //Main vars
-        $pagedata = [];
+        $pagedata = self::hero_InitPageData();
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID; //TODO
-        //$CACHE_ID = $_ID . '_' . $heroProperName; TODO
+        $CACHE_ID = $_ID . "_" . $queryHero .((strlen($queryCacheSql) > 0) ? ("_" . md5($queryCacheSql)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -58,12 +87,12 @@ class HerodataController extends Controller {
         //Try to get cached value
         $cacheval = NULL;
         if ($connected_redis !== FALSE) {
-            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+            //$cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION); TODO
         }
 
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
             //Use cached value
-            //$datatable = json_decode($cacheval, true); TODO
+            //$pagedata = json_decode($cacheval, true); TODO
 
             $validResponse = TRUE;
         }
@@ -76,9 +105,29 @@ class HerodataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
+                //Prepare Statements
+                $db->prepare("GetHeroData",
+                    "SELECT `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero` 
+                    FROM herodata_heroes WHERE `name` = '$queryHero'");
 
+                $db->prepare("GetHeroStats",
+                    "SELECT `range_match_length`, `range_hero_level`, `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
+                    `stats_siege_damage`, `stats_hero_damage`, `stats_structure_damage`, `stats_healing`, `stats_damage_taken`, `stats_merc_camps`, `stats_exp_contrib`,
+                    `stats_best_killstreak`, `stats_time_spent_dead`, `medals`, `talents`, `builds`, `matchup_friends`, `matchup_foes` 
+                    FROM heroes_matches_recent_granular WHERE $querySql");
 
-                //$db->freeResult($result); TODO
+                $result = $db->execute("GetHeroData");
+                while ($row = $db->fetchArray($result)) {
+
+                }
+                $db->freeResult($result);
+
+                $result = $db->execute("GetHeroStats");
+                while ($row = $db->fetchArray($result)) {
+
+                }
+                $db->freeResult($result);
+
                 $db->close();
 
                 $validResponse = TRUE;
@@ -94,9 +143,13 @@ class HerodataController extends Controller {
 
         $redis->close();
 
-        $response = $this->render('default/hero.html.twig', $pagedata);
+        $pagedata['data'] = [
+            "testkey" => "testvalue"
+        ];
 
-        $response->setPublic();
+        $response = $this->json($pagedata);
+
+        //$response->setPublic();
 
         //Determine expire date on valid response TODO
         /*if ($validResponse) {
@@ -122,7 +175,6 @@ class HerodataController extends Controller {
         $query = self::heroesStatsList_initQueries();
         $queryCacheSqlValues = [];
         $querySqlValues = [];
-        $queryDateKey = $request->query->get(HotstatusPipeline::FILTER_KEY_DATE);
 
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
@@ -133,6 +185,8 @@ class HerodataController extends Controller {
                 $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
             }
         }
+
+        $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][self::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
@@ -437,6 +491,58 @@ class HerodataController extends Controller {
     }
 
     /*
+     * Initializes the queries object for the hero pagedata
+     */
+    private static function hero_initQueries() {
+        HotstatusPipeline::filter_generate_date();
+
+        $q = [
+            HotstatusPipeline::FILTER_KEY_HERO => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "hero",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "map",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_RANK => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "mmr_average",
+                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
+            ],
+            HotstatusPipeline::FILTER_KEY_DATE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "date_end",
+                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
+            ],
+        ];
+
+        return $q;
+    }
+
+    /*
      * Initializes the queries object for the heroesStatsList
      */
     private static function heroesStatsList_initQueries() {
@@ -478,6 +584,15 @@ class HerodataController extends Controller {
         ];
 
         return $q;
+    }
+
+    //TODO
+    private static function hero_InitPageData() {
+        $d = [
+
+        ];
+
+        return $d;
     }
 
     /*

@@ -16,7 +16,7 @@ HeroLoader.ajax = {
      * Otherwise will return the current url the ajax object is set to request from.
      */
     url: function(url = null) {
-        let self = heroloader.ajax;
+        let self = HeroLoader.ajax;
 
         if (url === null) {
             return self.internal.url;
@@ -31,13 +31,13 @@ HeroLoader.ajax = {
      * Returns the ajax object.
      */
     load: function() {
-        let self = heroloader.ajax;
+        let self = HeroLoader.ajax;
 
         //Enable Processing Indicator
 
         //Ajax Request
-        $.get(self.internal.url)
-            .done(function(data) {
+        $.getJSON(self.internal.url)
+            .done(function(json) {
                 //Assign data
             })
             .fail(function() {
@@ -62,7 +62,7 @@ $(document).ready(function() {
     //let table = $('#hsl-table').DataTable(heroes_statslist);
 
     //Track filter changes and validate
-    $('select.filter-selector').on('change', function(event, clickedIndex, newValue, oldValue) {
+    $('select.filter-selector').on('change', function(event) {
         HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
     });
 

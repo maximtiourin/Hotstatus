@@ -22,6 +22,7 @@ Encore
     .addEntry('hotstatus-bootstrap-select', './assets/js/hotstatus-bootstrap-select.js')
     .addEntry('hotstatus', './assets/js/hotstatus.js')
     .addEntry('heroes-statslist', './assets/js/heroes-statslist.js')
+    .addEntry('hero-loader', './assets/js/hero-loader.js')
 
     // will output as web/build/global.css
     //.addStyleEntry('global', './assets/css/global.scss')

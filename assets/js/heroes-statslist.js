@@ -63,7 +63,7 @@ $(document).ready(function() {
     });
 
     //Track filter changes and validate
-    $('select.filter-selector').on('change', function(event, clickedIndex, newValue, oldValue) {
+    $('select.filter-selector').on('change', function(event) {
         HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
     });
 
