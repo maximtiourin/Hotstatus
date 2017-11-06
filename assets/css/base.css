@@ -193,6 +193,30 @@ body {
     border-radius: 4px;
 }
 
+/* HeroLoader */
+.heroloader-flex-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.heroloader-container {
+    display: inline-block;
+    flex-grow: 1;
+
+    /* testing */
+    background-color: #ff2a48;
+    margin: 4px;
+}
+
+.heroloader-container-talents {
+    flex-grow: 3;
+}
+
+.heroloader-container-stats {
+    flex-grow: 1;
+}
+
 /* Statlist styling */
 #hsl-table {
     border: 0 !important;
@@ -356,7 +380,7 @@ table.dataTable.fixedHeader-locked {
 /* DataTable Processing Hoverup */
 .dataTables_processing{
     position:absolute;
-    top:0% !important;
+    top:26px !important;
     left:50% !important;
     width:100% !important;
     margin-left:-50% !important;
@@ -650,6 +674,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     height:28px;
 }
 
+.filter-button-hero-loader {
+    margin: 0;
+    padding: 0;
+    width:100%;
+}
+
 .filter-button[disabled] {
     cursor: not-allowed;
 }
@@ -660,6 +690,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .filter-selector {
     display: inline-block;
+    margin:2px;
 }
 
 /* At very small portrait size, make all filters blocks that scale to 100% width of their container, to keep things looking nice for mobile */

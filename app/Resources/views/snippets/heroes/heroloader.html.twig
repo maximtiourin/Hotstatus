@@ -3,9 +3,36 @@
 {% endblock %}
 
 <div class="hotstatus-container">
-    {% block filter %}{% endblock %}
-    {% block filterbutton %}{% endblock %}
     <div>
-        Testing123
+        {% block filter %}{% endblock %}
+    </div>
+    <div class="heroloader-flex-container">
+        <div class="heroloader-container heroloader-container-stats">
+            Raw Stats
+        </div>
+        <div class="heroloader-container heroloader-container-talents">
+            Talents
+
+            <div>
+                Talent Builds
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="heroloader-flex-container">
+            <div class="heroloader-container heroloader-container-graphs">
+                Horizontally Layed out Graphs
+            </div>
+        </div>
+        <div class="heroloader-flex-container">
+            <div class="heroloader-container heroloader-container-matchup-foes">
+                Data Table Foes Matchup
+            </div>
+        </div>
+        <div class="heroloader-flex-container">
+            <div class="heroloader-container heroloader-container-matchup-friends">
+                Data Table Friends Matchup
+            </div>
+        </div>
     </div>
 </div>

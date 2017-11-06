@@ -46,8 +46,12 @@ class DefaultController extends Controller
         if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
             HotstatusPipeline::filter_generate_date();
 
+            $herofilter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
+            $herofilter[$heroProperName]["selected"] = true;
+
             return $this->render('default/hero.html.twig', [
                 "hero_name" => $heroProperName,
+                "filter_heroes" => $herofilter,
                 "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
                 "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
                 "filter_ranks" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK],
@@ -60,10 +64,11 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/talents", name="talents")
+     * @Route("/talents/{heroProperName}", defaults={"heroProperName" = "Abathur"}, name="talents")
      */
-    public function talentsAction() {
-        return $this->render('default/index.html.twig', [
+    public function talentsAction($heroProperName) {
+        return $this->redirectToRoute("hero", [
+            "heroProperName" => $heroProperName
         ]);
     }
 
