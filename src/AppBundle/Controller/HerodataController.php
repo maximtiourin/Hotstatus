@@ -351,7 +351,7 @@ class HerodataController extends Controller {
                     $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths * 1.00)), 2);
                 }
                 $stats['kda'] = [
-                    "average" => $c_avg_assists
+                    "average" => $c_avg_kda
                 ];
 
                 //Average Siege Damage (+ Per Minute)

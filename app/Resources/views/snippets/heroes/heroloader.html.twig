@@ -19,28 +19,28 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div id="hl-herodata-name" class="dev-row-b">{NAME}</div>
+                            <div class="dev-row-b"><span id="hl-herodata-name">{NAME}</span></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div id="hl-herodata-title" class="dev-row-a">{TITLE}</div>
+                            <div class="dev-row-a"><span id="hl-herodata-title">{TITLE}</span></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div id="hl-herodata-desc-tagline" class="dev-row-a">{TAGLINE}</div>
+                            <div class="dev-row-b"><span id="hl-herodata-desc-tagline">{TAGLINE}</span></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div id="hl-herodata-desc-bio" class="dev-row-b">{BIO}</div>
+                            <div class="dev-row-a"><span id="hl-herodata-desc-bio">{BIO}</span></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-8 col-md-7 col-lg-7 padding-sm-left-0 padding-md-right-0 heroloader-container-talents">
+        <div class="col-sm-8 col-md-9 col-lg-6 padding-sm-left-0 padding-lg-right-0 heroloader-container-talents">
             <div class="row">
                 <div class="col">
                     <div class="row">
@@ -56,31 +56,23 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2 col-lg-2 padding-md-left-0 heroloader-container-stats">
+        <div class="col-lg-3 padding-lg-left-0 heroloader-container-stats">
             <div class="row">
                 <div class="col">
-                    <div class="row">
-                        <div class="col">
-                            <div class="dev-row-a">
-                                <div class="d-inline-block">
-                                    Kills:
-                                </div>
-                                <div class="d-inline-block">
-                                    {AVG KILLS} ({KILLS/M})
-                                </div>
-                            </div>
-                        </div>
+                    <div class="dev-row-b">
+                        <a
+                                data-toggle="collapse"
+                                data-target="#average_stats"
+                                class="heroloader-toggle d-lg-none collapsed"></a>
+                         Average Stats
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="dev-row-b">
-                                <div class="d-inline-block">
-                                    Assists:
-                                </div>
-                                <div class="d-inline-block">
-                                    {AVG ASSISTS} ({ASSISTS/M})
-                                </div>
-                            </div>
+                </div>
+            </div>
+            <div id="average_stats" class="collapse">
+                <div class="row">
+                    <div class="col">
+                        <div class="dev-row-a">
+                            {% block group_average_stats %}{% endblock %}
                         </div>
                     </div>
                 </div>

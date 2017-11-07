@@ -46,6 +46,7 @@ class DefaultController extends Controller
         if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
             HotstatusPipeline::filter_generate_date();
 
+            //Select correct hero in hero filter
             $herofilter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
             $herofilter[$heroProperName]["selected"] = true;
 
@@ -55,7 +56,9 @@ class DefaultController extends Controller
                 "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
                 "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
                 "filter_ranks" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK],
-                "filter_dates" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE]
+                "filter_dates" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE],
+                "average_stats" => HotstatusPipeline::$heropage[HotstatusPipeline::HEROPAGE_KEY_AVERAGE_STATS],
+                "average_stats_tooltips" => HotstatusPipeline::$heropage_tooltips[HotstatusPipeline::HEROPAGE_KEY_AVERAGE_STATS]
             ]);
         }
         else {

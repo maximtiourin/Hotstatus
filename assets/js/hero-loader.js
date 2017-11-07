@@ -63,6 +63,26 @@ HeroLoader.ajax = {
                 //bio
                 data_herodata.bio(json_herodata['desc_bio']);
 
+                /*
+                 * Stats
+                 */
+                for (let statkey in average_stats) {
+                    if (average_stats.hasOwnProperty(statkey)) {
+                        let stat = average_stats[statkey];
+
+                        if (stat.type === 'avg-pmin') {
+                            data_stats.avg_pmin(statkey, json_stats[statkey]['average'], json_stats[statkey]['per_minute']);
+                        }
+                        else if (stat.type === 'percentage') {
+                            data_stats.percentage(statkey, json_stats[statkey]);
+                        }
+                        else if (stat.type === 'kda') {
+                            data_stats.kda(statkey, json_stats[statkey]['average']);
+                        }
+                    }
+                }
+                //kills
+                //data_stats.kills(json_stats['kills']['average'], json_stats['kills']['per_minute']);
             })
             .fail(function() {
                 //Failure to load Data
@@ -97,12 +117,24 @@ HeroLoader.data = {
         }
     },
     stats: {
-
+        avg_pmin: function(key, avg, pmin) {
+            $('#hl-stats-' + key + '-avg').text(avg);
+            $('#hl-stats-' + key + '-pmin').text(pmin);
+        },
+        percentage: function(key, percentage) {
+            $('#hl-stats-' + key + '-percentage').text(percentage);
+        },
+        kda: function(key, kda) {
+            $('#hl-stats-' + key + '-kda').text(kda);
+        }
     }
 };
 
 
 $(document).ready(function() {
+    //Enable tooltips for the page
+    $('[data-toggle="tooltip"]').tooltip();
+
     //Set the initial url based on default filters
     let baseUrl = Routing.generate('herodata_pagedata_hero');
     let filterTypes = ["hero", "gameType", "map", "rank", "date"];

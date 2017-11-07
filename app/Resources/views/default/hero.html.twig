@@ -11,6 +11,7 @@
 
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
+    let average_stats = {{ average_stats | json_encode | raw}};
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}
@@ -43,6 +44,34 @@
                         <div>
                             <button class="btn btn-sm filter-button filter-button-hero-loader">Filter</button>
                         </div>
+                    {% endblock %}
+                    {% block group_average_stats %}
+                        {% for key, stat in average_stats %}
+                            <div class="row">
+                                <div class="col">
+                                    <div class="">
+                                        <div class="d-inline-block heroloader-stats-key">
+                                            {{ stat.name }}:
+                                        </div>
+                                        <div class="d-inline-block heroloader-stats-value">
+                                            {% if stat.type == 'avg-pmin' %}
+                                                <span id="hl-stats-{{ key }}-avg"
+                                                      data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['avg'] }}"></span>
+                                                 <span data-toggle="tooltip"
+                                                       title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['pmin'] }}">(<span id="hl-stats-{{ key }}-pmin"></span>)</span>
+                                            {% elseif stat.type == 'percentage' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage"></span> %</span>
+                                            {% elseif stat.type == 'kda' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda"></span></span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
                     {% endblock %}
                 {% endembed %}
             </div>
