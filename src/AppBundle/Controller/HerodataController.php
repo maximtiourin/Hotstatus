@@ -137,8 +137,8 @@ class HerodataController extends Controller {
                         "role_specific" => $row['role_specific'],
                         "universe" => $row['universe'],
                         "title" => $row['title'],
-                        "desc_tagline" => $row['desc_tagline'],
-                        "desc_bio" => $row['desc_bio'],
+                        "desc_tagline" => htmlspecialchars_decode($row['desc_tagline']),
+                        "desc_bio" => htmlspecialchars_decode($row['desc_bio']),
                         "rarity" => $row['rarity'],
                         "image_hero" => $imgbasepath . $row['image_hero'] . ".png"
                     ];

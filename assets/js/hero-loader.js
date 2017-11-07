@@ -50,6 +50,12 @@ HeroLoader.ajax = {
                 let json_stats = json['stats'];
 
                 /*
+                 * Window
+                 */
+                data.window.title(json_herodata['name']);
+                data.window.url(json_herodata['name']);
+
+                /*
                  * Herodata
                  */
                 //image_hero
@@ -105,6 +111,15 @@ HeroLoader.ajax = {
  * Handles binding data to the page
  */
 HeroLoader.data = {
+    window: {
+        title: function(str) {
+            document.title = "Hotstat.us: " + str;
+        },
+        url: function(hero) {
+            let url = Routing.generate("hero", {heroProperName: hero});
+            history.pushState(hero, hero, url);
+        }
+    },
     herodata: {
         name: function(val) {
             $('#hl-herodata-name').text(val);

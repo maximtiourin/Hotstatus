@@ -40,7 +40,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/heroes/{heroProperName}", name="hero")
+     * @Route("/heroes/{heroProperName}", options={"expose"=true}, name="hero")
      */
     public function heroAction($heroProperName) {
         if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {

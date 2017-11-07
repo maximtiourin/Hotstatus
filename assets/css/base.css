@@ -58,6 +58,7 @@
     overflow: hidden;
     width: 234px;
     height: 60px;
+    margin: 8px 2px 2px 0px;
 }
 @media (min-width:360px) { .adslot_horizontal_1 { width: 320px; height: 100px; } }
 @media (min-width:768px) { .adslot_horizontal_1 { width: 728px; height: 90px; } }
@@ -694,6 +695,31 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 #hl-herodata-image-hero {
     width: 128px;
     height: 128px;
+    border: 2px;
+    border-style: solid;
+    border-color: #151120;
+    border-radius: 4px;
+}
+
+#hl-herodata-title {
+    position: absolute;
+    width:100%;
+    left:0px;
+    top:4px;
+    color:#FFFFFF;
+    font-size: 13px;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+}
+
+#hl-herodata-name {
+    position: absolute;
+    width:100%;
+    left:0px;
+    bottom:4px;
+    color:#FFFFFF;
+    font-size: 18px;
+    font-weight: bolder;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }
 
 /* Small and up */
