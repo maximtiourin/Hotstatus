@@ -66,6 +66,12 @@
                                             {% elseif stat.type == 'kda' %}
                                                 <span data-toggle="tooltip"
                                                       title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda"></span></span>
+                                            {% elseif stat.type == 'raw' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name }}"><span id="hl-stats-{{ key }}-raw"></span></span>
+                                            {% elseif stat.type == 'time-spent-dead' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['time-spent-dead'] }}"><span id="hl-stats-{{ key }}-time-spent-dead"></span></span>
                                             {% endif %}
                                         </div>
                                     </div>

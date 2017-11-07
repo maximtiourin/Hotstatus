@@ -116,7 +116,7 @@ class HerodataController extends Controller {
                 //Prepare Statements
                 $db->prepare("GetHeroData",
                     "SELECT `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero` 
-                    FROM herodata_heroes WHERE `name` = '$queryHero'");
+                    FROM herodata_heroes WHERE `name` = \"$queryHero\"");
 
                 $db->prepare("GetHeroStats",
                     "SELECT `range_match_length`, `range_hero_level`, `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
@@ -461,7 +461,7 @@ class HerodataController extends Controller {
                     $c_avg_time_spent_dead = round(($a_time_spent_dead / ($a_played * 1.00) / 60.0), 1);
                 }
                 $stats['time_spent_dead'] = [
-                    "average" => $c_avg_assists
+                    "average" => $c_avg_time_spent_dead
                 ];
 
                 //TODO - look up json and fill out JSON structures for medals, talents, builds, etc

@@ -79,6 +79,12 @@ HeroLoader.ajax = {
                         else if (stat.type === 'kda') {
                             data_stats.kda(statkey, json_stats[statkey]['average']);
                         }
+                        else if (stat.type === 'raw') {
+                            data_stats.raw(statkey, json_stats[statkey]);
+                        }
+                        else if (stat.type === 'time-spent-dead') {
+                            data_stats.time_spent_dead(statkey, json_stats[statkey]['average']);
+                        }
                     }
                 }
                 //kills
@@ -126,7 +132,13 @@ HeroLoader.data = {
         },
         kda: function(key, kda) {
             $('#hl-stats-' + key + '-kda').text(kda);
-        }
+        },
+        raw: function(key, rawval) {
+            $('#hl-stats-' + key + '-raw').text(rawval);
+        },
+        time_spent_dead: function(key, time_spent_dead) {
+            $('#hl-stats-' + key + '-time-spent-dead').text(time_spent_dead);
+        },
     }
 };
 
@@ -147,6 +159,19 @@ $(document).ready(function() {
     $('select.filter-selector').on('change', function(event) {
         HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
     });
+
+    //Todo, instead of using blur event, use the change above, but add a timer for when the data is loaded after a change (or explore other options)
+    /*$('div.filter-selector > .btn.dropdown-toggle').on('blur', function(event) {
+        let valid = HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
+
+        if (valid) {
+            let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+            if (url !== HeroLoader.ajax.url()) {
+                HeroLoader.ajax.url(url).load();
+            }
+        }
+    });*/
 
     //Calculate new url based on filters and load it, only if the url has changed
     $('button.filter-button').click(function () {
