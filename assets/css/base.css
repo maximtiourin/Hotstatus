@@ -696,6 +696,30 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     height: 128px;
 }
 
+@media screen and (min-width: 576px) {
+    .padding-sm-left-0 {
+        padding-left: 0px !important;
+    }
+
+    .padding-sm-right-0 {
+        padding-right: 0px !important;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .padding-md-left-0 {
+        padding-left: 0px !important;
+    }
+
+    .padding-md-right-0 {
+        padding-right: 0px !important;
+    }
+}
+
+.heroloader-container-herodata {
+
+}
+
 .heroloader-container-stats {
 }
 
