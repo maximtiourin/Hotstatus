@@ -2,36 +2,105 @@
     <script src="{{ asset('build/hero-loader.js') }}"></script>
 {% endblock %}
 
-<div class="hotstatus-container">
-    <div>
-        {% block filter %}{% endblock %}
-    </div>
-    <div class="heroloader-flex-container">
-        <div class="heroloader-container heroloader-container-stats">
-            Raw Stats
-        </div>
-        <div class="heroloader-container heroloader-container-talents">
-            Talents
-
-            <div>
-                Talent Builds
-            </div>
+<div class="container-fluid hotstatus-container">
+    <div class="row">
+        <div class="col">
+            {% block filter %}{% endblock %}
         </div>
     </div>
-    <div>
-        <div class="heroloader-flex-container">
-            <div class="heroloader-container heroloader-container-graphs">
-                Horizontally Layed out Graphs
+    <div class="row">
+        <div class="col-sm-4 col-md-3 col-lg-3 heroloader-container-stats bg-success">
+            <div class="row">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <div class="dev-row-a"><img id="hl-herodata-image-hero" src=""></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="hl-herodata-title" class="dev-row-a">{TITLE}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="hl-herodata-name" class="dev-row-b">{NAME}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="hl-herodata-desc-tagline" class="dev-row-a">{TAGLINE}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="hl-herodata-desc-bio" class="dev-row-b">{BIO}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="dev-row-a">
+                                        <div class="d-inline-block">
+                                            Kills:
+                                        </div>
+                                        <div class="d-inline-block">
+                                            {AVG KILLS} ({KILLS/M})
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="dev-row-b">
+                                        <div class="d-inline-block">
+                                            Assists:
+                                        </div>
+                                        <div class="d-inline-block">
+                                            {AVG ASSISTS} ({ASSISTS/M})
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="heroloader-flex-container">
-            <div class="heroloader-container heroloader-container-matchup-foes">
-                Data Table Foes Matchup
+        <div class="col-sm-8 col-md-9 col-lg-9 heroloader-container-talents bg-info">
+            <div class="row">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <div class="dev-row-a">Talents</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="dev-row-b">Talent Builds</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="heroloader-flex-container">
-            <div class="heroloader-container heroloader-container-matchup-friends">
-                Data Table Friends Matchup
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="dev-row-a">Graphs</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="dev-row-b">Data Table Foes Matchup</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="dev-row-a">Data Table Friends Matchup</div>
+                </div>
             </div>
         </div>
     </div>

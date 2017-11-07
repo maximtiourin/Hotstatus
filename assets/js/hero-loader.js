@@ -6,6 +6,9 @@
  */
 let HeroLoader = {};
 
+/*
+ * Handles Ajax requests
+ */
 HeroLoader.ajax = {
     internal: {
         url: '', //url to get a response from
@@ -37,8 +40,29 @@ HeroLoader.ajax = {
 
         //Ajax Request
         $.getJSON(self.internal.url)
-            .done(function(json) {
-                //Assign data
+            .done(function(jsonResponse) {
+                let data = HeroLoader.data;
+                let data_herodata = data.herodata;
+                let data_stats = data.stats;
+
+                let json = jsonResponse[self.internal.dataSrc];
+                let json_herodata = json['herodata'];
+                let json_stats = json['stats'];
+
+                /*
+                 * Herodata
+                 */
+                //image_hero
+                data_herodata.image_hero(json_herodata['image_hero']);
+                //name
+                data_herodata.name(json_herodata['name']);
+                //title
+                data_herodata.title(json_herodata['title']);
+                //tagline
+                data_herodata.tagline(json_herodata['desc_tagline']);
+                //bio
+                data_herodata.bio(json_herodata['desc_bio']);
+
             })
             .fail(function() {
                 //Failure to load Data
@@ -48,6 +72,32 @@ HeroLoader.ajax = {
             });
 
         return self;
+    }
+};
+
+/*
+ * Handles binding data to the page
+ */
+HeroLoader.data = {
+    herodata: {
+        name: function(val) {
+            $('#hl-herodata-name').text(val);
+        },
+        title: function(val) {
+            $('#hl-herodata-title').text(val);
+        },
+        tagline: function(val) {
+            $('#hl-herodata-desc-tagline').text(val);
+        },
+        bio: function(val) {
+            $('#hl-herodata-desc-bio').text(val);
+        },
+        image_hero: function(val) {
+            $('#hl-herodata-image-hero').attr('src', val);
+        }
+    },
+    stats: {
+
     }
 };
 

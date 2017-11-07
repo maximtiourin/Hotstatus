@@ -193,30 +193,6 @@ body {
     border-radius: 4px;
 }
 
-/* HeroLoader */
-.heroloader-flex-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-
-.heroloader-container {
-    display: inline-block;
-    flex-grow: 1;
-
-    /* testing */
-    background-color: #ff2a48;
-    margin: 4px;
-}
-
-.heroloader-container-talents {
-    flex-grow: 3;
-}
-
-.heroloader-container-stats {
-    flex-grow: 1;
-}
-
 /* Statlist styling */
 #hsl-table {
     border: 0 !important;
@@ -699,4 +675,29 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
         display: block !important;
         width: 100% !important;
     }
+}
+
+/* Development Layout Styles */
+.dev-row-a {
+    background-color: #ff7300;
+    margin: 2px;
+    padding: 4px;
+}
+
+.dev-row-b {
+    background-color: #545454;
+    margin: 2px;
+    padding: 4px;
+}
+
+/* HeroLoader */
+#hl-herodata-image-hero {
+    width: 128px;
+    height: 128px;
+}
+
+.heroloader-container-stats {
+}
+
+.heroloader-container-talents {
 }
