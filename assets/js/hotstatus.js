@@ -4,6 +4,7 @@
 //Begin hotstatus definitions
 (function ($) {
     let HotstatusFilter = {
+        validFilters: false,
         /*
          * Validates the selectors of the given filter types, if their current selections are invalid, then
          * disable the given submit element and add a filter-error class to the invalid selectors. Returns
@@ -30,11 +31,13 @@
             }
 
             if (invalid) {
-                filterSubmitElement.prop("disabled", true);
+                if (filterSubmitElement !== null) filterSubmitElement.prop("disabled", true);
+                self.validFilters = false;
                 return false;
             }
             else {
-                filterSubmitElement.prop("disabled", false);
+                if (filterSubmitElement !== null) filterSubmitElement.prop("disabled", false);
+                self.validFilters = true;
                 return true;
             }
         },

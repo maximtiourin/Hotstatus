@@ -692,6 +692,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 /* HeroLoader */
+.initial-load {
+    display: none;
+}
+
 #hl-herodata-image-hero {
     width: 128px;
     height: 128px;
@@ -801,4 +805,20 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .heroloader-container-talents {
+}
+
+.heroloader-processing {
+    position:absolute;
+    top:26px !important;
+    left:50% !important;
+    width:100% !important;
+    height:100% !important;
+    margin-left:-50% !important;
+    margin-top:-25px !important;
+    padding-top:20px !important;
+    text-align:center !important;
+    font-size:2em !important;
+    background-color: rgba(27, 7, 72, 0.3) !important;
+    color: #1B0748 !important;
+    z-index: 9999;
 }

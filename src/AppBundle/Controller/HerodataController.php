@@ -31,7 +31,7 @@ class HerodataController extends Controller {
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
      *
-     * @Route("/herodata/pagedata/hero", options={"expose"=true}, name="herodata_pagedata_hero")
+     * @Route("/herodata/pagedata/hero", options={"expose"=true}, name="herodata_pagedata_hero") //TODO re-add condition for xmlhttprequest after done testing
      */
     public function getPageDataHeroAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;

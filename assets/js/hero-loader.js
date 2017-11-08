@@ -7,10 +7,24 @@
 let HeroLoader = {};
 
 /*
+ * Handles loading on valid filters, making sure to only fire once until loading is complete
+ */
+HeroLoader.validateLoad = function(baseUrl, filterTypes) {
+    if (!HeroLoader.ajax.internal.loading && HotstatusFilter.validFilters) {
+        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+        if (url !== HeroLoader.ajax.url()) {
+            HeroLoader.ajax.url(url).load();
+        }
+    }
+};
+
+/*
  * Handles Ajax requests
  */
 HeroLoader.ajax = {
     internal: {
+        loading: false, //Whether or not the hero loader is currently loading a result
         url: '', //url to get a response from
         dataSrc: 'data', //The array of data is found in .data field
     },
@@ -37,6 +51,9 @@ HeroLoader.ajax = {
         let self = HeroLoader.ajax;
 
         //Enable Processing Indicator
+        self.internal.loading = true;
+
+        $('#heroloader-container').prepend('<div class="heroloader-processing"><i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></div>');
 
         //Ajax Request
         $.getJSON(self.internal.url)
@@ -48,6 +65,11 @@ HeroLoader.ajax = {
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_herodata = json['herodata'];
                 let json_stats = json['stats'];
+
+                /*
+                 * Heroloader Container
+                 */
+                $('#heroloader-container').removeClass('initial-load');
 
                 /*
                  * Window
@@ -101,6 +123,9 @@ HeroLoader.ajax = {
             })
             .always(function() {
                 //Disable Processing Indicator
+                $('.heroloader-processing').remove();
+
+                self.internal.loading = false;
             });
 
         return self;
@@ -117,7 +142,7 @@ HeroLoader.data = {
         },
         url: function(hero) {
             let url = Routing.generate("hero", {heroProperName: hero});
-            history.pushState(hero, hero, url);
+            history.replaceState(hero, hero, url);
         }
     },
     herodata: {
@@ -162,38 +187,22 @@ $(document).ready(function() {
     //Enable tooltips for the page
     $('[data-toggle="tooltip"]').tooltip();
 
-    //Set the initial url based on default filters
+    //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('herodata_pagedata_hero');
     let filterTypes = ["hero", "gameType", "map", "rank", "date"];
-    HeroLoader.ajax.url(HotstatusFilter.generateUrl(baseUrl, filterTypes)).load();
+    HotstatusFilter.validateSelectors(null, filterTypes);
+    HeroLoader.validateLoad(baseUrl, filterTypes);
 
     //Get the datatable object
     //let table = $('#hsl-table').DataTable(heroes_statslist);
 
     //Track filter changes and validate
     $('select.filter-selector').on('change', function(event) {
-        HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
+        HotstatusFilter.validateSelectors(null, filterTypes);
     });
 
-    //Todo, instead of using blur event, use the change above, but add a timer for when the data is loaded after a change (or explore other options)
-    /*$('div.filter-selector > .btn.dropdown-toggle').on('blur', function(event) {
-        let valid = HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
-
-        if (valid) {
-            let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
-
-            if (url !== HeroLoader.ajax.url()) {
-                HeroLoader.ajax.url(url).load();
-            }
-        }
-    });*/
-
-    //Calculate new url based on filters and load it, only if the url has changed
-    $('button.filter-button').click(function () {
-        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
-
-        if (url !== HeroLoader.ajax.url()) {
-            HeroLoader.ajax.url(url).load();
-        }
+    //Load new data on a select dropdown being closed (Have to use '*' selector workaround due to a 'Bootstrap + Chrome-only' bug)
+    $('*').on('hidden.bs.dropdown', function(e) {
+        HeroLoader.validateLoad(baseUrl, filterTypes);
     });
 });

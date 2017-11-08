@@ -35,14 +35,11 @@
                     {% block javascripts %}{% endblock %}
                     {% block filter %}
                         <div>
-                            {% include ':snippets:heroes/filter/dropdown/select/heroes.html.twig' %}
                             {% include ':snippets:heroes/filter/dropdown/multiselect/gameTypes.html.twig' %}
                             {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
                             {% include ':snippets:heroes/filter/dropdown/multiselect/ranks.html.twig' %}
                             {% include ':snippets:heroes/filter/dropdown/select/dates.html.twig' %}
-                        </div>
-                        <div>
-                            <button class="btn btn-sm filter-button filter-button-hero-loader">Filter</button>
+                            {% include ':snippets:heroes/filter/dropdown/select/heroes.html.twig' %}
                         </div>
                     {% endblock %}
                     {% block group_average_stats %}

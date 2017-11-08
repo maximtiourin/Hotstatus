@@ -1,8 +1,19 @@
 'use strict';
 
-let heroes_statslist = {};
+let HeroesStatslist = {};
 
-//let herodata_heroes_path = Routing.generate('herodata_datatable_heroes_statslist');
+HeroesStatslist.loading = false;
+HeroesStatslist.validateLoad = function(table, baseUrl, filterTypes) {
+    if (!HeroesStatslist.loading && HotstatusFilter.validFilters) {
+        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+        if (url !== table.ajax.url()) {
+            table.ajax.url(url).load();
+        }
+    }
+};
+
+let heroes_statslist = {};
 
 heroes_statslist.columns = [
     {"width": "10%", "sClass": "hsl-table-portrait-td", "bSortable": false, "searchable": false, "responsivePriority": 1},
@@ -47,10 +58,30 @@ $(document).ready(function() {
     //Set the initial url based on default filters
     let baseUrl = Routing.generate('herodata_datatable_heroes_statslist');
     let filterTypes = ["gameType", "map", "rank", "date"];
+    HotstatusFilter.validateSelectors(null, filterTypes);
     heroes_statslist.ajax.url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
 
     //Get the datatable object
     let table = $('#hsl-table').DataTable(heroes_statslist);
+
+    //Track datatable processing of ajax data
+    table.on('preXhr', function() {
+        HeroesStatslist.loading = true;
+    });
+
+    table.on('xhr', function() {
+        HeroesStatslist.loading = false;
+    });
+
+    //Track filter changes and validate
+    $('select.filter-selector').on('change', function(event) {
+        HotstatusFilter.validateSelectors(null, filterTypes);
+    });
+
+    //Load new data on a select dropdown being closed (Have to use '*' selector workaround due to a 'Bootstrap + Chrome-only' bug)
+    $('*').on('hidden.bs.dropdown', function(e) {
+        HeroesStatslist.validateLoad(table, baseUrl, filterTypes);
+    });
 
     //Search the table for the new value typed in by user
     $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
@@ -60,19 +91,5 @@ $(document).ready(function() {
     //Search the table for the new value populated by role button
     $('button.hsl-rolebutton').click(function () {
         table.search($(this).attr("value")).draw();
-    });
-
-    //Track filter changes and validate
-    $('select.filter-selector').on('change', function(event) {
-        HotstatusFilter.validateSelectors($('button.filter-button'), filterTypes);
-    });
-
-    //Calculate new url based on filters and load it, only if the url has changed
-    $('button.filter-button').click(function () {
-        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
-
-        if (url !== table.ajax.url()) {
-            table.ajax.url(url).load();
-        }
     });
 });
