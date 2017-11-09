@@ -115,8 +115,11 @@ HeroLoader.ajax = {
                         }
                     }
                 }
-                //kills
-                //data_stats.kills(json_stats['kills']['average'], json_stats['kills']['per_minute']);
+
+                /*
+                 * Enable advertising
+                 */
+                Hotstatus.advertising.generateAdvertising();
             })
             .fail(function() {
                 //Failure to load Data

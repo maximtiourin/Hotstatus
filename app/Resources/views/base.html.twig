@@ -21,5 +21,13 @@
         {% block body %}{% endblock %}
         {% include ':snippets:footer.html.twig' %}
         {% block javascripts %}{% endblock %}
+        <script>
+            $(document).ready(function() {
+                {% block tailJavascript %}{% endblock %}
+                if (Hotstatus.advertising.internal.generateByDefault) {
+                    Hotstatus.advertising.generateAdvertising();
+                }
+            });
+        </script>
     </body>
 </html>

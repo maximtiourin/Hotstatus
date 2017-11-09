@@ -77,7 +77,7 @@
                         {% endfor %}
                     {% endblock %}
                     {% block advertising_horizontal_responsive_01 %}
-                        {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
+                        {% include ':snippets:advertising/responsive_horizontal_inner.html.twig' %}
                     {% endblock %}
                 {% endembed %}
             </div>
@@ -97,5 +97,10 @@
 {% block javascripts %}
     {{ block('stdjavascripts') }}
     {{ block('heroloaderjavascripts') }}
+{% endblock %}
+
+{# Tail Javascript #}
+{% block tailJavascript %}
+    Hotstatus.advertising.internal.generateByDefault = false;
 {% endblock %}
 

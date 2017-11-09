@@ -1,8 +1,35 @@
-//Google Ads Define
-(adsbygoogle = window.adsbygoogle || []).push({});
-
 //Begin hotstatus definitions
 (function ($) {
+    let Hotstatus = {
+        advertising: {
+            internal: {
+                generated: false,
+                generateByDefault: true
+            },
+            generateAdvertising: function () {
+                let self = Hotstatus.advertising;
+
+                if (!self.internal.generated) {
+                    //Enable/Disable ad classes
+                    if (document.documentElement.clientWidth >= 1200) {
+                        $('.adslot_vertical').addClass('adsbygoogle');
+                    }
+
+                    //Google Ads Define
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    }
+                    catch (e) {
+                        //Google ad exception -- fail quietly
+                    }
+
+                    self.internal.generated = true;
+                }
+            }
+        }
+    };
+    window.Hotstatus = Hotstatus;
+
     let HotstatusFilter = {
         validFilters: false,
         /*
@@ -114,6 +141,5 @@
             return $('select.filter-selector-' + selector_type).first().find('option').length;
         }
     };
-
     window.HotstatusFilter = HotstatusFilter;
 })(jQuery);

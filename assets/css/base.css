@@ -57,23 +57,46 @@
 .adslot_horizontal_1 {
     display: inline-block;
     overflow: hidden;
-    text-wrap: none;
     width: 234px;
     height: 60px;
     margin: 8px 2px 2px 0px;
 }
-@media (min-width:360px) { .adslot_horizontal_1 { width: 320px; height: 100px; } }
-@media (min-width:768px) { .adslot_horizontal_1 { width: 728px; height: 90px; } }
+.adslot_horizontal_2 {
+    display: inline-block;
+    overflow: hidden;
+    width: 234px;
+    height: 60px;
+    margin: 8px 2px 2px 0px;
+}
+@media (min-width:360px) {
+    .adslot_horizontal_1 {
+        width: 320px; height: 100px;
+    }
+    .adslot_horizontal_2 {
+        width: 320px; height: 100px;
+    }
+}
+@media (min-width:768px) {
+    .adslot_horizontal_1 {
+        width: 728px; height: 90px;
+    }
+}
+@media (min-width:992px) {
+    .adslot_horizontal_2 {
+        width: 728px; height: 90px;
+    }
+}
 
 .adslot_vertical_1 {
-    display: none;
+    display: none!important;
     overflow: hidden;
     position: fixed;
     top: 180px;
+    z-index: -1;
 }
-@media (min-width:1200px) { .adslot_vertical_1 { width: 200px; height: 200px; } }
-@media (min-width:1438px) { .adslot_vertical_1 { width: 250px; height: 250px; } }
-@media (min-width:1738px) { .adslot_vertical_1 { width: 300px; height: 250px; } }
+@media (min-width:1200px) { .adslot_vertical_1 { display: inline-block!important;z-index: 9999; width: 200px; height: 200px; } }
+@media (min-width:1438px) { .adslot_vertical_1 { display: inline-block!important;z-index: 9999; width: 250px; height: 250px; } }
+@media (min-width:1738px) { .adslot_vertical_1 { display: inline-block!important;z-index: 9999; width: 300px; height: 250px; } }
 
 /* Fixes the bug of the duplicate data tables sort icon appearing on the first row of results when using bootstrap style */
 .dataTables_scrollBody thead {visibility: hidden;}
