@@ -55,7 +55,9 @@
 
 /* Advertising */
 .adslot_horizontal_1 {
+    display: inline-block;
     overflow: hidden;
+    text-wrap: none;
     width: 234px;
     height: 60px;
     margin: 8px 2px 2px 0px;

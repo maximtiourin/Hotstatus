@@ -313,8 +313,8 @@ class HerodataController extends Controller {
                     $c_pmin_kills = round(($c_avg_kills / ($c_avg_minutesPlayed * 1.00)), 2);
                 }
                 $stats['kills'] = [
-                    "average" => $c_avg_kills,
-                    "per_minute" => $c_pmin_kills
+                    "average" => self::formatNumber($c_avg_kills, 2),
+                    "per_minute" => self::formatNumber($c_pmin_kills, 2)
                 ];
 
                 //Average Assists (+ Per Minute)
@@ -327,8 +327,8 @@ class HerodataController extends Controller {
                     $c_pmin_assists = round(($c_avg_assists / ($c_avg_minutesPlayed * 1.00)), 2);
                 }
                 $stats['assists'] = [
-                    "average" => $c_avg_assists,
-                    "per_minute" => $c_pmin_assists
+                    "average" => self::formatNumber($c_avg_assists, 2),
+                    "per_minute" => self::formatNumber($c_pmin_assists, 2)
                 ];
 
                 //Average Deaths (+ Per Minute)
@@ -341,8 +341,8 @@ class HerodataController extends Controller {
                     $c_pmin_deaths = round(($c_avg_deaths / ($c_avg_minutesPlayed * 1.00)), 2);
                 }
                 $stats['deaths'] = [
-                    "average" => $c_avg_deaths,
-                    "per_minute" => $c_pmin_deaths
+                    "average" => self::formatNumber($c_avg_deaths, 2),
+                    "per_minute" => self::formatNumber($c_pmin_deaths, 2)
                 ];
 
                 //Average KDA
@@ -351,7 +351,7 @@ class HerodataController extends Controller {
                     $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths * 1.00)), 2);
                 }
                 $stats['kda'] = [
-                    "average" => $c_avg_kda
+                    "average" => self::formatNumber($c_avg_kda, 2)
                 ];
 
                 //Average Siege Damage (+ Per Minute)
@@ -364,8 +364,8 @@ class HerodataController extends Controller {
                     $c_pmin_siege_damage = round(($c_avg_siege_damage / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['siege_damage'] = [
-                    "average" => $c_avg_siege_damage,
-                    "per_minute" => $c_pmin_siege_damage
+                    "average" => self::formatNumber($c_avg_siege_damage),
+                    "per_minute" => self::formatNumber($c_pmin_siege_damage)
                 ];
 
                 //Average Hero Damage (+ Per Minute)
@@ -378,8 +378,8 @@ class HerodataController extends Controller {
                     $c_pmin_hero_damage = round(($c_avg_hero_damage / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['hero_damage'] = [
-                    "average" => $c_avg_hero_damage,
-                    "per_minute" => $c_pmin_hero_damage
+                    "average" => self::formatNumber($c_avg_hero_damage),
+                    "per_minute" => self::formatNumber($c_pmin_hero_damage)
                 ];
 
                 //Average Structure Damage (+ Per Minute)
@@ -392,8 +392,8 @@ class HerodataController extends Controller {
                     $c_pmin_structure_damage = round(($c_avg_structure_damage / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['structure_damage'] = [
-                    "average" => $c_avg_structure_damage,
-                    "per_minute" => $c_pmin_structure_damage
+                    "average" => self::formatNumber($c_avg_structure_damage),
+                    "per_minute" => self::formatNumber($c_pmin_structure_damage)
                 ];
 
                 //Average Healing (+ Per Minute)
@@ -406,8 +406,8 @@ class HerodataController extends Controller {
                     $c_pmin_healing = round(($c_avg_healing / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['healing'] = [
-                    "average" => $c_avg_healing,
-                    "per_minute" => $c_pmin_healing
+                    "average" => self::formatNumber($c_avg_healing),
+                    "per_minute" => self::formatNumber($c_pmin_healing)
                 ];
 
                 //Average Damage Taken (+ Per Minute)
@@ -420,8 +420,8 @@ class HerodataController extends Controller {
                     $c_pmin_damage_taken = round(($c_avg_damage_taken / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['damage_taken'] = [
-                    "average" => $c_avg_damage_taken,
-                    "per_minute" => $c_pmin_damage_taken
+                    "average" => self::formatNumber($c_avg_damage_taken),
+                    "per_minute" => self::formatNumber($c_pmin_damage_taken)
                 ];
 
                 //Average Merc Camps (+ Per Minute)
@@ -434,8 +434,8 @@ class HerodataController extends Controller {
                     $c_pmin_merc_camps = round(($c_avg_merc_camps / ($c_avg_minutesPlayed * 1.00)), 2);
                 }
                 $stats['merc_camps'] = [
-                    "average" => $c_avg_merc_camps,
-                    "per_minute" => $c_pmin_merc_camps
+                    "average" => self::formatNumber($c_avg_merc_camps, 2),
+                    "per_minute" => self::formatNumber($c_pmin_merc_camps, 2)
                 ];
 
                 //Average Exp Contrib (+ Per Minute)
@@ -448,12 +448,12 @@ class HerodataController extends Controller {
                     $c_pmin_exp_contrib = round(($c_avg_exp_contrib / ($c_avg_minutesPlayed * 1.00)), 0);
                 }
                 $stats['exp_contrib'] = [
-                    "average" => $c_avg_exp_contrib,
-                    "per_minute" => $c_pmin_exp_contrib
+                    "average" => self::formatNumber($c_avg_exp_contrib),
+                    "per_minute" => self::formatNumber($c_pmin_exp_contrib)
                 ];
 
                 //Best Killstreak
-                $stats['best_killstreak'] = $a_best_killstreak;
+                $stats['best_killstreak'] = self::formatNumber($a_best_killstreak);
 
                 //Average Time Spent Dead (in Minutes)
                 $c_avg_time_spent_dead = 0;
@@ -461,7 +461,7 @@ class HerodataController extends Controller {
                     $c_avg_time_spent_dead = round(($a_time_spent_dead / ($a_played * 1.00) / 60.0), 1);
                 }
                 $stats['time_spent_dead'] = [
-                    "average" => $c_avg_time_spent_dead
+                    "average" => self::formatNumber($c_avg_time_spent_dead, 1)
                 ];
 
                 //TODO - look up json and fill out JSON structures for medals, talents, builds, etc
@@ -1031,5 +1031,9 @@ class HerodataController extends Controller {
         $ret .= ")";
 
         return $ret;
+    }
+
+    private static function formatNumber($n, $decimalPlaces = 0) {
+        return number_format($n, $decimalPlaces, '.', ',');
     }
 }
