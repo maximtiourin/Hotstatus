@@ -27,6 +27,7 @@ class HerodataController extends Controller {
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
+    const TALENT_WINRATE_MIN_PLAYED = 100; //How many times a talent must have been played before allowing winrate calculation
 
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
@@ -553,6 +554,10 @@ class HerodataController extends Controller {
                         $picked = 0;
                         $won = 0;
                         $winrate = 0;
+
+                        //Special winrate display value, to display nothing rather than 0 for winrates that don't have high enough pickrate
+                        $talent['winrate_display'] = '';
+
                         if (key_exists($talent['name_internal'], $a_talents)) {
                             $talentStats = $a_talents[$talent['name_internal']];
 
@@ -560,10 +565,13 @@ class HerodataController extends Controller {
                             $picked += $talentStats['played'];
                             $won += $talentStats['won'];
 
-                            if ($picked > 0) {
+                            //Make sure pickrate >= min pickrate in order to display valuable winrate
+                            if ($picked >= self::TALENT_WINRATE_MIN_PLAYED) {
                                 $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+                                $talent['winrate_display'] = $winrate . ' %';
                             }
                         }
+
                         $talent['pickrate'] = $picked;
                         $talent['winrate'] = $winrate;
                     }

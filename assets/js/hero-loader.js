@@ -149,7 +149,7 @@ HeroLoader.ajax = {
                         let talent = json_talents[rkey][ckey];
 
                         data_talents.generateAbilityRow(rkey, ckey, talent['name'], talent['desc_simple'],
-                            talent['image'], talent['pickrate'], talent['popularity'], talent['winrate']);
+                            talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_display']);
                     }
                 }
 
@@ -249,8 +249,8 @@ HeroLoader.data = {
         generateTierRow: function(rowId) {
             $('#hl-talents-container').append('<div id="hl-talents-tier-row-' + rowId + '"></div>');
         },
-        generateAbilityRow: function(rowId, colId, name, desc, image, pickrate, popularity, winrate) {
-            $('#hl-talents-tier-row-' + rowId).append('<div id="hl-talents-ability-row-' + colId + '">' + name + ' - ' + pickrate + ' - ' + popularity + '% - ' + winrate +'%</div>');
+        generateAbilityRow: function(rowId, colId, name, desc, image, pickrate, popularity, winrate, winrateDisplay) {
+            $('#hl-talents-tier-row-' + rowId).append('<div id="hl-talents-ability-row-' + colId + '">' + name + ' - ' + pickrate + ' - ' + popularity + '% - ' + winrateDisplay +'</div>');
         },
         empty: function() {
             $('#hl-talents-container').empty();
