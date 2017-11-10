@@ -50,6 +50,11 @@ HeroLoader.ajax = {
     load: function() {
         let self = HeroLoader.ajax;
 
+        let data = HeroLoader.data;
+        let data_herodata = data.herodata;
+        let data_stats = data.stats;
+        let data_abilities = data.abilities;
+
         //Enable Processing Indicator
         self.internal.loading = true;
 
@@ -58,13 +63,15 @@ HeroLoader.ajax = {
         //Ajax Request
         $.getJSON(self.internal.url)
             .done(function(jsonResponse) {
-                let data = HeroLoader.data;
-                let data_herodata = data.herodata;
-                let data_stats = data.stats;
-
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_herodata = json['herodata'];
                 let json_stats = json['stats'];
+                let json_abilities = json['abilities'];
+
+                /*
+                 * Empty dynamically filled containers
+                 */
+                data_abilities.empty();
 
                 /*
                  * Heroloader Container
@@ -115,6 +122,20 @@ HeroLoader.ajax = {
                         }
                     }
                 }
+
+                /*
+                 * Abilities
+                 */
+                let abilityOrder = ["Normal", "Heroic", "Trait"];
+                for (let type of abilityOrder) {
+                    data_abilities.beginInner(type);
+                    for (let ability of json_abilities[type]) {
+                        data_abilities.generate(type, ability['name'], ability['desc_simple'], ability['image']);
+                    }
+                }
+
+                //Enable tooltips for the page
+                $('[data-toggle="tooltip"]').tooltip();
 
                 /*
                  * Enable advertising
@@ -182,14 +203,33 @@ HeroLoader.data = {
         time_spent_dead: function(key, time_spent_dead) {
             $('#hl-stats-' + key + '-time-spent-dead').text(time_spent_dead);
         },
+    },
+    abilities: {
+        beginInner: function(type) {
+          $('#hl-abilities-container').append('<div id="hl-abilities-inner-' + type + '" class="hl-abilities-inner"></div>');
+        },
+        generate: function(type, name, desc, imagepath) {
+            let self = HeroLoader.data.abilities;
+            $('#hl-abilities-inner-' + type).append('<div class="hl-abilities-ability"><span data-toggle="tooltip" data-html="true" title="' + self.tooltip(type, name, desc) + '">' +
+                '<img class="hl-abilities-ability-image" src="' + imagepath + '"><img class="hl-abilities-ability-image-frame" src="' + image_base_path + 'ui/ability_icon_frame.png">' +
+                '</span></div>');
+        },
+        empty: function() {
+            $('#hl-abilities-container').empty();
+        },
+        tooltip: function(type, name, desc) {
+            if (type === "Heroic" || type === "Trait") {
+                return '<span class=\'hl-abilities-tooltip-' + type + '\'>[' + type + ']</span><br><span class=\'hl-abilities-tooltip-name\'>' + name + '</span><br>' + desc;
+            }
+            else {
+                return '<span class=\'hl-abilities-tooltip-name\'>' + name + '</span><br>' + desc;
+            }
+        }
     }
 };
 
 
 $(document).ready(function() {
-    //Enable tooltips for the page
-    $('[data-toggle="tooltip"]').tooltip();
-
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('herodata_pagedata_hero');
     let filterTypes = ["hero", "gameType", "map", "rank", "date"];

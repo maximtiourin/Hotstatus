@@ -751,6 +751,47 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }
 
+.hl-abilities-inner {
+    display:inline-block;
+    margin: 4px 8px;
+}
+
+.hl-abilities-ability {
+    display:inline-block;
+    position: relative;
+    margin: 0px 0px;
+}
+
+.hl-abilities-ability-image {
+    width:43px;
+    height:43px;
+    border: 1px;
+    border-style: solid;
+    border-radius: 22px;
+}
+
+.hl-abilities-ability-image-frame {
+    position: absolute;
+    left:-2px;
+    top:-6px;
+    width:48px;
+    height:54px;
+}
+
+.hl-abilities-tooltip-name {
+    color:#ffcf36;
+}
+
+.hl-abilities-tooltip-Heroic {
+    color: #6a46d0;
+    font-weight: bold;
+}
+
+.hl-abilities-tooltip-Trait {
+    color: #25c173;
+    font-weight: bold;
+}
+
 /* Small and up */
 @media screen and (min-width: 576px) {
     .padding-sm-left-0 {

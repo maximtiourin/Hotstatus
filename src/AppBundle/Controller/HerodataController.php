@@ -124,8 +124,13 @@ class HerodataController extends Controller {
                     `stats_best_killstreak`, `stats_time_spent_dead`, `medals`, `talents`, `builds`, `matchup_friends`, `matchup_foes` 
                     FROM heroes_matches_recent_granular WHERE $querySql");
 
+                $db->prepare("GetHeroAbilities",
+                    "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
 
-                //Collect herodata
+
+                /*
+                 * Collect Herodata
+                 */
                 $heroDataResult = $db->execute("GetHeroData");
                 while ($heroDataRow = $db->fetchArray($heroDataResult)) {
                     $row = $heroDataRow;
@@ -213,7 +218,9 @@ class HerodataController extends Controller {
                 $a_matchup_friends = [];
                 $a_matchup_foes = [];
 
-                //Collect stats
+                /*
+                 * Collect Stats
+                 */
                 $heroStatsResult = $db->execute("GetHeroStats");
                 while ($heroStatsRow = $db->fetchArray($heroStatsResult)) {
                     $row = $heroStatsRow;
@@ -464,10 +471,35 @@ class HerodataController extends Controller {
                     "average" => self::formatNumber($c_avg_time_spent_dead, 1)
                 ];
 
-                //TODO - look up json and fill out JSON structures for medals, talents, builds, etc
-
                 //Set pagedata stats
                 $pagedata['stats'] = $stats;
+
+                /*
+                 * Collect Abilities
+                 */
+
+                $abilities = [];
+
+                $heroAbilitiesResult = $db->execute("GetHeroAbilities");
+                while ($heroAbilitiesRow = $db->fetchArray($heroAbilitiesResult)) {
+                    $row = $heroAbilitiesRow;
+
+                    if (!key_exists($row['type'], $abilities)) {
+                        $abilities[$row['type']] = [];
+                    }
+
+                    $abilities[$row['type']][] = [
+                        "name" => $row['name'],
+                        "desc_simple" => htmlspecialchars_decode($row['desc_simple']),
+                        "image" => $imgbasepath . $row['image'] . ".png"
+                    ];
+                }
+                $db->freeResult($heroAbilitiesResult);
+
+                //Set pagedata abilities
+                $pagedata['abilities'] = $abilities;
+
+                //TODO - look up json and fill out JSON structures for medals, talents, builds, etc
 
                 //Close connection and set valid response
                 $db->close();
