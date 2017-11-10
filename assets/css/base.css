@@ -723,13 +723,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     display: none;
 }
 
-#hl-herodata-image-hero {
+.hl-herodata-image-hero {
     width: 128px;
     height: 128px;
-    border: 2px;
+    border: 1px;
     border-style: solid;
-    border-color: #151120;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 #hl-herodata-title {
@@ -751,6 +750,28 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     font-size: 18px;
     font-weight: bolder;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+}
+
+.tooltip-inner {
+    border:1px !important;
+    border-style: solid !important;
+    border-color: #1B0748 !important;
+}
+
+.herodata-bio.tooltip-inner {
+    border-color: #1B0748!important;
+}
+
+.hl-herodata-rarity-Rare {
+    border-color: #231acd!important;
+}
+
+.hl-herodata-rarity-Epic {
+    border-color: #5909af !important;
+}
+
+.hl-herodata-rarity-Legendary {
+    border-color: #ffb82d !important;
 }
 
 .hl-abilities-inner {
@@ -804,7 +825,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border: 2px;
     border-style: solid;
     border-radius: 12px;
-    border-color: #6625cd;
+    border-color: #1B0748;
     margin-right: 8px;
 }
 
@@ -818,7 +839,43 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .hl-row-height {
-    line-height: 40px;
+    /*line-height: 40px;*//* Had to be removed so that vertical align could do its job, useful when no vertical align*/
+}
+
+#hl-talents-table {
+    border: 0 !important;
+    border-spacing: 0 !important;
+    padding: 0 !important;
+    background-color: rgba(46, 57, 59, 0.81); /* Interesting colors: rgba(53, 49, 88, 0.8), */
+}
+
+#hl-talents-table tr,td,thead,th {
+    padding: 2px 8px !important;
+    border: 0 !important;
+    border-spacing: 0 !important;
+    color: #FFFFFF !important;
+}
+
+#hl-talents-table td {
+    display: table-cell !important;
+    vertical-align: middle !important;
+    text-align: left;
+}
+
+#hl-talents-table tr:nth-child(2n) {
+    background-color: rgba(255,255,255,0.05);
+}
+
+.tier {
+    background-color: rgba(17, 23, 25, 0.81)!important;
+}
+
+#hl-talents-table thead, th {
+    /*background-color: rgba(46, 57, 59, 0.81) !important;*/
+    text-align: left;
+    white-space: normal!important;
+    overflow: hidden!important;
+    padding: 0px 0px !important;
 }
 
 /* Small and up */
@@ -846,6 +903,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 /* Medium and up */
 @media screen and (min-width: 768px) {
+    .herodata-bio.tooltip-inner {
+        max-width:400px !important;
+        width:400px !important;
+    }
+
     .col-md-3pt5 {
         -ms-flex: 0 0 29.166666%;
         flex: 0 0 29.166666%;

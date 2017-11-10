@@ -28,6 +28,7 @@ class HerodataController extends Controller {
 
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
     const TALENT_WINRATE_MIN_PLAYED = 100; //How many times a talent must have been played before allowing winrate calculation
+    const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
 
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
@@ -524,6 +525,7 @@ class HerodataController extends Controller {
                     //Calculate min/max cols
                     if (!key_exists($trowkey, $talents)) {
                         $talents[$trowkey] = [
+                            "tier" => HotstatusPipeline::$heropage_talent_tiers[$trowkey],
                             "minCol" => PHP_INT_MAX,
                             "maxCol" => PHP_INT_MIN,
                             "totalPicked" => 0
@@ -588,7 +590,7 @@ class HerodataController extends Controller {
 
                     //Total talent picks for Row
                     $talents[$r.'']['totalPicked'] = $rowTotalPicked;
-                    $talents[$r.'']['minWinrate'] = $rowMinWinrate;
+                    $talents[$r.'']['minWinrate'] = max(0, $rowMinWinrate - self::TALENT_WINRATE_MIN_OFFSET);
                     $talents[$r.'']['maxWinrate'] = $rowMaxWinrate;
                 }
 

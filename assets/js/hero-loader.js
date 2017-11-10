@@ -73,6 +73,7 @@ HeroLoader.ajax = {
                 /*
                  * Empty dynamically filled containers
                  */
+                data_herodata.empty();
                 data_abilities.empty();
                 data_talents.empty();
 
@@ -90,16 +91,14 @@ HeroLoader.ajax = {
                 /*
                  * Herodata
                  */
+                //Create image composite container
+                data_herodata.generateImageCompositeContainer(json_herodata['desc_tagline'], json_herodata['desc_bio']);
                 //image_hero
-                data_herodata.image_hero(json_herodata['image_hero']);
+                data_herodata.image_hero(json_herodata['image_hero'], json_herodata['rarity']);
                 //name
                 data_herodata.name(json_herodata['name']);
                 //title
                 data_herodata.title(json_herodata['title']);
-                //tagline
-                data_herodata.tagline(json_herodata['desc_tagline']);
-                //bio
-                data_herodata.bio(json_herodata['desc_bio']);
 
                 /*
                  * Stats
@@ -147,6 +146,7 @@ HeroLoader.ajax = {
 
                 //Columns definition
                 datatable.columns = [
+                    {"title": "Tier", "visible": false},
                     {"title": "Talent", "width": "40%"},
                     {"title": "Played", "width": "20%"},
                     {"title": "Popularity", "width": "20%"},
@@ -170,10 +170,25 @@ HeroLoader.ajax = {
                 datatable.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
                 datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
+                datatable.drawCallback = function(settings) {
+                    let api = this.api();
+                    let rows = api.rows({page: 'current'}).nodes();
+                    let last = null;
+
+                    api.column(0, {page: 'current'}).data().each(function (group, i) {
+                        if (last !== group) {
+                            $(rows).eq(i).before('<tr class="group tier"><td colspan="4">' + group + '</td></tr>');
+
+                            last = group;
+                        }
+                    });
+                };
+
                 datatable.data = [];
 
                 for (let r = json_talents['minRow']; r <= json_talents['maxRow']; r++) {
                     let rkey = r + '';
+                    let tier = json_talents[rkey]['tier'];
 
                     //Build columns for Datatable
                     for (let c = json_talents[rkey]['minCol']; c <= json_talents[rkey]['maxCol']; c++) {
@@ -181,7 +196,7 @@ HeroLoader.ajax = {
 
                         let talent = json_talents[rkey][ckey];
 
-                        datatable.data.push(data_talents.generateAbilityTableData(talent['name'], talent['desc_simple'],
+                        datatable.data.push(data_talents.generateAbilityTableData(tier, talent['name'], talent['desc_simple'],
                             talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
                     }
                 }
@@ -225,20 +240,30 @@ HeroLoader.data = {
         }
     },
     herodata: {
+        generateImageCompositeContainer: function(tagline, bio) {
+            let self = HeroLoader.data.herodata;
+
+            let tooltipTemplate = '<div class=\'tooltip\' role=\'tooltip\'><div class=\'arrow\'></div>' +
+                '<div class=\'herodata-bio tooltip-inner\'></div></div>';
+
+            $('#hl-herodata-image-hero-composite-container').append('<span data-toggle="tooltip" data-template="' + tooltipTemplate + '" ' +
+                'data-html="true" title="' + self.image_hero_tooltip(tagline, bio) + '"><div id="hl-herodata-image-hero-container"></div>' +
+                '<span id="hl-herodata-name"></span><span id="hl-herodata-title"></span></span>');
+        },
         name: function(val) {
             $('#hl-herodata-name').text(val);
         },
         title: function(val) {
             $('#hl-herodata-title').text(val);
         },
-        tagline: function(val) {
-            $('#hl-herodata-desc-tagline').text(val);
+        image_hero: function(image, rarity) {
+            $('#hl-herodata-image-hero-container').append('<img class="hl-herodata-image-hero hl-herodata-rarity-' + rarity + '" src="' + image + '">');
         },
-        bio: function(val) {
-            $('#hl-herodata-desc-bio').text(val);
+        image_hero_tooltip: function(tagline, bio) {
+            return '<span class=\'hl-talents-tooltip-name\'>' + tagline + '</span><br>' + bio;
         },
-        image_hero: function(val) {
-            $('#hl-herodata-image-hero').attr('src', val);
+        empty: function() {
+            $('#hl-herodata-image-hero-composite-container').empty();
         }
     },
     stats: {
@@ -285,7 +310,7 @@ HeroLoader.data = {
         generateTalentTable: function(rowId) {
             $('#hl-talents-container').append('<table id="hl-talents-table" class="display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
         },
-        generateAbilityTableData: function(name, desc, image, pickrate, popularity, winrate, winrate_percentOnRange, winrateDisplay) {
+        generateAbilityTableData: function(tier, name, desc, image, pickrate, popularity, winrate, winrate_percentOnRange, winrateDisplay) {
             let self = HeroLoader.data.talents;
 
             let talentField = '<span data-toggle="tooltip" data-html="true" title="' + self.tooltip(name, desc) + '">' +
@@ -304,7 +329,7 @@ HeroLoader.data = {
                 winrateField = '<span class="hl-row-height">' + winrateDisplay + '</span>';
             }
 
-            return [talentField, pickrateField, popularityField, winrateField];
+            return [tier, talentField, pickrateField, popularityField, winrateField];
         },
         initTalentTable: function(dataTableConfig) {
             $('#hl-talents-table').DataTable(dataTableConfig);
