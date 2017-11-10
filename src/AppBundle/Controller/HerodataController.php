@@ -546,26 +546,25 @@ class HerodataController extends Controller {
                 for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
                     $rowTotalPicked = 0;
 
-                    for ($c = $talents['minCol']; $c <= $talents['maxCol']; $c++) {
-                        $picked = 0;
-                        $won = 0;
-
+                    for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
                         $talent = &$talents[$r.''][$c.''];
 
-                        $talentStats = $a_talents[$talent['name_internal']];
-
-                        $rowTotalPicked += $talentStats['played'];
-                        $picked += $talentStats['played'];
-                        $won += $talentStats['won'];
-
-                        //Pickrate
-                        $talent['picked'] = $picked;
-
-                        //Winrate
+                        //Pickrate / Winrate
+                        $picked = 0;
+                        $won = 0;
                         $winrate = 0;
-                        if ($picked > 0) {
-                            $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+                        if (key_exists($talent['name_internal'], $a_talents)) {
+                            $talentStats = $a_talents[$talent['name_internal']];
+
+                            $rowTotalPicked += $talentStats['played'];
+                            $picked += $talentStats['played'];
+                            $won += $talentStats['won'];
+
+                            if ($picked > 0) {
+                                $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+                            }
                         }
+                        $talent['pickrate'] = $picked;
                         $talent['winrate'] = $winrate;
                     }
 
@@ -577,16 +576,19 @@ class HerodataController extends Controller {
                 for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
                     $rowTotalPicked = $talents[$r.'']['totalPicked'];
 
-                    for ($c = $talents['minCol']; $c <= $talents['maxCol']; $c++) {
+                    for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
                         $talent = &$talents[$r.''][$c.''];
 
-                        $talentStats = $a_talents[$talent['name_internal']];
-
-                        $picked = $talentStats['played'];
-
+                        //Popularity
                         $popularity = 0;
-                        if ($rowTotalPicked > 0) {
-                            $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                        if (key_exists($talent['name_internal'], $a_talents)) {
+                            $talentStats = $a_talents[$talent['name_internal']];
+
+                            $picked = $talentStats['played'];
+
+                            if ($rowTotalPicked > 0) {
+                                $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                            }
                         }
                         $talent['popularity'] = $popularity;
                     }

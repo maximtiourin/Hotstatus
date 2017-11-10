@@ -54,6 +54,7 @@ HeroLoader.ajax = {
         let data_herodata = data.herodata;
         let data_stats = data.stats;
         let data_abilities = data.abilities;
+        let data_talents = data.talents;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -67,11 +68,13 @@ HeroLoader.ajax = {
                 let json_herodata = json['herodata'];
                 let json_stats = json['stats'];
                 let json_abilities = json['abilities'];
+                let json_talents = json['talents'];
 
                 /*
                  * Empty dynamically filled containers
                  */
                 data_abilities.empty();
+                data_talents.empty();
 
                 /*
                  * Heroloader Container
@@ -131,6 +134,22 @@ HeroLoader.ajax = {
                     data_abilities.beginInner(type);
                     for (let ability of json_abilities[type]) {
                         data_abilities.generate(type, ability['name'], ability['desc_simple'], ability['image']);
+                    }
+                }
+
+                /*
+                 * Talents
+                 */
+                for (let r = json_talents['minRow']; r <= json_talents['maxRow']; r++) {
+                    let rkey = r + '';
+                    data_talents.generateTierRow(rkey);
+                    for (let c = json_talents[rkey]['minCol']; c <= json_talents[rkey]['maxCol']; c++) {
+                        let ckey = c + '';
+
+                        let talent = json_talents[rkey][ckey];
+
+                        data_talents.generateAbilityRow(rkey, ckey, talent['name'], talent['desc_simple'],
+                            talent['image'], talent['pickrate'], talent['popularity'], talent['winrate']);
                     }
                 }
 
@@ -224,6 +243,17 @@ HeroLoader.data = {
             else {
                 return '<span class=\'hl-abilities-tooltip-name\'>' + name + '</span><br>' + desc;
             }
+        }
+    },
+    talents: {
+        generateTierRow: function(rowId) {
+            $('#hl-talents-container').append('<div id="hl-talents-tier-row-' + rowId + '"></div>');
+        },
+        generateAbilityRow: function(rowId, colId, name, desc, image, pickrate, popularity, winrate) {
+            $('#hl-talents-tier-row-' + rowId).append('<div id="hl-talents-ability-row-' + colId + '">' + name + ' - ' + pickrate + ' - ' + popularity + '% - ' + winrate +'%</div>');
+        },
+        empty: function() {
+            $('#hl-talents-container').empty();
         }
     }
 };
