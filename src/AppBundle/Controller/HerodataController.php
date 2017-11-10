@@ -546,6 +546,8 @@ class HerodataController extends Controller {
                 //Calculate total picked as well as winrates for Talents
                 for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
                     $rowTotalPicked = 0;
+                    $rowMinWinrate = PHP_INT_MAX;
+                    $rowMaxWinrate = PHP_INT_MIN;
 
                     for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
                         $talent = &$talents[$r.''][$c.''];
@@ -568,9 +570,17 @@ class HerodataController extends Controller {
                             //Make sure pickrate >= min pickrate in order to display valuable winrate
                             if ($picked >= self::TALENT_WINRATE_MIN_PLAYED) {
                                 $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
-                                $talent['winrate_display'] = $winrate . ' %';
+
+                                $colorclass = "hsl-number-winrate-red";
+                                if ($winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+
+                                $talent['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
                             }
                         }
+
+                        //Min/Max
+                        $rowMinWinrate = min($winrate, $rowMinWinrate);
+                        $rowMaxWinrate = max($winrate, $rowMaxWinrate);
 
                         $talent['pickrate'] = $picked;
                         $talent['winrate'] = $winrate;
@@ -578,14 +588,26 @@ class HerodataController extends Controller {
 
                     //Total talent picks for Row
                     $talents[$r.'']['totalPicked'] = $rowTotalPicked;
+                    $talents[$r.'']['minWinrate'] = $rowMinWinrate;
+                    $talents[$r.'']['maxWinrate'] = $rowMaxWinrate;
                 }
 
-                //Calculate popularity for Talents
+                //Calculate popularity for Talents, as well as winratePercent
                 for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
                     $rowTotalPicked = $talents[$r.'']['totalPicked'];
+                    $rowMinWinrate = $talents[$r.'']['minWinrate'];
+                    $rowMaxWinrate = $talents[$r.'']['maxWinrate'];
 
                     for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
                         $talent = &$talents[$r.''][$c.''];
+
+                        //Winrate Percent On Range
+                        $percentOnRange = 0;
+                        if ($rowMaxWinrate - $rowMinWinrate > 0) {
+                            $percentOnRange = ((($talent['winrate'] - $rowMinWinrate) * 1.00) / (($rowMaxWinrate - $rowMinWinrate) * 1.00)) * 100.0;
+                        }
+
+                        $talent['winrate_percentOnRange'] = $percentOnRange;
 
                         //Popularity
                         $popularity = 0;
@@ -914,7 +936,10 @@ class HerodataController extends Controller {
                     if ($hero['dt_playrate'] > 0) {
                         $colorclass = "hsl-number-winrate-red";
                         if ($hero['dt_winrate'] >= 50.0) $colorclass = "hsl-number-winrate-green";
-                        $percentOnRange = ((($hero['dt_winrate'] - $minWinrate) * 1.00) / (($maxWinrate - $minWinrate) * 1.00)) * 100.0;
+                        $percentOnRange = 0;
+                        if ($maxWinrate - $minWinrate > 0) {
+                            $percentOnRange = ((($hero['dt_winrate'] - $minWinrate) * 1.00) / (($maxWinrate - $minWinrate) * 1.00)) * 100.0;
+                        }
                         $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $hero['dt_winrate'])
                             . '</span><div class="hsl-percentbar hsl-percentbar-winrate" style="width:' . $percentOnRange . '%;"></div>';
                     }

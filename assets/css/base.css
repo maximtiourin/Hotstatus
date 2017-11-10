@@ -121,6 +121,8 @@
     margin: 2px 4px;
 }
 
+
+
 .hotstatus-search-textbox::placeholder {
     color: #9b9eaf;
     opacity: 255;
@@ -792,8 +794,47 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     font-weight: bold;
 }
 
+.hl-talents-tooltip-name {
+    color:#ffcf36;
+}
+
+.hl-talents-talent-image {
+    width:36px;
+    height:36px;
+    border: 2px;
+    border-style: solid;
+    border-radius: 12px;
+    border-color: #6625cd;
+    margin-right: 8px;
+}
+
+.hl-talents-talent-name {
+    font-size: 14px;
+}
+
+.hl-no-wrap {
+    text-wrap: none;
+    white-space: nowrap;
+}
+
+.hl-row-height {
+    line-height: 40px;
+}
+
 /* Small and up */
 @media screen and (min-width: 576px) {
+    .col-sm-3pt5 {
+        -ms-flex: 0 0 29.166666%;
+        flex: 0 0 29.166666%;
+        max-width: 29.166666%;
+    }
+
+    .col-sm-8pt5 {
+        -ms-flex: 0 0 70.833333%;
+        flex: 0 0 70.833333%;
+        max-width: 70.833333%;
+    }
+
     .padding-sm-left-0 {
         padding-left: 0px !important;
     }
@@ -805,6 +846,18 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 /* Medium and up */
 @media screen and (min-width: 768px) {
+    .col-md-3pt5 {
+        -ms-flex: 0 0 29.166666%;
+        flex: 0 0 29.166666%;
+        max-width: 29.166666%;
+    }
+
+    .col-md-8pt5 {
+        -ms-flex: 0 0 70.833333%;
+        flex: 0 0 70.833333%;
+        max-width: 70.833333%;
+    }
+
     .padding-md-left-0 {
         padding-left: 0px !important;
     }
@@ -818,6 +871,18 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 @media screen and (min-width: 992px) {
     #average_stats {
         display: block;
+    }
+
+    .col-lg-3pt5 {
+        -ms-flex: 0 0 29.166666%;
+        flex: 0 0 29.166666%;
+        max-width: 29.166666%;
+    }
+
+    .col-lg-8pt5 {
+        -ms-flex: 0 0 70.833333%;
+        flex: 0 0 70.833333%;
+        max-width: 70.833333%;
     }
 
     .padding-lg-left-0 {
