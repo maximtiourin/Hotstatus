@@ -127,6 +127,8 @@ class HerodataController extends Controller {
                 $db->prepare("GetHeroAbilities",
                     "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
 
+                $db->prepare("GetHeroTalents",
+                    "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
 
                 /*
                  * Collect Herodata
@@ -477,7 +479,6 @@ class HerodataController extends Controller {
                 /*
                  * Collect Abilities
                  */
-
                 $abilities = [];
 
                 $heroAbilitiesResult = $db->execute("GetHeroAbilities");
@@ -499,7 +500,102 @@ class HerodataController extends Controller {
                 //Set pagedata abilities
                 $pagedata['abilities'] = $abilities;
 
-                //TODO - look up json and fill out JSON structures for medals, talents, builds, etc
+                /*
+                 * Collect Talents
+                 */
+                $talents = [
+                    "minRow" => PHP_INT_MAX,
+                    "maxRow" => PHP_INT_MIN
+                ];
+
+                $heroTalentsResult = $db->execute("GetHeroTalents");
+                while ($heroTalentsRow = $db->fetchArray($heroTalentsResult)) {
+                    $row = $heroTalentsRow;
+
+                    //Set string keys for row/col
+                    $trowkey = $row['tier_row'] . '';
+                    $tcolkey = $row['tier_column'] . '';
+
+                    //Calculate min/max rows
+                    $talents['minRow'] = min($row['tier_row'], $talents['minRow']);
+                    $talents['maxRow'] = max($row['tier_row'], $talents['maxRow']);
+
+                    //Calculate min/max cols
+                    if (!key_exists($trowkey, $talents)) {
+                        $talents[$trowkey] = [
+                            "minCol" => PHP_INT_MAX,
+                            "maxCol" => PHP_INT_MIN,
+                            "totalPicked" => 0
+                        ];
+                    }
+
+                    $talents[$trowkey]['minCol'] = min($row['tier_column'], $talents[$trowkey]['minCol']);
+                    $talents[$trowkey]['maxCol'] = max($row['tier_column'], $talents[$trowkey]['maxCol']);
+
+                    //Set row/col talent
+                    $talents[$trowkey][$tcolkey] = [
+                        "name" => $row['name'],
+                        "name_internal" => $row['name_internal'],
+                        "desc_simple" => htmlspecialchars_decode($row['desc_simple']),
+                        "image" => $imgbasepath . $row['image'] . ".png"
+                    ];
+                }
+                $db->freeResult($heroTalentsResult);
+
+                //Calculate total picked as well as winrates for Talents
+                for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
+                    $rowTotalPicked = 0;
+
+                    for ($c = $talents['minCol']; $c <= $talents['maxCol']; $c++) {
+                        $picked = 0;
+                        $won = 0;
+
+                        $talent = &$talents[$r.''][$c.''];
+
+                        $talentStats = $a_talents[$talent['name_internal']];
+
+                        $rowTotalPicked += $talentStats['played'];
+                        $picked += $talentStats['played'];
+                        $won += $talentStats['won'];
+
+                        //Pickrate
+                        $talent['picked'] = $picked;
+
+                        //Winrate
+                        $winrate = 0;
+                        if ($picked > 0) {
+                            $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+                        }
+                        $talent['winrate'] = $winrate;
+                    }
+
+                    //Total talent picks for Row
+                    $talents[$r.'']['totalPicked'] = $rowTotalPicked;
+                }
+
+                //Calculate popularity for Talents
+                for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
+                    $rowTotalPicked = $talents[$r.'']['totalPicked'];
+
+                    for ($c = $talents['minCol']; $c <= $talents['maxCol']; $c++) {
+                        $talent = &$talents[$r.''][$c.''];
+
+                        $talentStats = $a_talents[$talent['name_internal']];
+
+                        $picked = $talentStats['played'];
+
+                        $popularity = 0;
+                        if ($rowTotalPicked > 0) {
+                            $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                        }
+                        $talent['popularity'] = $popularity;
+                    }
+                }
+
+                $pagedata['talents'] = $talents;
+
+
+                //TODO - look up json and fill out JSON structures for medals, builds, etc
 
                 //Close connection and set valid response
                 $db->close();
