@@ -842,6 +842,14 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     /*line-height: 40px;*//* Had to be removed so that vertical align could do its job, useful when no vertical align*/
 }
 
+.hl-number-winrate-red {
+    color: #e13f3b;
+}
+
+.hl-number-winrate-green {
+    color: #5ce181;
+}
+
 #hl-talents-table {
     border: 0 !important;
     border-spacing: 0 !important;

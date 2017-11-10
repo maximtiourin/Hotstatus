@@ -312,7 +312,9 @@ class HerodataController extends Controller {
                 if ($a_played > 0) {
                     $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
                 }
-                $stats['winrate'] = $c_winrate;
+                $colorclass = "hl-number-winrate-red";
+                if ($c_winrate >= 50.0) $colorclass = "hl-number-winrate-green";
+                $stats['winrate'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $c_winrate) . '</span>';
 
                 //Average Kills (+ Per Minute)
                 $c_avg_kills = 0;

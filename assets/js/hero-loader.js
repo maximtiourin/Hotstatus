@@ -272,7 +272,7 @@ HeroLoader.data = {
             $('#hl-stats-' + key + '-pmin').text(pmin);
         },
         percentage: function(key, percentage) {
-            $('#hl-stats-' + key + '-percentage').text(percentage);
+            $('#hl-stats-' + key + '-percentage').html(percentage);
         },
         kda: function(key, kda) {
             $('#hl-stats-' + key + '-kda').text(kda);

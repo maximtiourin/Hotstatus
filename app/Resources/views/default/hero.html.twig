@@ -60,7 +60,7 @@
                                                        title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['pmin'] }}">(<span id="hl-stats-{{ key }}-pmin"></span>)</span>
                                             {% elseif stat.type == 'percentage' %}
                                                 <span data-toggle="tooltip"
-                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage"></span> %</span>
+                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage"></span></span>
                                             {% elseif stat.type == 'kda' %}
                                                 <span data-toggle="tooltip"
                                                       title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda"></span></span>
