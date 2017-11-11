@@ -1,5 +1,3 @@
-//processing: '<i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span>'
-
 /*
  * Hero Loader
  * Handles retrieving hero data through ajax requests based on state of filters
@@ -56,6 +54,7 @@ HeroLoader.ajax = {
         let data_abilities = data.abilities;
         let data_talents = data.talents;
         let data_builds = data.builds;
+        let data_graphs = data.graphs;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -79,6 +78,7 @@ HeroLoader.ajax = {
                 data_abilities.empty();
                 data_talents.empty();
                 data_builds.empty();
+                data_graphs.empty();
 
                 /*
                  * Heroloader Container
@@ -205,6 +205,15 @@ HeroLoader.ajax = {
                 //Init Builds DataTable
                 data_builds.initTable(builds_datatable);
 
+                /*
+                 * Graphs
+                 */
+                //Stat Matrix
+                data_graphs.generateStatMatrix(json_herodata['name'], null, null); //TODO - Have to flesh out
+
+                //Winrate over Match Length
+
+                //Winrate over Hero Level
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -472,6 +481,70 @@ HeroLoader.data = {
         empty: function() {
             $('#hl-talents-builds-container').empty();
         },
+    },
+    graphs: {
+        resize: function() {
+            if (document.documentElement.clientWidth >= 992) {
+                $('#hl-graphs-collapse').removeClass('collapse');
+            }
+            else {
+                $('#hl-graphs-collapse').addClass('collapse');
+            }
+        },
+        generateStatMatrix: function(heroName, heroStats, minMaxTotalHeroStats) {
+            //TODO - have to flesh out
+
+            $('#hl-graphs').append('<div id="hl-graph-statmatrix">' +
+                '<div class="hl-graph-chart-container" style="position: relative; height:200px">' +
+                '<canvas id="hl-graph-statmatrix-chart"></canvas></div></div>');
+
+            //Create chart
+            let data = {
+                labels: ["Healing", "Tanking", "Sieging", "Damage", "Poke", "Waveclear", "Soaking", "Mercenary"],
+                datasets: [
+                    {
+                        label: heroName,
+                        data: [.8, .2, .3, .05, 0, .5],
+                        backgroundColor: "#a5fff8",
+                        borderColor: "#b8ffc1",
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }
+                ]
+            };
+
+            let options = {
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    enabled: false
+                },
+                hover: {
+                    mode: null
+                },
+                scale: {
+                    pointLabels: {
+                        fontColor: "#ada2c3",
+                        fontSize: 14
+                    },
+                    ticks: {
+                        maxTicksLimit: 1,
+                        display: false
+                    },
+                }
+            };
+
+            new Chart($('#hl-graph-statmatrix-chart'), {
+                type: 'radar',
+                data: data,
+                options: options
+            });
+        },
+        empty: function() {
+            $('#hl-graphs').empty();
+        }
     }
 };
 
@@ -483,8 +556,11 @@ $(document).ready(function() {
     HotstatusFilter.validateSelectors(null, filterTypes);
     HeroLoader.validateLoad(baseUrl, filterTypes);
 
-    //Get the datatable object
-    //let table = $('#hsl-table').DataTable(heroes_statslist);
+    //Track window width and toggle collapsability for graphs pane
+    HeroLoader.data.graphs.resize();
+    $(window).resize(function(){
+        HeroLoader.data.graphs.resize();
+    });
 
     //Track filter changes and validate
     $('select.filter-selector').on('change', function(event) {
