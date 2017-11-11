@@ -64,15 +64,18 @@
 .adslot_horizontal_2 {
     display: inline-block;
     overflow: hidden;
-    width: 234px;
-    height: 60px;
+    width: 100%;
+    height: 100px;
     margin: 8px 2px 2px 0px;
+}
+.adslot_horizontal_3 {
+    display: inline-block;
+    overflow: hidden;
+    width:100%;
+    height:100px;
 }
 @media (min-width:360px) {
     .adslot_horizontal_1 {
-        width: 320px; height: 100px;
-    }
-    .adslot_horizontal_2 {
         width: 320px; height: 100px;
     }
 }
@@ -82,9 +85,6 @@
     }
 }
 @media (min-width:992px) {
-    .adslot_horizontal_2 {
-        width: 728px; height: 90px;
-    }
 }
 
 .adslot_vertical_1 {
