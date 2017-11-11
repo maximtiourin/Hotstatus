@@ -947,6 +947,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #b8ffc1;
 }
 
+.hl-graph-spacer {
+    margin: 40px 0px;
+}
+
 /* Small and up */
 @media screen and (min-width: 576px) {
     .col-sm-3pt5 {

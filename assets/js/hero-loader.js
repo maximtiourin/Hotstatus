@@ -209,11 +209,19 @@ HeroLoader.ajax = {
                  * Graphs
                  */
                 //Stat Matrix
-                data_graphs.generateStatMatrix(json_herodata['name'], null, null); //TODO - Have to flesh out
+                data_graphs.generateStatMatrix(null, null); //TODO - Have to flesh out
+
+                //Spacer
+                data_graphs.generateSpacer();
 
                 //Winrate over Match Length
+                data_graphs.generateMatchLengthWinratesGraph(json_stats['range_match_length'], json_stats['winrate_raw']);
+
+                //Spacer
+                data_graphs.generateSpacer();
 
                 //Winrate over Hero Level
+                data_graphs.generateHeroLevelWinratesGraph(json_stats['range_hero_level'], json_stats['winrate_raw']);
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -483,6 +491,9 @@ HeroLoader.data = {
         },
     },
     graphs: {
+        internal: {
+            charts: []
+        },
         resize: function() {
             if (document.documentElement.clientWidth >= 992) {
                 $('#hl-graphs-collapse').removeClass('collapse');
@@ -491,8 +502,202 @@ HeroLoader.data = {
                 $('#hl-graphs-collapse').addClass('collapse');
             }
         },
-        generateStatMatrix: function(heroName, heroStats, minMaxTotalHeroStats) {
+        generateSpacer: function() {
+            $('#hl-graphs').append('<div class="hl-graph-spacer"></div>');
+        },
+        generateMatchLengthWinratesGraph: function(winrates, avgWinrate) {
+            let self = HeroLoader.data.graphs;
+
+            $('#hl-graphs').append('<div id="hl-graph-matchlength-winrate">' +
+                '<div class="hl-graph-chart-container" style="position: relative; height:200px">' +
+                '<canvas id="hl-graph-matchlength-winrate-chart"></canvas></div></div>');
+
+            //Create chart
+            let cwinrates = [];
+            let cavgwinrate = [];
+            for (let wkey in winrates) {
+                if (winrates.hasOwnProperty(wkey)) {
+                    let winrate = winrates[wkey];
+                    cwinrates.push(winrate);
+                    cavgwinrate.push(avgWinrate);
+                }
+            }
+
+            let data = {
+                labels: Object.keys(winrates),
+                datasets: [
+                    {
+                        label: "Base Winrate",
+                        data: cavgwinrate,
+                        borderColor: "#28c2ff",
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        fill: false
+                    },
+                    {
+                        label: "Match Length Winrate",
+                        data: cwinrates,
+                        backgroundColor: "rgba(34, 125, 37, 1)", //#227d25
+                        borderColor: "rgba(184, 255, 193, 1)", //#b8ffc1
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }
+                ]
+            };
+
+            let options = {
+                animation: false,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Winrate",
+                            fontColor: "#ada2c3",
+                            fontSize: 14
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value + '%';
+                            },
+                            fontColor: "#716787",
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            lineWidth: 2
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Match Length (Minutes)",
+                            fontColor: "#ada2c3",
+                            fontSize: 14
+                        },
+                        ticks: {
+                            autoSkip: false,
+                            labelOffset: 10,
+                            minRotation: 30,
+                            maxRotation: 30,
+                            fontColor: "#716787",
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            lineWidth: 2
+                        }
+                    }]
+                }
+            };
+
+            let chart = new Chart($('#hl-graph-matchlength-winrate-chart'), {
+                type: 'line',
+                data: data,
+                options: options
+            });
+
+            self.internal.charts.push(chart);
+        },
+        generateHeroLevelWinratesGraph: function(winrates, avgWinrate) {
+            let self = HeroLoader.data.graphs;
+
+            $('#hl-graphs').append('<div id="hl-graph-herolevel-winrate">' +
+                '<div class="hl-graph-chart-container" style="position: relative; height:200px">' +
+                '<canvas id="hl-graph-herolevel-winrate-chart"></canvas></div></div>');
+
+            //Create chart
+            let cwinrates = [];
+            let cavgwinrate = [];
+            for (let wkey in winrates) {
+                if (winrates.hasOwnProperty(wkey)) {
+                    let winrate = winrates[wkey];
+                    cwinrates.push(winrate);
+                    cavgwinrate.push(avgWinrate);
+                }
+            }
+
+            let data = {
+                labels: Object.keys(winrates),
+                datasets: [
+                    {
+                        label: "Base Winrate",
+                        data: cavgwinrate,
+                        borderColor: "#28c2ff",
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        fill: false
+                    },
+                    {
+                        label: "Hero Level Winrate",
+                        data: cwinrates,
+                        backgroundColor: "rgba(34, 125, 37, 1)", //#227d25
+                        borderColor: "rgba(184, 255, 193, 1)", //#b8ffc1
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }
+                ]
+            };
+
+            let options = {
+                animation: false,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Winrate",
+                            fontColor: "#ada2c3",
+                            fontSize: 14
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value + '%';
+                            },
+                            fontColor: "#716787",
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            lineWidth: 2
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Hero Level",
+                            fontColor: "#ada2c3",
+                            fontSize: 14
+                        },
+                        ticks: {
+                            autoSkip: false,
+                            labelOffset: 10,
+                            minRotation: 30,
+                            maxRotation: 30,
+                            fontColor: "#716787",
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            lineWidth: 2
+                        }
+                    }]
+                }
+            };
+
+            let chart = new Chart($('#hl-graph-herolevel-winrate-chart'), {
+                type: 'line',
+                data: data,
+                options: options
+            });
+
+            self.internal.charts.push(chart);
+        },
+        generateStatMatrix: function(heroStats, minMaxTotalHeroStats) {
             //TODO - have to flesh out
+            let self = HeroLoader.data.graphs;
 
             $('#hl-graphs').append('<div id="hl-graph-statmatrix">' +
                 '<div class="hl-graph-chart-container" style="position: relative; height:200px">' +
@@ -500,13 +705,12 @@ HeroLoader.data = {
 
             //Create chart
             let data = {
-                labels: ["Healing", "Tanking", "Sieging", "Damage", "Poke", "Waveclear", "Soaking", "Mercenary"],
+                labels: ["Healer", "Tank", "Safety", "Demolition", "Damage", "Waveclear", "Exp Soak", "Merc Camps"],
                 datasets: [
                     {
-                        label: heroName,
                         data: [.8, .2, .3, .05, 0, .5],
-                        backgroundColor: "#a5fff8",
-                        borderColor: "#b8ffc1",
+                        backgroundColor: "rgba(165, 255, 248, 1)", //#a5fff8
+                        borderColor: "rgba(184, 255, 193, 1)", //#b8ffc1
                         borderWidth: 2,
                         pointRadius: 0
                     }
@@ -514,6 +718,7 @@ HeroLoader.data = {
             };
 
             let options = {
+                animation: false,
                 maintainAspectRatio: false,
                 legend: {
                     display: false
@@ -527,22 +732,40 @@ HeroLoader.data = {
                 scale: {
                     pointLabels: {
                         fontColor: "#ada2c3",
-                        fontSize: 14
+                        fontFamily: "Arial sans-serif",
+                        fontStyle: "normal",
+                        fontSize: 11
                     },
                     ticks: {
                         maxTicksLimit: 1,
                         display: false
                     },
+                    gridLines: {
+                        lineWidth: 2
+                    },
+                    angleLines: {
+                        lineWidth: 1
+                    }
                 }
             };
 
-            new Chart($('#hl-graph-statmatrix-chart'), {
+            let chart = new Chart($('#hl-graph-statmatrix-chart'), {
                 type: 'radar',
                 data: data,
                 options: options
             });
+
+            self.internal.charts.push(chart);
         },
         empty: function() {
+            let self = HeroLoader.data.graphs;
+
+            for (let chart of self.internal.charts) {
+                chart.destroy();
+            }
+
+            self.internal.charts.length = 0;
+
             $('#hl-graphs').empty();
         }
     }
