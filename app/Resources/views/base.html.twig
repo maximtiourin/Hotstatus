@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-109505297-1"></script>
+        <script>
+            try {
+                window.dataLayer = window.dataLayer || [];
+                function gtag() {
+                    dataLayer.push(arguments);
+                }
+
+                gtag('js', new Date());
+                gtag('config', 'UA-109505297-1');
+            }
+            catch (e) {
+                //Google Analytics exception - fail quietly
+            }
+        </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Hotstat.us{% block title %}{% endblock %}</title>
