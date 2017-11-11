@@ -146,8 +146,8 @@ class HerodataController extends Controller {
                         "role_specific" => $row['role_specific'],
                         "universe" => $row['universe'],
                         "title" => $row['title'],
-                        "desc_tagline" => htmlspecialchars_decode($row['desc_tagline']),
-                        "desc_bio" => htmlspecialchars_decode($row['desc_bio']),
+                        "desc_tagline" => $row['desc_tagline'],
+                        "desc_bio" => $row['desc_bio'],
                         "rarity" => $row['rarity'],
                         "image_hero" => $imgbasepath . $row['image_hero'] . ".png"
                     ];
@@ -495,7 +495,7 @@ class HerodataController extends Controller {
 
                     $abilities[$row['type']][] = [
                         "name" => $row['name'],
-                        "desc_simple" => htmlspecialchars_decode($row['desc_simple']),
+                        "desc_simple" => $row['desc_simple'], ENT_QUOTES,
                         "image" => $imgbasepath . $row['image'] . ".png"
                     ];
                 }
@@ -541,7 +541,7 @@ class HerodataController extends Controller {
                     $talents[$trowkey][$tcolkey] = [
                         "name" => $row['name'],
                         "name_internal" => $row['name_internal'],
-                        "desc_simple" => htmlspecialchars_decode($row['desc_simple']),
+                        "desc_simple" => $row['desc_simple'],
                         "image" => $imgbasepath . $row['image'] . ".png"
                     ];
                 }
