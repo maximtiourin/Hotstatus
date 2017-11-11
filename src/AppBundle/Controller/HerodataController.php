@@ -29,6 +29,8 @@ class HerodataController extends Controller {
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
     const TALENT_WINRATE_MIN_PLAYED = 100; //How many times a talent must have been played before allowing winrate calculation
     const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
+    const TALENT_BUILD_WINRATE_MIN_PLAYED = 100; //How many times a talent build have been palyed before allowing display
+    const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to dermine percentOnRange calculations, used to normalize ranges.
 
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
@@ -131,6 +133,10 @@ class HerodataController extends Controller {
 
                 $db->prepare("GetHeroTalents",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
+
+                $db->prepare("GetHeroBuildTalents",
+                    "SELECT `talents` FROM `heroes_builds` WHERE `hero` = \"$queryHero\" AND `build` = ?");
+                $db->bind("GetHeroBuildTalents", "s", $r_build);
 
                 /*
                  * Collect Herodata
@@ -631,7 +637,75 @@ class HerodataController extends Controller {
                 $pagedata['talents'] = $talents;
 
 
-                //TODO - look up json and fill out JSON structures for medals, builds, etc
+                /*
+                 * Collect Talent Builds
+                 */
+                $builds = [];
+
+                $bMinWinrate = PHP_INT_MAX;
+                $bMaxWinrate = PHP_INT_MIN;
+
+                //Filter builds for only those with atleast min games played, collect build talents, and and calculate winrates/popularity/etc
+                foreach ($a_builds as $bkey => $bstats) {
+                    $bplayed = $bstats['played'];
+                    $bwon = $bstats['won'];
+
+                    if ($bplayed >= self::TALENT_BUILD_WINRATE_MIN_PLAYED) {
+                        //Collect talents
+                        $buildTalentsResult = $db->execute("GetHeroBuildTalents");
+                        $buildTalentsResultRows = $db->countResultRows($buildTalentsResult);
+                        if ($buildTalentsResultRows > 0) {
+                            $row = $db->fetchArray($buildTalentsResult);
+
+                            $build = [];
+
+                            //Set talents
+                            $btalents = json_decode($row['talents'], true);
+                            $build['talents'] = $btalents;
+
+                            //Set pickrate
+                            $build['pickrate'] = $bplayed;
+
+                            //Set winrate and winrate display
+                            $bwinrate = round(($bwon / ($bplayed * 1.00)) * 100.0, 1);
+
+                            $colorclass = "hsl-number-winrate-red";
+                            if ($bwinrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+
+                            $build['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $bwinrate) . '</span>';
+                            $build['winrate'] = $bwinrate;
+
+                            //Set popularity
+                            $bpopularity = round((($bplayed * 1.00) / (($a_played) * 1.00)) * 100.0, 1);
+                            $build['popularity'] = $bpopularity;
+
+                            //Min/Max
+                            $bMinWinrate = min($bwinrate, $bMinWinrate);
+                            $bMaxWinrate = max($bwinrate, $bMaxWinrate);
+
+                            $builds[$bkey] = $build;
+                        }
+                        $db->freeResult($buildTalentsResult);
+                    }
+                }
+
+                //Normalize minWinrate
+                $bMinWinrate = max(0, $bMinWinrate - self::TALENT_BUILD_WINRATE_MIN_OFFSET);
+
+                //Calculate winrate percent on range for valid builds
+                foreach ($builds as $bkey => &$bobj) {
+                    //Winrate Percent On Range
+                    $percentOnRange = 0;
+                    if ($bMaxWinrate - $bMinWinrate > 0) {
+                        $percentOnRange = ((($bobj['winrate'] - $bMinWinrate) * 1.00) / (($bMaxWinrate - $bMinWinrate) * 1.00)) * 100.0;
+                    }
+
+                    $bobj['winrate_percentOnRange'] = $percentOnRange;
+                }
+
+                $pagedata['builds'] = $builds;
+
+                //TODO - look up json and fill out JSON structures for medals, matchups, etc
 
                 //Close connection and set valid response
                 $db->close();

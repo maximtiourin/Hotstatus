@@ -184,8 +184,13 @@ HeroLoader.ajax = {
                     });
                 };
 
+                //Initialize datatable data array
                 datatable.data = [];
 
+                //Collapsed object of all talents for hero, for use with displaying builds
+                let talentsCollapsed = {};
+
+                //Loop through talent table to collect talents
                 for (let r = json_talents['minRow']; r <= json_talents['maxRow']; r++) {
                     let rkey = r + '';
                     let tier = json_talents[rkey]['tier'];
@@ -196,6 +201,14 @@ HeroLoader.ajax = {
 
                         let talent = json_talents[rkey][ckey];
 
+                        //Add talent to collapsed obj
+                        talentsCollapsed[talent['name_internal']] = {
+                            name: talent['name'],
+                            desc_simple: talent['desc_simple'],
+                            image: talent['image']
+                        };
+
+                        //Create datatable row
                         datatable.data.push(data_talents.generateAbilityTableData(tier, talent['name'], talent['desc_simple'],
                             talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
                     }
