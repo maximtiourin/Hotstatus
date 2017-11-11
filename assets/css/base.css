@@ -221,44 +221,63 @@ body {
     border-radius: 4px;
 }
 
+.hotstatus-subcontainer {
+    background-color: rgba(46, 57, 59, 0.4);
+    border: 1px;
+    border-color: #4F495C;
+    border-style: solid;
+    border-radius: 4px;
+    padding: 7px 15px !important;
+    margin: 2px 2px !important;
+    overflow: hidden;
+}
+
 /* Statlist styling */
-#hsl-table {
+.hotstatus-datatable[id*="table"] {
     border: 0 !important;
     border-spacing: 0 !important;
     padding: 0 !important;
     background-color: rgba(46, 57, 59, 0.81); /* Interesting colors: rgba(53, 49, 88, 0.8), */
 }
 
-#hsl-table tr,td,thead,th {
+.hotstatus-datatable[id*="table"] tr,td,thead,th {
     padding: 2px 8px !important;
     border: 0 !important;
     border-spacing: 0 !important;
     color: #FFFFFF !important;
 }
 
-#hsl-table td {
+.hotstatus-datatable[id*="table"] td {
     display: table-cell !important;
     vertical-align: middle !important;
     text-align: left;
 }
 
-.hsl-table-portrait-td {
+#hsl-table-portrait-td {
     text-align: center !important;
 }
 
-#hsl-table tr:first-child {
+.hotstatus-datatable[id*="table"] tr:first-child {
 
 }
 
-#hsl-table tr:nth-child(2n) {
+.hotstatus-datatable[id*="table"] tr:nth-child(2n) {
     background-color: rgba(255,255,255,0.05);
 }
 
-#hsl-table thead, th {
+.hotstatus-datatable[id*="table"] thead,th {
     /*background-color: rgba(46, 57, 59, 0.81) !important;*/
     text-align: left;
     white-space: normal!important;
     overflow: hidden!important;
+}
+
+.hotstatus-datatable[id*="table"] th {
+    /*background-color: rgba(46, 57, 59, 0.81) !important;*/
+    text-align: left;
+    white-space: normal!important;
+    overflow: hidden!important;
+    padding: 0px 0px!important;
 }
 
 table.dataTable.fixedHeader-floating,
@@ -379,6 +398,40 @@ table.dataTable.fixedHeader-locked {
 
 .hsl-percentbar-popularity {
     background-color: #4da7ca;
+}
+
+/* DataTable Pagination buttons */
+.page-link {
+    background-color: #201D26!important;
+    color: #FFFFFF!important;
+    border: 1px !important;
+    border-style: solid !important;
+    border-color: #4F495C !important;
+}
+
+.page-item.disabled .page-link {
+    background-color: #3a3741 !important;
+    color: #9b9b9b !important;
+    border: 1px !important;
+    border-style: solid !important;
+    border-color: #4F495C !important;
+}
+
+.page-item.active .page-link {
+    background-color: #566eff!important;
+    color: #FFFFFF!important;
+    border: 1px !important;
+    border-style: solid !important;
+    border-color: #4F495C !important;
+}
+
+.page-link:hover {
+    color: #8782ff!important;
+}
+
+.page-item.active .page-link:hover {
+    background-color: #6e87ff!important;
+    color: #FFFFFF!important;
 }
 
 /* DataTable Processing Hoverup */
@@ -829,6 +882,16 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin-right: 8px;
 }
 
+.hl-builds-talent-image {
+    width:24px;
+    height:24px;
+    border: 2px;
+    border-style: solid;
+    border-radius: 8px;
+    border-color: #1B0748;
+    margin-right: 8px;
+}
+
 .hl-talents-talent-name {
     font-size: 14px;
 }
@@ -843,47 +906,45 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .hl-number-winrate-red {
-    color: #e13f3b;
+    color: #e13f3b!important;
 }
 
 .hl-number-winrate-green {
-    color: #5ce181;
-}
-
-#hl-talents-table {
-    border: 0 !important;
-    border-spacing: 0 !important;
-    padding: 0 !important;
-    background-color: rgba(46, 57, 59, 0.81); /* Interesting colors: rgba(53, 49, 88, 0.8), */
-}
-
-#hl-talents-table tr,td,thead,th {
-    padding: 2px 8px !important;
-    border: 0 !important;
-    border-spacing: 0 !important;
-    color: #FFFFFF !important;
-}
-
-#hl-talents-table td {
-    display: table-cell !important;
-    vertical-align: middle !important;
-    text-align: left;
-}
-
-#hl-talents-table tr:nth-child(2n) {
-    background-color: rgba(255,255,255,0.05);
+    color: #5ce181!important;
 }
 
 .tier {
     background-color: rgba(17, 23, 25, 0.81)!important;
 }
 
-#hl-talents-table thead, th {
-    /*background-color: rgba(46, 57, 59, 0.81) !important;*/
-    text-align: left;
-    white-space: normal!important;
-    overflow: hidden!important;
-    padding: 0px 0px !important;
+.hl-talent-pane-seperator {
+    height:28px;
+    margin: 0px 15px;
+    background-color: rgba(17, 23, 25, 0.81)!important;
+}
+
+.hl-stats-title {
+    font-size: 18px;
+    color: #FFFFFF;
+}
+
+.hl-stats-label {
+    font-size: 12px;
+    color: #ada2c3;
+}
+
+.hl-stats-paren {
+    font-size: 12px!important;
+    color: #ada2c3!important;
+}
+.hl-stats-val {
+    font-size: 14px;
+    color: #a5fff8;
+}
+
+.hl-stats-pval {
+    font-size: 14px;
+    color: #b8ffc1;
 }
 
 /* Small and up */

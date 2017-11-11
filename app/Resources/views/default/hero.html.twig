@@ -49,27 +49,27 @@
                                 <div class="col">
                                     <div class="">
                                         <div class="d-inline-block heroloader-stats-key">
-                                            {{ stat.name }}:
+                                            <span class="hl-stats-label">{{ stat.name }}:</span>
                                         </div>
                                         <div class="d-inline-block heroloader-stats-value">
                                             {% if stat.type == 'avg-pmin' %}
                                                 <span id="hl-stats-{{ key }}-avg"
                                                       data-toggle="tooltip"
-                                                      title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['avg'] }}"></span>
+                                                      title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['avg'] }}" class="hl-stats-val"></span>
                                                  <span data-toggle="tooltip"
-                                                       title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['pmin'] }}">(<span id="hl-stats-{{ key }}-pmin"></span>)</span>
+                                                       title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['pmin'] }}"><span class="hl-stats-paren">(</span><span id="hl-stats-{{ key }}-pmin" class="hl-stats-pval"></span><span class="hl-stats-paren">)</span></span>
                                             {% elseif stat.type == 'percentage' %}
                                                 <span data-toggle="tooltip"
-                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage"></span></span>
+                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage" class="hl-stats-val"></span></span>
                                             {% elseif stat.type == 'kda' %}
                                                 <span data-toggle="tooltip"
-                                                      title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda"></span></span>
+                                                      title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda" class="hl-stats-val"></span></span>
                                             {% elseif stat.type == 'raw' %}
                                                 <span data-toggle="tooltip"
-                                                      title="{{ stat.name }}"><span id="hl-stats-{{ key }}-raw"></span></span>
+                                                      title="{{ stat.name }}"><span id="hl-stats-{{ key }}-raw" class="hl-stats-val"></span></span>
                                             {% elseif stat.type == 'time-spent-dead' %}
                                                 <span data-toggle="tooltip"
-                                                      title="{{ stat.name ~ average_stats_tooltips['time-spent-dead'] }}"><span id="hl-stats-{{ key }}-time-spent-dead"></span></span>
+                                                      title="{{ stat.name ~ average_stats_tooltips['time-spent-dead'] }}"><span id="hl-stats-{{ key }}-time-spent-dead" class="hl-stats-val"></span></span>
                                             {% endif %}
                                         </div>
                                     </div>

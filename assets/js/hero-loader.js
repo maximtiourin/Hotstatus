@@ -55,6 +55,7 @@ HeroLoader.ajax = {
         let data_stats = data.stats;
         let data_abilities = data.abilities;
         let data_talents = data.talents;
+        let data_builds = data.builds;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -69,6 +70,7 @@ HeroLoader.ajax = {
                 let json_stats = json['stats'];
                 let json_abilities = json['abilities'];
                 let json_talents = json['talents'];
+                let json_builds = json['builds'];
 
                 /*
                  * Empty dynamically filled containers
@@ -76,6 +78,7 @@ HeroLoader.ajax = {
                 data_herodata.empty();
                 data_abilities.empty();
                 data_talents.empty();
+                data_builds.empty();
 
                 /*
                  * Heroloader Container
@@ -139,53 +142,13 @@ HeroLoader.ajax = {
                 /*
                  * Talents
                  */
-                //Define DataTable and generate table structure
-                data_talents.generateTalentTable();
+                //Define Talents DataTable and generate table structure
+                data_talents.generateTable();
 
-                let datatable = {};
+                let talents_datatable = data_talents.getTableConfig();
 
-                //Columns definition
-                datatable.columns = [
-                    {"title": "Tier", "visible": false},
-                    {"title": "Talent", "width": "40%"},
-                    {"title": "Played", "width": "20%"},
-                    {"title": "Popularity", "width": "20%"},
-                    {"title": "Winrate", "width": "20%"},
-                ];
-
-                datatable.language = {
-                    processing: '', //Change content of processing indicator
-                    loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
-                    zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
-                    emptyTable: ' ' //Message when table is empty regardless of filtering
-                };
-
-                datatable.sorting = false;
-                datatable.searching = false;
-                datatable.deferRender = false;
-                datatable.paging = false; //Controls whether or not the table is allowed to paginate data by page length
-                datatable.responsive = false; //Controls whether or not the table collapses responsively as need
-                datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
-                datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
-                datatable.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
-                datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
-
-                datatable.drawCallback = function(settings) {
-                    let api = this.api();
-                    let rows = api.rows({page: 'current'}).nodes();
-                    let last = null;
-
-                    api.column(0, {page: 'current'}).data().each(function (group, i) {
-                        if (last !== group) {
-                            $(rows).eq(i).before('<tr class="group tier"><td colspan="4">' + group + '</td></tr>');
-
-                            last = group;
-                        }
-                    });
-                };
-
-                //Initialize datatable data array
-                datatable.data = [];
+                //Initialize talents datatable data array
+                talents_datatable.data = [];
 
                 //Collapsed object of all talents for hero, for use with displaying builds
                 let talentsCollapsed = {};
@@ -209,15 +172,42 @@ HeroLoader.ajax = {
                         };
 
                         //Create datatable row
-                        datatable.data.push(data_talents.generateAbilityTableData(tier, talent['name'], talent['desc_simple'],
+                        talents_datatable.data.push(data_talents.generateTableData(r, c, tier, talent['name'], talent['desc_simple'],
                             talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
                     }
                 }
 
-                //Init Datatable
-                data_talents.initTalentTable(datatable);
+                //Init Talents Datatable
+                data_talents.initTable(talents_datatable);
 
-                //Enable tooltips for the page
+                /*
+                 * Talent Builds
+                 */
+                //Define Builds DataTable and generate table structure
+                data_builds.generateTable();
+
+                let builds_datatable = data_builds.getTableConfig(Object.keys(json_builds).length);
+
+                //Initialize builds datatable data array
+                builds_datatable.data = [];
+
+                //Loop through builds
+                for (let bkey in json_builds) {
+                    if (json_builds.hasOwnProperty(bkey)) {
+                        let build = json_builds[bkey];
+
+                        //Create datatable row
+                        builds_datatable.data.push(data_builds.generateTableData(talentsCollapsed, build.talents, build.pickrate, build.popularity,
+                            build.popularity_percentOnRange, build.winrate, build.winrate_percentOnRange, build.winrate_display));
+                    }
+                }
+
+                //Init Builds DataTable
+                data_builds.initTable(builds_datatable);
+
+
+
+                //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
                 $('[data-toggle="tooltip"]').tooltip();
 
                 /*
@@ -320,10 +310,10 @@ HeroLoader.data = {
         }
     },
     talents: {
-        generateTalentTable: function(rowId) {
-            $('#hl-talents-container').append('<table id="hl-talents-table" class="display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
+        generateTable: function(rowId) {
+            $('#hl-talents-container').append('<table id="hl-talents-table" class="hsl-table hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
         },
-        generateAbilityTableData: function(tier, name, desc, image, pickrate, popularity, winrate, winrate_percentOnRange, winrateDisplay) {
+        generateTableData: function(r, c, tier, name, desc, image, pickrate, popularity, winrate, winrate_percentOnRange, winrateDisplay) {
             let self = HeroLoader.data.talents;
 
             let talentField = '<span data-toggle="tooltip" data-html="true" title="' + self.tooltip(name, desc) + '">' +
@@ -342,10 +332,58 @@ HeroLoader.data = {
                 winrateField = '<span class="hl-row-height">' + winrateDisplay + '</span>';
             }
 
-            return [tier, talentField, pickrateField, popularityField, winrateField];
+            return [r, c, tier, talentField, pickrateField, popularityField, winrateField];
         },
-        initTalentTable: function(dataTableConfig) {
+        initTable: function(dataTableConfig) {
             $('#hl-talents-table').DataTable(dataTableConfig);
+        },
+        getTableConfig: function() {
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {"title": "Tier_Row", "visible": false, "bSortable": false},
+                {"title": "Tier_Col", "visible": false, "bSortable": false},
+                {"title": "Tier", "visible": false, "bSortable": false},
+                {"title": "Talent", "width": "40%", "bSortable": false},
+                {"title": "Played", "width": "20%", "bSortable": false},
+                {"title": "Popularity", "width": "20%", "bSortable": false},
+                {"title": "Winrate", "width": "20%", "bSortable": false},
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.order = [[0, 'asc'], [1, 'asc']];
+
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.paging = false; //Controls whether or not the table is allowed to paginate data by page length
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            datatable.drawCallback = function(settings) {
+                let api = this.api();
+                let rows = api.rows({page: 'current'}).nodes();
+                let last = null;
+
+                api.column(2, {page: 'current'}).data().each(function (group, i) {
+                    if (last !== group) {
+                        $(rows).eq(i).before('<tr class="group tier"><td colspan="7">' + group + '</td></tr>');
+
+                        last = group;
+                    }
+                });
+            };
+
+            return datatable;
         },
         empty: function() {
             $('#hl-talents-container').empty();
@@ -353,6 +391,87 @@ HeroLoader.data = {
         tooltip: function(name, desc) {
             return '<span class=\'hl-talents-tooltip-name\'>' + name + '</span><br>' + desc;
         }
+    },
+    builds: {
+        generateTable: function(rowId) {
+            $('#hl-talents-builds-container').append('<table id="hl-talents-builds-table" class="hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
+        },
+        generateTableData: function(talents, buildTalents, pickrate, popularity, popularity_percentOnRange, winrate, winrate_percentOnRange, winrateDisplay) {
+            let self = HeroLoader.data.builds;
+
+            let talentField = '';
+            for (let talentNameInternal of buildTalents) {
+                if (talents.hasOwnProperty(talentNameInternal)) {
+                    let talent = talents[talentNameInternal];
+
+                    talentField += self.generateFieldTalentImage(talent.name, talent.desc_simple, talent.image);
+                }
+            }
+
+            let pickrateField = '<span class="hl-row-height">' + pickrate + '</span>';
+
+            let popularityField = '<span class="hl-row-height">' + popularity + '%<div class="hsl-percentbar hsl-percentbar-popularity" style="width:' + popularity_percentOnRange + '%;"></div></span>';
+
+            let winrateField = '';
+            if (winrate > 0) {
+                winrateField = '<span class="hl-row-height">' + winrateDisplay + '<div class="hsl-percentbar hsl-percentbar-winrate" style="width:'+ winrate_percentOnRange + '%;"></div></span>';
+            }
+            else {
+                winrateField = '<span class="hl-row-height">' + winrateDisplay + '</span>';
+            }
+
+            return [talentField, pickrateField, popularityField, winrateField];
+        },
+        generateFieldTalentImage: function(name, desc, image) {
+            let that = HeroLoader.data.talents;
+
+            return '<span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="' + that.tooltip(name, desc) + '">' +
+                '<span class="hl-no-wrap hl-row-height"><img class="hl-builds-talent-image" src="' + image + '">' +
+                '</span></span>';
+        },
+        initTable: function(dataTableConfig) {
+            $('#hl-talents-builds-table').DataTable(dataTableConfig);
+        },
+        getTableConfig: function(rowLength) {
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {"title": "Talent Build", "width": "40%", "bSortable": false},
+                {"title": "Played", "width": "20%", "sClass": "sortIcon_Number", "orderSequence": ['desc', 'asc']},
+                {"title": "Popularity", "width": "20%", "sClass": "sortIcon_Number", "orderSequence": ['desc', 'asc']},
+                {"title": "Winrate", "width": "20%", "sClass": "sortIcon_Number", "orderSequence": ['desc', 'asc']},
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: 'Build Data is currently limited for this Hero. Increase date range or wait for more data.' //Message when table is empty regardless of filtering
+            };
+
+            datatable.order = [[1, 'desc']];
+
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = 5; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            //datatable.pagingType = "simple_numbers";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'trp>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            datatable.drawCallback = function() {
+                $('.paginated-tooltip[data-toggle="tooltip"]').tooltip();
+            };
+
+            return datatable;
+        },
+        empty: function() {
+            $('#hl-talents-builds-container').empty();
+        },
     }
 };
 

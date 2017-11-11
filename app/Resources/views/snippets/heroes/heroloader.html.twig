@@ -14,25 +14,25 @@
                 <div class="col">
                     <div class="row">
                         <div class="col">
-                            <div id="hl-herodata-image-hero-composite-container" class="dev-row-b text-center">{# HEROLOADER GENERATED #}</div>
+                            <div class="hotstatus-subcontainer">
+                                <div id="hl-herodata-image-hero-composite-container" class="text-center">{# HEROLOADER GENERATED #}</div>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div class="dev-row-b">
-                                <a
-                                        data-toggle="collapse"
-                                        data-target="#average_stats"
-                                        class="heroloader-toggle d-lg-none collapsed"></a>
-                                Average Stats
-                            </div>
-                        </div>
-                    </div>
-                    <div id="average_stats" class="collapse">
-                        <div class="row">
-                            <div class="col">
-                                <div class="dev-row-b">
-                                    {% block group_average_stats %}{% endblock %}
+                            <div class="hotstatus-subcontainer">
+                                <div class="">
+                                    <a
+                                            data-toggle="collapse"
+                                            data-target="#average_stats"
+                                            class="heroloader-toggle d-lg-none collapsed"></a>
+                                    <span class="hl-stats-title">Average Stats</span>
+                                </div>
+                                <div id="average_stats" class="collapse">
+                                    <div class="">
+                                        {% block group_average_stats %}{% endblock %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -45,17 +45,26 @@
                 <div class="col">
                     <div class="row">
                         <div class="col">
-                            <div id="hl-abilities-container" class="dev-row-b text-center">{# HEROLOADER GENERATED #}</div>
+                            <div class="hotstatus-subcontainer">
+                                <div id="hl-abilities-container" class="text-center">{# HEROLOADER GENERATED #}</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <div id="hl-talents-container" class="">{# HEROLOADER GENERATED #}</div>
+                    <div class="hotstatus-subcontainer">
+                        <div class="row">
+                            <div class="col">
+                                <div id="hl-talents-container">{# HEROLOADER GENERATED #}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="dev-row-b">Talent Builds</div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="hl-talent-pane-seperator"></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div id="hl-talents-builds-container">{# HEROLOADER GENERATED #}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
