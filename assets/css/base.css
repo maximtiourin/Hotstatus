@@ -788,7 +788,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     position: absolute;
     width:100%;
     left:0px;
-    top:4px;
+    top:8px;
     color:#FFFFFF;
     font-size: 13px;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
@@ -798,7 +798,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     position: absolute;
     width:100%;
     left:0px;
-    bottom:4px;
+    bottom:8px;
     color:#FFFFFF;
     font-size: 18px;
     font-weight: bolder;
