@@ -96,7 +96,9 @@ HeroLoader.ajax = {
                  * Herodata
                  */
                 //Create image composite container
-                data_herodata.generateImageCompositeContainer(json_herodata['desc_tagline'], json_herodata['desc_bio']);
+                data_herodata.generateImageCompositeContainer(json_herodata['universe'], json_herodata['difficulty'],
+                    json_herodata['role_blizzard'], json_herodata['role_specific'],
+                    json_herodata['desc_tagline'], json_herodata['desc_bio']);
                 //image_hero
                 data_herodata.image_hero(json_herodata['image_hero'], json_herodata['rarity']);
                 //name
@@ -261,14 +263,14 @@ HeroLoader.data = {
         }
     },
     herodata: {
-        generateImageCompositeContainer: function(tagline, bio) {
+        generateImageCompositeContainer: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) {
             let self = HeroLoader.data.herodata;
 
             let tooltipTemplate = '<div class=\'tooltip\' role=\'tooltip\'><div class=\'arrow\'></div>' +
                 '<div class=\'herodata-bio tooltip-inner\'></div></div>';
 
             $('#hl-herodata-image-hero-composite-container').append('<span data-toggle="tooltip" data-template="' + tooltipTemplate + '" ' +
-                'data-html="true" title="' + self.image_hero_tooltip(tagline, bio) + '"><div id="hl-herodata-image-hero-container"></div>' +
+                'data-html="true" title="' + self.image_hero_tooltip(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) + '"><div id="hl-herodata-image-hero-container"></div>' +
                 '<span id="hl-herodata-name"></span><span id="hl-herodata-title"></span></span>');
         },
         name: function(val) {
@@ -280,8 +282,11 @@ HeroLoader.data = {
         image_hero: function(image, rarity) {
             $('#hl-herodata-image-hero-container').append('<img class="hl-herodata-image-hero hl-herodata-rarity-' + rarity + '" src="' + image + '">');
         },
-        image_hero_tooltip: function(tagline, bio) {
-            return '<span class=\'hl-talents-tooltip-name\'>' + tagline + '</span><br>' + bio;
+        image_hero_tooltip: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) {
+            return '<span class=\'hl-herodata-tooltip-universe\'>[' + universe + ']</span><br>' +
+                '<span class=\'hl-herodata-tooltip-role\'>' + roleBlizzard + ' - ' + roleSpecific + '</span><br>' +
+                '<span class=\'hl-herodata-tooltip-difficulty\'>(Difficulty: ' + difficulty + ')</span><br>' +
+                '<span class=\'hl-talents-tooltip-name\'>' + tagline + '</span><br>' + bio;
         },
         empty: function() {
             $('#hl-herodata-image-hero-composite-container').empty();
@@ -493,14 +498,37 @@ HeroLoader.data = {
     },
     graphs: {
         internal: {
-            charts: []
+            charts: [],
+            collapse: {
+                init: false,
+                enabled: false
+            }
         },
         resize: function() {
-            if (document.documentElement.clientWidth >= 992) {
-                $('#hl-graphs-collapse').removeClass('collapse');
+            let self = HeroLoader.data.graphs;
+            let widthBreakpoint = 992;
+
+            if (!self.internal.collapse.init) {
+                if (document.documentElement.clientWidth >= widthBreakpoint) {
+                    $('#hl-graphs-collapse').removeClass('collapse');
+                    self.internal.collapse.enabled = false;
+                    self.internal.collapse.init = true;
+                }
+                else {
+                    $('#hl-graphs-collapse').addClass('collapse');
+                    self.internal.collapse.enabled = true;
+                    self.internal.collapse.init = true;
+                }
             }
             else {
-                $('#hl-graphs-collapse').addClass('collapse');
+                if (self.internal.collapse.enabled && document.documentElement.clientWidth >= widthBreakpoint) {
+                    $('#hl-graphs-collapse').removeClass('collapse');
+                    self.internal.collapse.enabled = false;
+                }
+                else if (!self.internal.collapse.enabled && document.documentElement.clientWidth < widthBreakpoint) {
+                    $('#hl-graphs-collapse').addClass('collapse');
+                    self.internal.collapse.enabled = true;
+                }
             }
         },
         generateSpacer: function() {

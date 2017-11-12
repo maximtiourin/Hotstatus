@@ -174,50 +174,21 @@ class HerodataController extends Controller {
                 $db->freeResult($heroDataResult);
 
                 //Initialize range granularity objects
-                $range_match_length = [
-                    "0-10" => [
+                $range_match_length = [];
+                foreach (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MATCH_LENGTH] as $rkey => $robj) {
+                    $range_match_length[$rkey] = [
                         "played" => 0,
                         "won" => 0
-                    ],
-                    "11-15" => [
+                    ];
+                }
+
+                $range_hero_level = [];
+                foreach (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO_LEVEL] as $rkey => $robj) {
+                    $range_hero_level[$rkey] = [
                         "played" => 0,
                         "won" => 0
-                    ],
-                    "16-20" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "21-25" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "26-30" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "31+" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                ];
-                $range_hero_level = [
-                    "1-5" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "6-10" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "11-15" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                    "16+" => [
-                        "played" => 0,
-                        "won" => 0
-                    ],
-                ];
+                    ];
+                }
 
                 //Initialize aggregators
                 $a_played = 0;

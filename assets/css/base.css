@@ -815,6 +815,24 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border-color: #1B0748!important;
 }
 
+.hl-herodata-tooltip-role {
+    color: #ff235f;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.hl-herodata-tooltip-universe {
+    color: #289bff;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.hl-herodata-tooltip-difficulty {
+    color: #d6ff5b;
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .hl-herodata-rarity-Rare {
     border-color: #231acd!important;
 }
