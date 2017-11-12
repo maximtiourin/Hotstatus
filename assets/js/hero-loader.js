@@ -70,6 +70,7 @@ HeroLoader.ajax = {
                 let json_abilities = json['abilities'];
                 let json_talents = json['talents'];
                 let json_builds = json['builds'];
+                let json_statMatrix = json['statMatrix'];
 
                 /*
                  * Empty dynamically filled containers
@@ -209,7 +210,7 @@ HeroLoader.ajax = {
                  * Graphs
                  */
                 //Stat Matrix
-                data_graphs.generateStatMatrix(null, null); //TODO - Have to flesh out
+                data_graphs.generateStatMatrix(json_statMatrix);
 
                 //Spacer
                 data_graphs.generateSpacer();
@@ -695,20 +696,29 @@ HeroLoader.data = {
 
             self.internal.charts.push(chart);
         },
-        generateStatMatrix: function(heroStats, minMaxTotalHeroStats) {
-            //TODO - have to flesh out
+        generateStatMatrix: function(heroStatMatrix) {
             let self = HeroLoader.data.graphs;
 
             $('#hl-graphs').append('<div id="hl-graph-statmatrix">' +
                 '<div class="hl-graph-chart-container" style="position: relative; height:200px">' +
                 '<canvas id="hl-graph-statmatrix-chart"></canvas></div></div>');
 
+            //Get matrix keys
+            let matrixKeys = [];
+            let matrixVals = [];
+            for (let smkey in heroStatMatrix) {
+                if (heroStatMatrix.hasOwnProperty(smkey)) {
+                    matrixKeys.push(smkey);
+                    matrixVals.push(heroStatMatrix[smkey]);
+                }
+            }
+
             //Create chart
             let data = {
-                labels: ["Healer", "Tank", "Safety", "Demolition", "Damage", "Waveclear", "Exp Soak", "Merc Camps"],
+                labels: matrixKeys,
                 datasets: [
                     {
-                        data: [.8, .2, .3, .05, 0, .5],
+                        data: matrixVals,
                         backgroundColor: "rgba(165, 255, 248, 1)", //#a5fff8
                         borderColor: "rgba(184, 255, 193, 1)", //#b8ffc1
                         borderWidth: 2,
@@ -738,7 +748,9 @@ HeroLoader.data = {
                     },
                     ticks: {
                         maxTicksLimit: 1,
-                        display: false
+                        display: false,
+                        min: 0,
+                        max: 1.0
                     },
                     gridLines: {
                         lineWidth: 2

@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class HerodataController extends Controller {
     const QUERY_IGNORE_AFTER_CACHE = "ignoreAfterCache";
+    const QUERY_USE_FOR_SECONDARY = "useForSecondary";
     const QUERY_ISSET = "isSet";
     const QUERY_RAWVALUE = "rawValue";
     const QUERY_SQLVALUE = "sqlValue";
@@ -51,6 +52,7 @@ class HerodataController extends Controller {
         $query = self::hero_initQueries();
         $queryCacheSqlValues = [];
         $querySqlValues = [];
+        $querySecondarySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
@@ -71,9 +73,17 @@ class HerodataController extends Controller {
             }
         }
 
+        //Collect WhereOr strings for query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if ($qobj[self::QUERY_USE_FOR_SECONDARY] && $qobj[self::QUERY_ISSET]) {
+                $querySecondarySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
         //Build WhereAnd string from collected WhereOr strings
         $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, false);
+        $querySecondarySql = self::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
 
         /*
          * Begin building response
@@ -489,6 +499,81 @@ class HerodataController extends Controller {
 
                 //Set pagedata stats
                 $pagedata['stats'] = $stats;
+
+                /*
+                 * Get Total Hero StatMatrix stats, and calculate StatMatrix values for hero
+                 */
+                $totalStats = self::hero_requestTotalStatMatrix($db, $connected_mysql, $redis, $connected_redis, $querySecondarySql);
+
+                //Init matrix
+                $statMatrix = [];
+
+                //Healer
+                $c_matrix_healer = 0;
+                $normal = $totalStats['healing']['max'] - $totalStats['healing']['min'];
+                if ($normal > 0) {
+                    $c_matrix_healer = ($c_avg_healing - $totalStats['healing']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Healer'] = $c_matrix_healer;
+
+                //Safety
+                $c_matrix_safety = 0;
+                $normal = $totalStats['deaths']['max'] - $totalStats['deaths']['min'];
+                if ($normal > 0) {
+                    $c_matrix_safety = (1.0 - (($c_avg_deaths - $totalStats['deaths']['min']) / ($normal * 1.0)));
+                }
+                $statMatrix['Safety'] = $c_matrix_safety;
+
+                //Demolition
+                $c_matrix_demolition = 0;
+                $normal = $totalStats['structure_damage']['max'] - $totalStats['structure_damage']['min'];
+                if ($normal > 0) {
+                    $c_matrix_demolition = ($c_avg_structure_damage - $totalStats['structure_damage']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Demolition'] = $c_matrix_demolition;
+
+                //Damage
+                $c_matrix_damage = 0;
+                $normal = $totalStats['hero_damage']['max'] - $totalStats['hero_damage']['min'];
+                if ($normal > 0) {
+                    $c_matrix_damage = ($c_avg_hero_damage - $totalStats['hero_damage']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Damage'] = $c_matrix_damage;
+
+                //Tank
+                $c_matrix_tank = 0;
+                $normal = $totalStats['damage_taken']['max'] - $totalStats['damage_taken']['min'];
+                if ($normal > 0) {
+                    $c_matrix_tank = ($c_avg_damage_taken - $totalStats['damage_taken']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Tank'] = $c_matrix_tank;
+
+                //Waveclear
+                $c_matrix_waveclear = 0;
+                $normal = $totalStats['siege_damage']['max'] - $totalStats['siege_damage']['min'];
+                if ($normal > 0) {
+                    $c_matrix_waveclear = ($c_avg_siege_damage - $totalStats['siege_damage']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Waveclear'] = $c_matrix_waveclear;
+
+                //Exp Soak
+                $c_matrix_expsoak = 0;
+                $normal = $totalStats['exp_contrib']['max'] - $totalStats['exp_contrib']['min'];
+                if ($normal > 0) {
+                    $c_matrix_expsoak = ($c_avg_exp_contrib - $totalStats['exp_contrib']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Exp Contrib'] = $c_matrix_expsoak;
+
+                //Merc Camps
+                $c_matrix_merccamps = 0;
+                $normal = $totalStats['merc_camps']['max'] - $totalStats['merc_camps']['min'];
+                if ($normal > 0) {
+                    $c_matrix_merccamps = ($c_avg_merc_camps - $totalStats['merc_camps']['min']) / ($normal * 1.0);
+                }
+                $statMatrix['Merc Camps'] = $c_matrix_merccamps;
+
+                //Set Statmatrix
+                $pagedata['statMatrix'] = $statMatrix;
 
                 /*
                  * Collect Abilities
@@ -1100,6 +1185,312 @@ class HerodataController extends Controller {
     }
 
     /*
+     * Given a mysql (and optional redis connection), returns an internal response for the given querySql in order to generate average min/max stats, which
+     * can then be used to generate a statMatrix for a hero.
+     */
+    private static function hero_requestTotalStatMatrix($mysql, $connected_mysql, $redis = NULL, $connected_redis = FALSE, $querySql) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataHeroRequestTotalStatMatrix";
+        $_VERSION = 0;
+
+        //Main vars
+        $pagedata = [];
+
+        //Determine Cache Id
+        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? ("_" . md5($querySql)) : (""));
+
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+        }
+        else if ($connected_mysql) {
+            /** @var MySqlDatabase $db */
+            $db = $mysql;
+
+            //Prepare Statement
+            $db->prepare("GetTargetHeroStats",
+                "SELECT `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
+                `stats_siege_damage`, `stats_hero_damage`, `stats_structure_damage`, `stats_healing`, `stats_damage_taken`, `stats_merc_camps`, `stats_exp_contrib`,
+                `stats_best_killstreak`, `stats_time_spent_dead` FROM heroes_matches_recent_granular WHERE `hero` = ? $querySql");
+            $db->bind("GetTargetHeroStats", "s", $r_hero);
+
+            //Loop through all heroes to collect individual average stats
+            $herostats = [];
+            foreach (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO] as $heroname => $heroobj) {
+                //Initialize aggregators
+                $a_played = 0;
+                $a_won = 0;
+                $a_time_played = 0;
+                $a_kills = 0;
+                $a_assists = 0;
+                $a_deaths = 0;
+                $a_siege_damage = 0;
+                $a_hero_damage = 0;
+                $a_structure_damage = 0;
+                $a_healing = 0;
+                $a_damage_taken = 0;
+                $a_merc_camps = 0;
+                $a_exp_contrib = 0;
+                $a_best_killstreak = 0;
+                $a_time_spent_dead = 0;
+
+                /*
+                 * Collect Stats
+                 */
+                $r_hero = $heroname;
+                $heroStatsResult = $db->execute("GetTargetHeroStats");
+                while ($heroStatsRow = $db->fetchArray($heroStatsResult)) {
+                    $row = $heroStatsRow;
+
+                    /*
+                     * Aggregate
+                     */
+                    $a_played += $row['played'];
+                    $a_won += $row['won'];
+                    $a_time_played += $row['time_played'];
+                    $a_kills += $row['stats_kills'];
+                    $a_assists += $row['stats_assists'];
+                    $a_deaths += $row['stats_deaths'];
+                    $a_siege_damage += $row['stats_siege_damage'];
+                    $a_hero_damage += $row['stats_hero_damage'];
+                    $a_structure_damage += $row['stats_structure_damage'];
+                    $a_healing += $row['stats_healing'];
+                    $a_damage_taken += $row['stats_damage_taken'];
+                    $a_merc_camps += $row['stats_merc_camps'];
+                    $a_exp_contrib += $row['stats_exp_contrib'];
+                    $a_best_killstreak = max($a_best_killstreak, $row['stats_best_killstreak']);
+                    $a_time_spent_dead += $row['stats_time_spent_dead'];
+                }
+                $db->freeResult($heroStatsResult);
+
+                /*
+                 * Calculate
+                 */
+                $stats = [];
+
+                //--Helpers
+                //Average Time Played in Minutes
+                $c_avg_minutesPlayed = 0;
+                if ($a_played > 0) {
+                    $c_avg_minutesPlayed = ($a_time_played / 60.0) / ($a_played * 1.00);
+                }
+
+                //Winrate
+                $c_winrate = 0;
+                if ($a_played > 0) {
+                    $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
+                }
+                $stats['winrate_raw'] = $c_winrate;
+
+                //Average Kills (+ Per Minute)
+                $c_avg_kills = 0;
+                if ($a_played > 0) {
+                    $c_avg_kills = round(($a_kills / ($a_played * 1.00)), 2);
+                }
+                $stats['kills'] = $c_avg_kills;
+
+                //Average Assists (+ Per Minute)
+                $c_avg_assists = 0;
+                if ($a_played > 0) {
+                    $c_avg_assists = round(($a_assists / ($a_played * 1.00)), 2);
+                }
+                $stats['assists'] = $c_avg_assists;
+
+                //Average Deaths (+ Per Minute)
+                $c_avg_deaths = 0;
+                if ($a_played > 0) {
+                    $c_avg_deaths = round(($a_deaths / ($a_played * 1.00)), 2);
+                }
+                $stats['deaths'] = $c_avg_deaths;
+
+                //Average KDA
+                $c_avg_kda = $c_avg_kills + $c_avg_assists;
+                if ($c_avg_deaths > 0) {
+                    $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths * 1.00)), 2);
+                }
+                $stats['kda'] = $c_avg_kda;
+
+                //Average Siege Damage (+ Per Minute)
+                $c_avg_siege_damage = 0;
+                if ($a_played > 0) {
+                    $c_avg_siege_damage = round(($a_siege_damage / ($a_played * 1.00)), 0);
+                }
+                $stats['siege_damage'] = $c_avg_siege_damage;
+
+                //Average Hero Damage (+ Per Minute)
+                $c_avg_hero_damage = 0;
+                if ($a_played > 0) {
+                    $c_avg_hero_damage = round(($a_hero_damage / ($a_played * 1.00)), 0);
+                }
+                $stats['hero_damage'] = $c_avg_hero_damage;
+
+                //Average Structure Damage (+ Per Minute)
+                $c_avg_structure_damage = 0;
+                if ($a_played > 0) {
+                    $c_avg_structure_damage = round(($a_structure_damage / ($a_played * 1.00)), 0);
+                }
+                $stats['structure_damage'] = $c_avg_structure_damage;
+
+                //Average Healing (+ Per Minute)
+                $c_avg_healing = 0;
+                if ($a_played > 0) {
+                    $c_avg_healing = round(($a_healing / ($a_played * 1.00)), 0);
+                }
+                $stats['healing'] = $c_avg_healing;
+
+                //Average Damage Taken (+ Per Minute)
+                $c_avg_damage_taken = 0;
+                if ($a_played > 0) {
+                    $c_avg_damage_taken = round(($a_damage_taken / ($a_played * 1.00)), 0);
+                }
+                $stats['damage_taken'] = $c_avg_damage_taken;
+
+                //Average Merc Camps (+ Per Minute)
+                $c_avg_merc_camps = 0;
+                if ($a_played > 0) {
+                    $c_avg_merc_camps = round(($a_merc_camps / ($a_played * 1.00)), 2);
+                }
+                $stats['merc_camps'] = $c_avg_merc_camps;
+
+                //Average Exp Contrib (+ Per Minute)
+                $c_avg_exp_contrib = 0;
+                if ($a_played > 0) {
+                    $c_avg_exp_contrib = round(($a_exp_contrib / ($a_played * 1.00)), 0);
+                }
+                $stats['exp_contrib'] = $c_avg_exp_contrib;
+
+                //Best Killstreak
+                $stats['best_killstreak'] = $a_best_killstreak;
+
+                //Average Time Spent Dead (in Minutes)
+                $c_avg_time_spent_dead = 0;
+                if ($a_played > 0) {
+                    $c_avg_time_spent_dead = round(($a_time_spent_dead / ($a_played * 1.00) / 60.0), 1);
+                }
+                $stats['time_spent_dead'] = $c_avg_time_spent_dead;
+
+                //Set pagedata stats
+                $herostats[$heroname] = $stats;
+            }
+
+            //Init total average stats object
+            $totalstats = [
+                "winrate_raw" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "kills" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "assists" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "deaths" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "kda" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "siege_damage" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "hero_damage" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "structure_damage" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "healing" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "damage_taken" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "merc_camps" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "exp_contrib" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "best_killstreak" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+                "time_spent_dead" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN
+                ],
+            ];
+
+            //Loop through hero average stats to collect a single object of min, avg, max
+            foreach ($herostats as $heroname => $stats) {
+                //Loop through total average stats object and collect herostat
+                foreach ($totalstats as $tskey => &$tstat) {
+                    $stat = $stats[$tskey];
+
+                    $val = 0;
+                    if (is_array($stat)) {
+                        $val = $stat['average'];
+                    }
+                    elseif (is_numeric($stat)) {
+                        $val = $stat;
+                    }
+
+                    $tstat['avg'] += $val;
+                    $tstat['min'] = min($tstat['min'], $val);
+                    $tstat['max'] = max($tstat['max'], $val);
+                }
+            }
+
+            //Loop through total average stats to calculate true average
+            $heroStatsCount = count($herostats);
+            foreach ($totalstats as $tskey => &$tstat) {
+                $tstat['avg'] = $tstat['avg'] / ($heroStatsCount * 1.00);
+            }
+
+            $pagedata = $totalstats;
+
+            //Store mysql value in cache
+            if ($connected_redis) {
+                $encoded = json_encode($pagedata);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+            }
+        }
+
+        return $pagedata;
+    }
+
+    /*
      * Initializes the queries object for the hero pagedata
      */
     private static function hero_initQueries() {
@@ -1108,6 +1499,7 @@ class HerodataController extends Controller {
         $q = [
             HotstatusPipeline::FILTER_KEY_HERO => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_USE_FOR_SECONDARY => false,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
@@ -1116,6 +1508,7 @@ class HerodataController extends Controller {
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_USE_FOR_SECONDARY => true,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
@@ -1124,6 +1517,7 @@ class HerodataController extends Controller {
             ],
             HotstatusPipeline::FILTER_KEY_MAP => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_USE_FOR_SECONDARY => true,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
@@ -1132,6 +1526,7 @@ class HerodataController extends Controller {
             ],
             HotstatusPipeline::FILTER_KEY_RANK => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_USE_FOR_SECONDARY => true,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
@@ -1140,6 +1535,7 @@ class HerodataController extends Controller {
             ],
             HotstatusPipeline::FILTER_KEY_DATE => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_USE_FOR_SECONDARY => true,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
