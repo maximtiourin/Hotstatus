@@ -44,8 +44,8 @@ heroes_statslist.ajax = {
 };
 //heroes_statslist.pageLength = 25; //Controls how many rows per page
 heroes_statslist.paging = false; //Controls whether or not the table is allowed to paginate data by page length
-heroes_statslist.responsive = true; //Controls whether or not the table collapses responsively as need
-heroes_statslist.scrollX = false; //Controls whether or not the table can create a horizontal scroll bar
+heroes_statslist.responsive = false; //Controls whether or not the table collapses responsively as need
+heroes_statslist.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
 heroes_statslist.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
 heroes_statslist.dom =  "<'row'<'col-sm-12'tr>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
 heroes_statslist.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many

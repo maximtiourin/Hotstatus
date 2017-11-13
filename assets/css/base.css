@@ -786,6 +786,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 #hl-herodata-title {
     position: absolute;
+    cursor: default;
     width:100%;
     left:0px;
     top:8px;
@@ -796,6 +797,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 #hl-herodata-name {
     position: absolute;
+    cursor: default;
     width:100%;
     left:0px;
     bottom:8px;
@@ -919,6 +921,54 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     white-space: nowrap;
 }
 
+.hl-medals-name {
+    position: relative;
+    color: #85d7d0;
+    font-size: 18px;
+    font-weight: bolder;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+    z-index:3;
+}
+
+.hl-medals-image {
+    position: relative;
+    margin-bottom: -26px;
+    margin-top: -10px;
+    margin-left: -6px;
+    width:48px;
+    height:48px;
+    z-index:1;
+}
+
+.hl-medals-percentbar {
+    position: relative;
+    margin-top: 0px;
+    height:8px;
+    background-color: #9dd7a4;
+    border: 1px;
+    border-color: #000000;
+    border-style: solid;
+    z-index:2;
+}
+
+.hl-medals-spacer {
+    margin: 20px 0px;
+}
+
+.hl-medals-percentbar-start {
+    margin-top:10px;
+}
+
+.hl-medals-line {
+    height: 22px;
+    vertical-align: middle;
+}
+
+.hl-medals-row {
+    cursor: default;
+    margin-bottom: -10px;
+}
+
 .hl-row-height {
     /*line-height: 40px;*//* Had to be removed so that vertical align could do its job, useful when no vertical align*/
 }
@@ -967,6 +1017,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .hl-graph-spacer {
     margin: 40px 0px;
+}
+
+.padding-horizontal-0 {
+    padding-left: 0px!important;
+    padding-right: 0px!important;
 }
 
 /* Small and up */

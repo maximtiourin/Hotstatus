@@ -54,6 +54,7 @@ HeroLoader.ajax = {
         let data_abilities = data.abilities;
         let data_talents = data.talents;
         let data_builds = data.builds;
+        let data_medals = data.medals;
         let data_graphs = data.graphs;
 
         //Enable Processing Indicator
@@ -70,6 +71,7 @@ HeroLoader.ajax = {
                 let json_abilities = json['abilities'];
                 let json_talents = json['talents'];
                 let json_builds = json['builds'];
+                let json_medals = json['medals'];
                 let json_statMatrix = json['statMatrix'];
 
                 /*
@@ -79,6 +81,7 @@ HeroLoader.ajax = {
                 data_abilities.empty();
                 data_talents.empty();
                 data_builds.empty();
+                data_medals.empty();
                 data_graphs.empty();
 
                 /*
@@ -209,6 +212,11 @@ HeroLoader.ajax = {
                 data_builds.initTable(builds_datatable);
 
                 /*
+                 * Medals
+                 */
+                data_medals.generateMedalsPane(json_medals);
+
+                /*
                  * Graphs
                  */
                 //Stat Matrix
@@ -260,6 +268,9 @@ HeroLoader.data = {
         url: function(hero) {
             let url = Routing.generate("hero", {heroProperName: hero});
             history.replaceState(hero, hero, url);
+        },
+        showInitialCollapse: function() {
+            $('#average_stats').collapse('show');
         }
     },
     herodata: {
@@ -495,6 +506,45 @@ HeroLoader.data = {
         empty: function() {
             $('#hl-talents-builds-container').empty();
         },
+    },
+    medals: {
+        generateMedalsPane: function (medals) {
+            if (medals.length > 0) {
+                let self = HeroLoader.data.medals;
+
+                let medalRows = '';
+                for (let medal of medals) {
+                    medalRows += self.generateMedalRow(medal);
+                }
+
+
+                $('#hl-medals-container').append('<div class="row"><div class="col"><div class="hotstatus-subcontainer">' +
+                    '<span class="hl-stats-title">Top Medals</span>' +
+                    '<div class="row"><div class="col padding-horizontal-0">' + medalRows + '</div></div>' +
+                    '</div></div></div>');
+            }
+        },
+        generateMedalRow: function(medal) {
+            let self = HeroLoader.data.medals;
+
+            return '<span data-toggle="tooltip" data-html="true" title="' + medal.desc_simple + '"><div class="row hl-medals-row"><div class="col">' +
+                '<div class="col">' + self.generateMedalImage(medal) + '</div>' +
+                '<div class="col hl-no-wrap">' + self.generateMedalEntry(medal) + '</div>' +
+                '<div class="col">' + self.generateMedalEntryPercentBar(medal) + '</div>' +
+                '</div></div></span>';
+        },
+        generateMedalImage: function(medal) {
+            return '<div class="hl-medals-line"><img class="hl-medals-image" src="' + medal.image_blue + '"></div>';
+        },
+        generateMedalEntry: function(medal) {
+            return '<div class="hl-medals-line"><span class="hl-medals-name">' + medal.name + '</span></div>';
+        },
+        generateMedalEntryPercentBar: function(medal) {
+            return '<div class="hl-medals-line"><div class="hl-medals-percentbar" style="width:' + (medal.value * 100) + '%"></div></div>';
+        },
+        empty: function() {
+            $('#hl-medals-container').empty();
+        }
     },
     graphs: {
         internal: {
@@ -818,6 +868,9 @@ $(document).ready(function() {
     let filterTypes = ["hero", "gameType", "map", "rank", "date"];
     HotstatusFilter.validateSelectors(null, filterTypes);
     HeroLoader.validateLoad(baseUrl, filterTypes);
+
+    //Show initial collapses
+    //HeroLoader.data.window.showInitialCollapse();
 
     //Track window width and toggle collapsability for graphs pane
     HeroLoader.data.graphs.resize();

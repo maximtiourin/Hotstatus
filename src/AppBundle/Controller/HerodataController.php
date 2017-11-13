@@ -144,6 +144,10 @@ class HerodataController extends Controller {
                 $db->prepare("GetHeroAbilities",
                     "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
 
+                $db->prepare("Get3Medals",
+                    "SELECT * FROM `herodata_awards` WHERE `id` = ? OR `id` = ? OR `id` = ?");
+                $db->bind("Get3Medals", "sss", $r_medal_1, $r_medal_2, $r_medal_3);
+
                 $db->prepare("GetHeroTalents",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
 
@@ -525,7 +529,7 @@ class HerodataController extends Controller {
                 $c_matrix_healer = 0;
                 $normal = $totalStats['healing']['max'] - $totalStats['healing']['min'];
                 if ($normal > 0) {
-                    $c_matrix_healer = ($c_pmin_healing_raw - $totalStats['healing']['min']) / ($normal * 1.0);
+                    $c_matrix_healer = max(0,($c_pmin_healing_raw - $totalStats['healing']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Healer'] = $c_matrix_healer;
 
@@ -533,7 +537,7 @@ class HerodataController extends Controller {
                 $c_matrix_safety = 0;
                 $normal = $totalStats['deaths']['max'] - $totalStats['deaths']['min'];
                 if ($normal > 0) {
-                    $c_matrix_safety = (1.0 - (($c_pmin_deaths_raw - $totalStats['deaths']['min']) / ($normal * 1.0)));
+                    $c_matrix_safety = min(1.0, max(0,(1.0 - (max(0,($c_pmin_deaths_raw - $totalStats['deaths']['min']) / ($normal * 1.0))))));
                 }
                 $statMatrix['Safety'] = $c_matrix_safety;
 
@@ -541,7 +545,7 @@ class HerodataController extends Controller {
                 $c_matrix_demolition = 0;
                 $normal = $totalStats['structure_damage']['max'] - $totalStats['structure_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_demolition = ($c_pmin_structure_damage_raw - $totalStats['structure_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_demolition = max(0,($c_pmin_structure_damage_raw - $totalStats['structure_damage']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Demolition'] = $c_matrix_demolition;
 
@@ -549,7 +553,7 @@ class HerodataController extends Controller {
                 $c_matrix_damage = 0;
                 $normal = $totalStats['hero_damage']['max'] - $totalStats['hero_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_damage = ($c_pmin_hero_damage_raw - $totalStats['hero_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_damage = max(0,($c_pmin_hero_damage_raw - $totalStats['hero_damage']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Damage'] = $c_matrix_damage;
 
@@ -557,7 +561,7 @@ class HerodataController extends Controller {
                 $c_matrix_tank = 0;
                 $normal = $totalStats['damage_taken']['max'] - $totalStats['damage_taken']['min'];
                 if ($normal > 0) {
-                    $c_matrix_tank = ($c_pmin_damage_taken_raw - $totalStats['damage_taken']['min']) / ($normal * 1.0);
+                    $c_matrix_tank = max(0,($c_pmin_damage_taken_raw - $totalStats['damage_taken']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Tank'] = $c_matrix_tank;
 
@@ -565,7 +569,7 @@ class HerodataController extends Controller {
                 $c_matrix_waveclear = 0;
                 $normal = $totalStats['siege_damage']['max'] - $totalStats['siege_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_waveclear = ($c_pmin_siege_damage_raw - $totalStats['siege_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_waveclear = max(0,($c_pmin_siege_damage_raw - $totalStats['siege_damage']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Waveclear'] = $c_matrix_waveclear;
 
@@ -573,7 +577,7 @@ class HerodataController extends Controller {
                 $c_matrix_expsoak = 0;
                 $normal = $totalStats['exp_contrib']['max'] - $totalStats['exp_contrib']['min'];
                 if ($normal > 0) {
-                    $c_matrix_expsoak = ($c_pmin_exp_contrib_raw - $totalStats['exp_contrib']['min']) / ($normal * 1.0);
+                    $c_matrix_expsoak = max(0,($c_pmin_exp_contrib_raw - $totalStats['exp_contrib']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Exp Contrib'] = $c_matrix_expsoak;
 
@@ -581,7 +585,7 @@ class HerodataController extends Controller {
                 $c_matrix_merccamps = 0;
                 $normal = $totalStats['merc_camps']['max'] - $totalStats['merc_camps']['min'];
                 if ($normal > 0) {
-                    $c_matrix_merccamps = ($c_pmin_merc_camps_raw - $totalStats['merc_camps']['min']) / ($normal * 1.0);
+                    $c_matrix_merccamps = max(0,($c_pmin_merc_camps_raw - $totalStats['merc_camps']['min']) / ($normal * 1.0));
                 }
                 $statMatrix['Merc Camps'] = $c_matrix_merccamps;
 
@@ -831,7 +835,115 @@ class HerodataController extends Controller {
 
                 $pagedata['builds'] = $builds;
 
-                //TODO - look up json and fill out JSON structures for medals, matchups, etc
+                /*
+                 * Collect medals
+                 */
+                //Delete MVP
+                if (key_exists("MVP", $a_medals)) {
+                    unset($a_medals['MVP']);
+                }
+
+                //Delete map specific medals
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_MAPSPECIFIC] as $medalid) {
+                    if (key_exists($medalid, $a_medals)) {
+                        unset($a_medals[$medalid]);
+                    }
+                }
+
+                //Delete invalid medals
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
+                    if (key_exists($medalid, $a_medals)) {
+                        unset($a_medals[$medalid]);
+                    }
+                }
+
+                //Remap any necessary medal ids
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
+                    if (key_exists($mold, $a_medals)) {
+                        $a_medals[$mnew] = $a_medals[$mold];
+                        unset($a_medals[$mold]);
+                    }
+                }
+
+                //Get total medal counts
+                $totalMedals = 0;
+                foreach ($a_medals as $mkey => $medal) {
+                    $totalMedals += $medal['count'];
+                }
+
+                //Set medal rate of occurence
+                $sortedMedals = [];
+                if ($totalMedals > 0) {
+                    foreach ($a_medals as $mkey => $medal) {
+                        $sortedMedals[] = [
+                            "key" => $mkey,
+                            "value" => $medal['count'] / $totalMedals,
+                            "name" => "UNKNOWN",
+                            "desc_simple" => "NONE",
+                            "image_blue" => "NONE",
+                            "image_red" => "NONE"
+                        ];
+                    }
+                }
+                usort($sortedMedals, function($a, $b) {
+                    $aval = $a['value'];
+                    $bval = $b['value'];
+
+                    //Sort by key's value in descending order
+                    if ($aval < $bval) {
+                        return 1;
+                    }
+                    else if ($bval < $aval) {
+                        return -1;
+                    }
+                    else {
+                        return 0;
+                    }
+                });
+
+                //Fetch the top 3 medals
+                $r_medal_1 = "~";
+                $r_medal_2 = "~";
+                $r_medal_3 = "~";
+
+                $smcount = count($sortedMedals);
+
+                if ($smcount > 0) {
+                    $r_medal_1 = $sortedMedals[0]['key'];
+                    if ($smcount > 1) {
+                        $r_medal_2 = $sortedMedals[1]['key'];
+                        if ($smcount > 2) {
+                            $r_medal_3 = $sortedMedals[2]['key'];
+                        }
+                    }
+                }
+
+                $medalsResult = $db->execute("Get3Medals");
+                $medalsResultRows = $db->countResultRows($medalsResult);
+                if ($medalsResultRows > 0) {
+                    while ($row = $db->fetchArray($medalsResult)) {
+                        for ($i = 0; $i < $smcount; $i++) {
+                            $medal = &$sortedMedals[$i];
+
+                            if ($medal['key'] === $row['id']) {
+                                $medal['name'] = $row['name'];
+                                $medal['desc_simple'] = $row['desc_simple'];
+                                $medal['image_blue'] = $imgbasepath . $row['image'] . "_blue.png";
+                                $medal['image_red'] = $imgbasepath . $row['image'] . "_red.png";
+                            }
+                        }
+                    }
+                }
+                $db->freeResult($medalsResult);
+
+                //Splice sortedMedals to top 3
+                $sortedMedalsSlice = array_splice($sortedMedals, 0, 3);
+
+                //Set medals
+                $pagedata['medals'] = $sortedMedalsSlice;
+                $pagedata['sortedMedals'] = $sortedMedals;
+
+                //TODO - look up json and fill out JSON structures for matchups, etc
 
                 //Close connection and set valid response
                 $db->close();
@@ -1434,6 +1546,20 @@ class HerodataController extends Controller {
                     "max" => PHP_INT_MIN,
                     "count" => 0,
                 ],
+                /*"special_tankiness" => [
+                    "min" => PHP_INT_MAX,
+                    "avg" => 0,
+                    "max" => PHP_INT_MIN,
+                    "count" => 0,
+                    "calc" => function(&$stats) {
+                        if ($stats['deaths'] > 0) {
+                            return $stats['damage_taken'] / $stats['deaths'];
+                        }
+                        else {
+                            return $stats['damage_taken'];
+                        }
+                    }
+                ],*/
                 "siege_damage" => [
                     "min" => PHP_INT_MAX,
                     "avg" => 0,
@@ -1488,19 +1614,26 @@ class HerodataController extends Controller {
             foreach ($herostats as $heroname => $stats) {
                 //Loop through total average stats object and collect herostat
                 foreach ($totalstats as $tskey => &$tstat) {
-                    $stat = $stats[$tskey];
+                    if (key_exists($tskey, $stats)) {
+                        //Standard Stat
+                        $stat = $stats[$tskey];
 
-                    $val = 0;
-                    if (is_array($stat)) {
-                        if (key_exists('per_minute', $stat)) {
-                            $val = $stat['per_minute'];
+                        $val = 0;
+                        if (is_array($stat)) {
+                            if (key_exists('per_minute', $stat)) {
+                                $val = $stat['per_minute'];
+                            }
+                            else {
+                                $val = $stat['average'];
+                            }
                         }
-                        else {
-                            $val = $stat['average'];
+                        elseif (is_numeric($stat)) {
+                            $val = $stat;
                         }
                     }
-                    elseif (is_numeric($stat)) {
-                        $val = $stat;
+                    else {
+                        //Special composite stat
+                        $val = $tstat['calc']($stats);
                     }
 
                     //Only track if valid
