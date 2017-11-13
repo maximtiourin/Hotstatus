@@ -310,11 +310,15 @@ class HerodataController extends Controller {
                 //Average Kills (+ Per Minute)
                 $c_avg_kills = 0;
                 $c_pmin_kills = 0;
+                $c_avg_kills_raw = 0;
+                $c_pmin_kills_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_kills = round(($a_kills / ($a_played * 1.00)), 2);
+                    $c_avg_kills_raw = $a_kills / ($a_played * 1.00);
+                    $c_avg_kills = round($c_avg_kills_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_kills = round(($c_avg_kills / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_kills_raw = $c_avg_kills_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_kills = round($c_pmin_kills_raw, 2);
                 }
                 $stats['kills'] = [
                     "average" => self::formatNumber($c_avg_kills, 2),
@@ -324,11 +328,15 @@ class HerodataController extends Controller {
                 //Average Assists (+ Per Minute)
                 $c_avg_assists = 0;
                 $c_pmin_assists = 0;
+                $c_avg_assists_raw = 0;
+                $c_pmin_assists_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_assists = round(($a_assists / ($a_played * 1.00)), 2);
+                    $c_avg_assists_raw = $a_assists / ($a_played * 1.00);
+                    $c_avg_assists = round($c_avg_assists_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_assists = round(($c_avg_assists / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_assists_raw = $c_avg_assists_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_assists = round($c_pmin_assists_raw, 2);
                 }
                 $stats['assists'] = [
                     "average" => self::formatNumber($c_avg_assists, 2),
@@ -338,11 +346,15 @@ class HerodataController extends Controller {
                 //Average Deaths (+ Per Minute)
                 $c_avg_deaths = 0;
                 $c_pmin_deaths = 0;
+                $c_avg_deaths_raw = 0;
+                $c_pmin_deaths_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_deaths = round(($a_deaths / ($a_played * 1.00)), 2);
+                    $c_avg_deaths_raw = $a_deaths / ($a_played * 1.00);
+                    $c_avg_deaths = round($c_avg_deaths_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_deaths = round(($c_avg_deaths / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_deaths_raw = $c_avg_deaths_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_deaths = round($c_pmin_deaths_raw, 2);
                 }
                 $stats['deaths'] = [
                     "average" => self::formatNumber($c_avg_deaths, 2),
@@ -350,9 +362,9 @@ class HerodataController extends Controller {
                 ];
 
                 //Average KDA
-                $c_avg_kda = $c_avg_kills + $c_avg_assists;
-                if ($c_avg_deaths > 0) {
-                    $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths * 1.00)), 2);
+                $c_avg_kda = $c_avg_kills_raw + $c_avg_assists_raw;
+                if ($c_avg_deaths_raw > 0) {
+                    $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths_raw * 1.00)), 2);
                 }
                 $stats['kda'] = [
                     "average" => self::formatNumber($c_avg_kda, 2)
@@ -361,11 +373,15 @@ class HerodataController extends Controller {
                 //Average Siege Damage (+ Per Minute)
                 $c_avg_siege_damage = 0;
                 $c_pmin_siege_damage = 0;
+                $c_avg_siege_damage_raw = 0;
+                $c_pmin_siege_damage_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_siege_damage = round(($a_siege_damage / ($a_played * 1.00)), 0);
+                    $c_avg_siege_damage_raw = $a_siege_damage / ($a_played * 1.00);
+                    $c_avg_siege_damage = round($c_avg_siege_damage_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_siege_damage = round(($c_avg_siege_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_siege_damage_raw = $c_avg_siege_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_siege_damage = round($c_pmin_siege_damage_raw, 2);
                 }
                 $stats['siege_damage'] = [
                     "average" => self::formatNumber($c_avg_siege_damage),
@@ -375,11 +391,15 @@ class HerodataController extends Controller {
                 //Average Hero Damage (+ Per Minute)
                 $c_avg_hero_damage = 0;
                 $c_pmin_hero_damage = 0;
+                $c_avg_hero_damage_raw = 0;
+                $c_pmin_hero_damage_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_hero_damage = round(($a_hero_damage / ($a_played * 1.00)), 0);
+                    $c_avg_hero_damage_raw = $a_hero_damage / ($a_played * 1.00);
+                    $c_avg_hero_damage = round($c_avg_hero_damage_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_hero_damage = round(($c_avg_hero_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_hero_damage_raw = $c_avg_hero_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_hero_damage = round($c_pmin_hero_damage_raw, 2);
                 }
                 $stats['hero_damage'] = [
                     "average" => self::formatNumber($c_avg_hero_damage),
@@ -389,11 +409,15 @@ class HerodataController extends Controller {
                 //Average Structure Damage (+ Per Minute)
                 $c_avg_structure_damage = 0;
                 $c_pmin_structure_damage = 0;
+                $c_avg_structure_damage_raw = 0;
+                $c_pmin_structure_damage_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_structure_damage = round(($a_structure_damage / ($a_played * 1.00)), 0);
+                    $c_avg_structure_damage_raw = $a_structure_damage / ($a_played * 1.00);
+                    $c_avg_structure_damage = round($c_avg_structure_damage_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_structure_damage = round(($c_avg_structure_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_structure_damage_raw = $c_avg_structure_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_structure_damage = round($c_pmin_structure_damage_raw, 2);
                 }
                 $stats['structure_damage'] = [
                     "average" => self::formatNumber($c_avg_structure_damage),
@@ -403,11 +427,15 @@ class HerodataController extends Controller {
                 //Average Healing (+ Per Minute)
                 $c_avg_healing = 0;
                 $c_pmin_healing = 0;
+                $c_avg_healing_raw = 0;
+                $c_pmin_healing_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_healing = round(($a_healing / ($a_played * 1.00)), 0);
+                    $c_avg_healing_raw = $a_healing / ($a_played * 1.00);
+                    $c_avg_healing = round($c_avg_healing_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_healing = round(($c_avg_healing / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_healing_raw = $c_avg_healing_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_healing = round($c_pmin_healing_raw, 2);
                 }
                 $stats['healing'] = [
                     "average" => self::formatNumber($c_avg_healing),
@@ -417,11 +445,15 @@ class HerodataController extends Controller {
                 //Average Damage Taken (+ Per Minute)
                 $c_avg_damage_taken = 0;
                 $c_pmin_damage_taken = 0;
+                $c_avg_damage_taken_raw = 0;
+                $c_pmin_damage_taken_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_damage_taken = round(($a_damage_taken / ($a_played * 1.00)), 0);
+                    $c_avg_damage_taken_raw = $a_damage_taken / ($a_played * 1.00);
+                    $c_avg_damage_taken = round($c_avg_damage_taken_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_damage_taken = round(($c_avg_damage_taken / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_damage_taken_raw = $c_avg_damage_taken_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_damage_taken = round($c_pmin_damage_taken_raw, 2);
                 }
                 $stats['damage_taken'] = [
                     "average" => self::formatNumber($c_avg_damage_taken),
@@ -431,11 +463,15 @@ class HerodataController extends Controller {
                 //Average Merc Camps (+ Per Minute)
                 $c_avg_merc_camps = 0;
                 $c_pmin_merc_camps = 0;
+                $c_avg_merc_camps_raw = 0;
+                $c_pmin_merc_camps_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_merc_camps = round(($a_merc_camps / ($a_played * 1.00)), 2);
+                    $c_avg_merc_camps_raw = $a_merc_camps / ($a_played * 1.00);
+                    $c_avg_merc_camps = round($c_avg_merc_camps_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_merc_camps = round(($c_avg_merc_camps / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_merc_camps_raw = $c_avg_merc_camps_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_merc_camps = round($c_pmin_merc_camps_raw, 2);
                 }
                 $stats['merc_camps'] = [
                     "average" => self::formatNumber($c_avg_merc_camps, 2),
@@ -445,11 +481,15 @@ class HerodataController extends Controller {
                 //Average Exp Contrib (+ Per Minute)
                 $c_avg_exp_contrib = 0;
                 $c_pmin_exp_contrib = 0;
+                $c_avg_exp_contrib_raw = 0;
+                $c_pmin_exp_contrib_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_exp_contrib = round(($a_exp_contrib / ($a_played * 1.00)), 0);
+                    $c_avg_exp_contrib_raw = $a_exp_contrib / ($a_played * 1.00);
+                    $c_avg_exp_contrib = round($c_avg_exp_contrib_raw, 2);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_exp_contrib = round(($c_avg_exp_contrib / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_exp_contrib_raw = $c_avg_exp_contrib_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_exp_contrib = round($c_pmin_exp_contrib_raw, 2);
                 }
                 $stats['exp_contrib'] = [
                     "average" => self::formatNumber($c_avg_exp_contrib),
@@ -461,8 +501,10 @@ class HerodataController extends Controller {
 
                 //Average Time Spent Dead (in Minutes)
                 $c_avg_time_spent_dead = 0;
+                $c_avg_time_spent_dead_raw = 0;
                 if ($a_played > 0) {
-                    $c_avg_time_spent_dead = round(($a_time_spent_dead / ($a_played * 1.00) / 60.0), 1);
+                    $c_avg_time_spent_dead_raw = ($a_time_spent_dead / ($a_played * 1.00)) / 60.0;
+                    $c_avg_time_spent_dead = round($c_avg_time_spent_dead_raw, 1);
                 }
                 $stats['time_spent_dead'] = [
                     "average" => self::formatNumber($c_avg_time_spent_dead, 1)
@@ -483,7 +525,7 @@ class HerodataController extends Controller {
                 $c_matrix_healer = 0;
                 $normal = $totalStats['healing']['max'] - $totalStats['healing']['min'];
                 if ($normal > 0) {
-                    $c_matrix_healer = ($c_pmin_healing - $totalStats['healing']['min']) / ($normal * 1.0);
+                    $c_matrix_healer = ($c_pmin_healing_raw - $totalStats['healing']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Healer'] = $c_matrix_healer;
 
@@ -491,7 +533,7 @@ class HerodataController extends Controller {
                 $c_matrix_safety = 0;
                 $normal = $totalStats['deaths']['max'] - $totalStats['deaths']['min'];
                 if ($normal > 0) {
-                    $c_matrix_safety = (1.0 - (($c_pmin_deaths - $totalStats['deaths']['min']) / ($normal * 1.0)));
+                    $c_matrix_safety = (1.0 - (($c_pmin_deaths_raw - $totalStats['deaths']['min']) / ($normal * 1.0)));
                 }
                 $statMatrix['Safety'] = $c_matrix_safety;
 
@@ -499,7 +541,7 @@ class HerodataController extends Controller {
                 $c_matrix_demolition = 0;
                 $normal = $totalStats['structure_damage']['max'] - $totalStats['structure_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_demolition = ($c_pmin_structure_damage - $totalStats['structure_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_demolition = ($c_pmin_structure_damage_raw - $totalStats['structure_damage']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Demolition'] = $c_matrix_demolition;
 
@@ -507,7 +549,7 @@ class HerodataController extends Controller {
                 $c_matrix_damage = 0;
                 $normal = $totalStats['hero_damage']['max'] - $totalStats['hero_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_damage = ($c_pmin_hero_damage - $totalStats['hero_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_damage = ($c_pmin_hero_damage_raw - $totalStats['hero_damage']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Damage'] = $c_matrix_damage;
 
@@ -515,7 +557,7 @@ class HerodataController extends Controller {
                 $c_matrix_tank = 0;
                 $normal = $totalStats['damage_taken']['max'] - $totalStats['damage_taken']['min'];
                 if ($normal > 0) {
-                    $c_matrix_tank = ($c_pmin_damage_taken - $totalStats['damage_taken']['min']) / ($normal * 1.0);
+                    $c_matrix_tank = ($c_pmin_damage_taken_raw - $totalStats['damage_taken']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Tank'] = $c_matrix_tank;
 
@@ -523,7 +565,7 @@ class HerodataController extends Controller {
                 $c_matrix_waveclear = 0;
                 $normal = $totalStats['siege_damage']['max'] - $totalStats['siege_damage']['min'];
                 if ($normal > 0) {
-                    $c_matrix_waveclear = ($c_pmin_siege_damage - $totalStats['siege_damage']['min']) / ($normal * 1.0);
+                    $c_matrix_waveclear = ($c_pmin_siege_damage_raw - $totalStats['siege_damage']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Waveclear'] = $c_matrix_waveclear;
 
@@ -531,7 +573,7 @@ class HerodataController extends Controller {
                 $c_matrix_expsoak = 0;
                 $normal = $totalStats['exp_contrib']['max'] - $totalStats['exp_contrib']['min'];
                 if ($normal > 0) {
-                    $c_matrix_expsoak = ($c_pmin_exp_contrib - $totalStats['exp_contrib']['min']) / ($normal * 1.0);
+                    $c_matrix_expsoak = ($c_pmin_exp_contrib_raw - $totalStats['exp_contrib']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Exp Contrib'] = $c_matrix_expsoak;
 
@@ -539,7 +581,7 @@ class HerodataController extends Controller {
                 $c_matrix_merccamps = 0;
                 $normal = $totalStats['merc_camps']['max'] - $totalStats['merc_camps']['min'];
                 if ($normal > 0) {
-                    $c_matrix_merccamps = ($c_pmin_merc_camps - $totalStats['merc_camps']['min']) / ($normal * 1.0);
+                    $c_matrix_merccamps = ($c_pmin_merc_camps_raw - $totalStats['merc_camps']['min']) / ($normal * 1.0);
                 }
                 $statMatrix['Merc Camps'] = $c_matrix_merccamps;
 
@@ -1255,10 +1297,10 @@ class HerodataController extends Controller {
                 $c_avg_kills = 0;
                 $c_pmin_kills = 0;
                 if ($a_played > 0) {
-                    $c_avg_kills = round(($a_kills / ($a_played * 1.00)), 2);
+                    $c_avg_kills = $a_kills / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_kills = round(($c_avg_kills / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_kills = $c_avg_kills / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['kills'] = $c_pmin_kills;
 
@@ -1266,10 +1308,10 @@ class HerodataController extends Controller {
                 $c_avg_assists = 0;
                 $c_pmin_assists = 0;
                 if ($a_played > 0) {
-                    $c_avg_assists = round(($a_assists / ($a_played * 1.00)), 2);
+                    $c_avg_assists = $a_assists / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_assists = round(($c_avg_assists / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_assists = $c_avg_assists / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['assists'] = $c_pmin_assists;
 
@@ -1277,10 +1319,10 @@ class HerodataController extends Controller {
                 $c_avg_deaths = 0;
                 $c_pmin_deaths = 0;
                 if ($a_played > 0) {
-                    $c_avg_deaths = round(($a_deaths / ($a_played * 1.00)), 2);
+                    $c_avg_deaths = $a_deaths / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_deaths = round(($c_avg_deaths / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_deaths = $c_avg_deaths / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['deaths'] = $c_pmin_deaths;
 
@@ -1288,10 +1330,10 @@ class HerodataController extends Controller {
                 $c_avg_siege_damage = 0;
                 $c_pmin_siege_damage = 0;
                 if ($a_played > 0) {
-                    $c_avg_siege_damage = round(($a_siege_damage / ($a_played * 1.00)), 0);
+                    $c_avg_siege_damage = $a_siege_damage / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_siege_damage = round(($c_avg_siege_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_siege_damage = $c_avg_siege_damage / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['siege_damage'] = $c_pmin_siege_damage;
 
@@ -1299,10 +1341,10 @@ class HerodataController extends Controller {
                 $c_avg_hero_damage = 0;
                 $c_pmin_hero_damage = 0;
                 if ($a_played > 0) {
-                    $c_avg_hero_damage = round(($a_hero_damage / ($a_played * 1.00)), 0);
+                    $c_avg_hero_damage = $a_hero_damage / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_hero_damage = round(($c_avg_hero_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_hero_damage = $c_avg_hero_damage / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['hero_damage'] = $c_pmin_hero_damage;
 
@@ -1310,10 +1352,10 @@ class HerodataController extends Controller {
                 $c_avg_structure_damage = 0;
                 $c_pmin_structure_damage = 0;
                 if ($a_played > 0) {
-                    $c_avg_structure_damage = round(($a_structure_damage / ($a_played * 1.00)), 0);
+                    $c_avg_structure_damage = $a_structure_damage / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_structure_damage = round(($c_avg_structure_damage / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_structure_damage = $c_avg_structure_damage / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['structure_damage'] = $c_pmin_structure_damage;
 
@@ -1321,10 +1363,10 @@ class HerodataController extends Controller {
                 $c_avg_healing = 0;
                 $c_pmin_healing = 0;
                 if ($a_played > 0) {
-                    $c_avg_healing = round(($a_healing / ($a_played * 1.00)), 0);
+                    $c_avg_healing = $a_healing / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_healing = round(($c_avg_healing / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_healing = $c_avg_healing / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['healing'] = $c_pmin_healing;
 
@@ -1332,10 +1374,10 @@ class HerodataController extends Controller {
                 $c_avg_damage_taken = 0;
                 $c_pmin_damage_taken = 0;
                 if ($a_played > 0) {
-                    $c_avg_damage_taken = round(($a_damage_taken / ($a_played * 1.00)), 0);
+                    $c_avg_damage_taken = $a_damage_taken / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_damage_taken = round(($c_avg_damage_taken / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_damage_taken = $c_avg_damage_taken / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['damage_taken'] = $c_pmin_damage_taken;
 
@@ -1343,10 +1385,10 @@ class HerodataController extends Controller {
                 $c_avg_merc_camps = 0;
                 $c_pmin_merc_camps = 0;
                 if ($a_played > 0) {
-                    $c_avg_merc_camps = round(($a_merc_camps / ($a_played * 1.00)), 2);
+                    $c_avg_merc_camps = $a_merc_camps / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_merc_camps = round(($c_avg_merc_camps / ($c_avg_minutesPlayed * 1.00)), 2);
+                    $c_pmin_merc_camps = $c_avg_merc_camps / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['merc_camps'] = $c_pmin_merc_camps;
 
@@ -1354,17 +1396,17 @@ class HerodataController extends Controller {
                 $c_avg_exp_contrib = 0;
                 $c_pmin_exp_contrib = 0;
                 if ($a_played > 0) {
-                    $c_avg_exp_contrib = round(($a_exp_contrib / ($a_played * 1.00)), 0);
+                    $c_avg_exp_contrib = $a_exp_contrib / ($a_played * 1.00);
                 }
                 if ($c_avg_minutesPlayed > 0) {
-                    $c_pmin_exp_contrib = round(($c_avg_exp_contrib / ($c_avg_minutesPlayed * 1.00)), 0);
+                    $c_pmin_exp_contrib = $c_avg_exp_contrib / ($c_avg_minutesPlayed * 1.00);
                 }
                 $stats['exp_contrib'] = $c_pmin_exp_contrib;
 
                 //Average Time Spent Dead (in Minutes)
                 $c_avg_time_spent_dead = 0;
                 if ($a_played > 0) {
-                    $c_avg_time_spent_dead = round(($a_time_spent_dead / ($a_played * 1.00) / 60.0), 1);
+                    $c_avg_time_spent_dead = ($a_time_spent_dead / ($a_played * 1.00)) / 60.0;
                 }
                 $stats['time_spent_dead'] = $c_avg_time_spent_dead;
 
@@ -1473,7 +1515,9 @@ class HerodataController extends Controller {
 
             //Loop through total average stats to calculate true average
             foreach ($totalstats as $tskey => &$tstat) {
-                $tstat['avg'] = $tstat['avg'] / ($tstat['count'] * 1.00);
+                if ($tstat['count'] > 0) {
+                    $tstat['avg'] = $tstat['avg'] / ($tstat['count'] * 1.00);
+                }
             }
 
             $pagedata = $totalstats;
