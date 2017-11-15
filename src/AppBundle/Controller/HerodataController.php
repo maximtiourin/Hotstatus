@@ -40,7 +40,7 @@ class HerodataController extends Controller {
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
      *
-     * @Route("/herodata/pagedata/hero", options={"expose"=true}, name="herodata_pagedata_hero") //TODO re-add condition for xmlhttprequest after done testing
+     * @Route("/herodata/pagedata/hero", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="herodata_pagedata_hero")
      */
     public function getPageDataHeroAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
@@ -107,12 +107,12 @@ class HerodataController extends Controller {
         //Try to get cached value
         $cacheval = NULL;
         if ($connected_redis !== FALSE) {
-            //$cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION); TODO
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
         }
 
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
             //Use cached value
-            //$pagedata = json_decode($cacheval, true); TODO
+            $pagedata = json_decode($cacheval, true);
 
             $validResponse = TRUE;
         }
@@ -943,7 +943,6 @@ class HerodataController extends Controller {
                 //Set medals
                 $pagedata['medals'] = $sortedMedalsSlice;
 
-                //TODO - look up json and fill out JSON structures for matchups, etc
                 /*
                  * Matchups
                  */
@@ -1041,12 +1040,11 @@ class HerodataController extends Controller {
                 $validResponse = TRUE;
             }
 
-            //$encoded = json_encode($pagedata); TODO
-
-            //Store mysql value in cache TODO
-            /*if ($validResponse && $connected_redis) {
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
                 HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
-            }*/
+            }
         }
 
         $redis->close();
@@ -1054,13 +1052,12 @@ class HerodataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
+        $response->setPublic();
 
-        //$response->setPublic();
-
-        //Determine expire date on valid response TODO
-        /*if ($validResponse) {
-            $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
-        }*/
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+        }
 
         return $response;
     }
@@ -1371,10 +1368,9 @@ class HerodataController extends Controller {
 
             $datatable['data'] = $data;
 
-            $encoded = json_encode($datatable);
-
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
+                $encoded = json_encode($datatable);
                 HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
             }
         }
@@ -1852,7 +1848,6 @@ class HerodataController extends Controller {
         return $q;
     }
 
-    //TODO
     /*
      * Initializes the page data object for the hero pagedata
      */
