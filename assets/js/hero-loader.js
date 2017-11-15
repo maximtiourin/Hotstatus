@@ -56,6 +56,7 @@ HeroLoader.ajax = {
         let data_builds = data.builds;
         let data_medals = data.medals;
         let data_graphs = data.graphs;
+        let data_matchups = data.matchups;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -73,6 +74,7 @@ HeroLoader.ajax = {
                 let json_builds = json['builds'];
                 let json_medals = json['medals'];
                 let json_statMatrix = json['statMatrix'];
+                let json_matchups = json['matchups'];
 
                 /*
                  * Empty dynamically filled containers
@@ -83,6 +85,7 @@ HeroLoader.ajax = {
                 data_builds.empty();
                 data_medals.empty();
                 data_graphs.empty();
+                data_matchups.empty();
 
                 /*
                  * Heroloader Container
@@ -233,6 +236,66 @@ HeroLoader.ajax = {
 
                 //Winrate over Hero Level
                 data_graphs.generateHeroLevelWinratesGraph(json_stats['range_hero_level'], json_stats['winrate_raw']);
+
+                /*
+                 * Matchups
+                 */
+                if (json_matchups['foes_count'] > 0 || json_matchups['friends_count'] > 0) {
+                    //Generate matchups container
+                    data_matchups.generateMatchupsContainer();
+
+                    /*
+                     * Foes
+                     */
+                    if (json_matchups['foes_count'] > 0) {
+                        //Define Matchup DataTables and generate table structure
+                        data_matchups.generateFoesTable();
+
+                        let matchup_foes_datatable = data_matchups.getFoesTableConfig(json_matchups['foes_count']);
+
+                        //Initialize builds datatable data array
+                        matchup_foes_datatable.data = [];
+
+                        //Loop through foes
+                        for (let mkey in json_matchups.foes) {
+                            if (json_matchups.foes.hasOwnProperty(mkey)) {
+                                let matchup = json_matchups.foes[mkey];
+
+                                //Create datatable row
+                                matchup_foes_datatable.data.push(data_matchups.generateTableData(mkey, matchup));
+                            }
+                        }
+
+                        //Init Matchup DataTables
+                        data_matchups.initFoesTable(matchup_foes_datatable);
+                    }
+
+                    /*
+                     * Friends
+                     */
+                    if (json_matchups['friends_count'] > 0) {
+                        //Define Matchup DataTables and generate table structure
+                        data_matchups.generateFriendsTable();
+
+                        let matchup_friends_datatable = data_matchups.getFriendsTableConfig(json_matchups['friends_count']);
+
+                        //Initialize builds datatable data array
+                        matchup_friends_datatable.data = [];
+
+                        //Loop through friends
+                        for (let mkey in json_matchups.friends) {
+                            if (json_matchups.friends.hasOwnProperty(mkey)) {
+                                let matchup = json_matchups.friends[mkey];
+
+                                //Create datatable row
+                                matchup_friends_datatable.data.push(data_matchups.generateTableData(mkey, matchup));
+                            }
+                        }
+
+                        //Init Matchup DataTables
+                        data_matchups.initFriendsTable(matchup_friends_datatable);
+                    }
+                }
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -427,7 +490,7 @@ HeroLoader.data = {
         }
     },
     builds: {
-        generateTable: function(rowId) {
+        generateTable: function() {
             $('#hl-talents-builds-container').append('<table id="hl-talents-builds-table" class="hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
         },
         generateTableData: function(talents, buildTalents, pickrate, popularity, popularity_percentOnRange, winrate, winrate_percentOnRange, winrateDisplay) {
@@ -858,11 +921,123 @@ HeroLoader.data = {
 
             $('#hl-graphs').empty();
         }
+    },
+    matchups: {
+        generateMatchupsContainer: function() {
+            $('#hl-matchups-container').append('<div class="hotstatus-subcontainer"><div class="row"><div class="col-lg-6 padding-lg-right-0"><div id="hl-matchups-foes-container"></div></div>' +
+                '<div class="col-lg-6 padding-lg-left-0"><div id="hl-matchups-friends-container"></div></div></div></div>');
+        },
+        generateTableData: function(hero, matchupData) {
+            let self = HeroLoader.data.matchups;
+
+            let imageField = '<img class="hl-matchups-image" src="' + matchupData.image + '">';
+
+            let heroField = '<span class="hl-row-height">' + hero + '</span>';
+
+            let heroSortField = matchupData.name_sort;
+            let roleField = matchupData.role_blizzard;
+            let roleSpecificField = matchupData.role_specific;
+
+            let playedField = '<span class="hl-row-height">' + matchupData.played + '</span>';
+
+            let winrateField = '<span class="hl-row-height">' + matchupData.winrate_display + '</span>';
+
+            return [imageField, heroField, heroSortField, roleField, roleSpecificField, playedField, winrateField];
+        },
+        generateFoesTable: function() {
+            $('#hl-matchups-foes-container').append('<table id="hl-matchups-foes-table" class="hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
+        },
+        generateFriendsTable: function() {
+            $('#hl-matchups-friends-container').append('<table id="hl-matchups-friends-table" class="hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
+        },
+        getFoesTableConfig: function(rowLength) {
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {"width": "10%", "bSortable": false, "searchable": false},
+                {"title": 'Foe', "width": "30%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+                {"title": 'Hero_Sort', "visible": false},
+                {"title": 'Role', "visible": false},
+                {"title": 'Role_Specific', "visible": false},
+                {"title": 'Played Against', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Wins Against', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.order = [[6, 'asc']];
+
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = 5; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            datatable.pagingType = "simple";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'trp>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            return datatable;
+        },
+        getFriendsTableConfig: function(rowLength) {
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {"width": "10%", "bSortable": false, "searchable": false},
+                {"title": 'Friend', "width": "30%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+                {"title": 'Hero_Sort', "visible": false},
+                {"title": 'Role', "visible": false},
+                {"title": 'Role_Specific', "visible": false},
+                {"title": 'Played With', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Wins With', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.order = [[6, 'desc']];
+
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = 5; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            datatable.pagingType = "simple";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'trp>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            return datatable;
+        },
+        initFoesTable: function(dataTableConfig) {
+            $('#hl-matchups-foes-table').DataTable(dataTableConfig);
+        },
+        initFriendsTable: function(dataTableConfig) {
+            $('#hl-matchups-friends-table').DataTable(dataTableConfig);
+        },
+        empty: function() {
+            $('#hl-matchups-container').empty();
+        }
     }
 };
 
 
 $(document).ready(function() {
+    $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
+
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('herodata_pagedata_hero');
     let filterTypes = ["hero", "gameType", "map", "rank", "date"];

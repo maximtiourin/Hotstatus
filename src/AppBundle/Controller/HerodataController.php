@@ -35,6 +35,7 @@ class HerodataController extends Controller {
     const TALENT_BUILD_WINRATE_MIN_PLAYED = 100; //How many times a talent build have been played before allowing display
     const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to determine percentOnRange calculations, used to normalize ranges.
     const TALENT_BUILD_POPULARITY_MIN_OFFSET = .1; //How much to subtract from the min popularity for a talent build to determine percentOnRange calcs, used to normalize range
+    const MATCHUP_PLAYRATE_MIN = 50; //How many matches should have been played with/against hero before winrate is calculated
 
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
@@ -941,9 +942,98 @@ class HerodataController extends Controller {
 
                 //Set medals
                 $pagedata['medals'] = $sortedMedalsSlice;
-                $pagedata['sortedMedals'] = $sortedMedals;
 
                 //TODO - look up json and fill out JSON structures for matchups, etc
+                /*
+                 * Matchups
+                 */
+                $matchups = [
+                    "foes_count" => count($a_matchup_foes),
+                    "friends_count" => count($a_matchup_friends),
+                ];
+                //Foes
+                $matchup_foes = [];
+                foreach ($a_matchup_foes as $mhero => $mstats) {
+                    $played = $mstats['played'];
+
+                    if ($played >= self::MATCHUP_PLAYRATE_MIN) {
+                        $m = [];
+                        $filter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mhero];
+
+                        //Name Sort
+                        $m['name_sort'] = $filter['name_sort'];
+
+                        //Roles
+                        $m['role_blizzard'] = $filter['role_blizzard'];
+                        $m['role_specific'] = $filter['role_specific'];
+
+                        //Image
+                        $m['image'] = $imgbasepath . $filter['image_hero'] . ".png";
+
+                        //Played
+                        $m['played'] = $played;
+
+                        //Winrate and winrate display
+                        $winrate = 0;
+                        if ($played > 0) {
+                            $winrate = round(($mstats['won'] / ($played * 1.00)) * 100.0, 1);
+                        }
+                        $m['winrate'] = $winrate;
+
+                        $colorclass = "hl-number-winrate-red";
+                        if ($winrate >= 50.0) $colorclass = "hl-number-winrate-green";
+                        $winrate_display = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
+                        $m['winrate_display'] = $winrate_display;
+
+                        //Set hero matchup
+                        $matchup_foes[$mhero] = $m;
+                    }
+                }
+                $matchups['foes'] = $matchup_foes;
+
+                //Friends
+                $matchup_friends = [];
+                foreach ($a_matchup_friends as $mhero => $mstats) {
+                    $played = $mstats['played'];
+
+                    if ($played >= self::MATCHUP_PLAYRATE_MIN) {
+                        $m = [];
+                        $filter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mhero];
+
+                        //Name Sort
+                        $m['name_sort'] = $filter['name_sort'];
+
+                        //Roles
+                        $m['role_blizzard'] = $filter['role_blizzard'];
+                        $m['role_specific'] = $filter['role_specific'];
+
+                        //Image
+                        $m['image'] = $imgbasepath . $filter['image_hero'] . ".png";
+
+                        //Played
+                        $m['played'] = $played;
+
+                        //Winrate and winrate display
+                        $winrate = 0;
+                        if ($played > 0) {
+                            $winrate = round(($mstats['won'] / ($played * 1.00)) * 100.0, 1);
+                        }
+                        $m['winrate'] = $winrate;
+
+                        $colorclass = "hl-number-winrate-red";
+                        if ($winrate >= 50.0) $colorclass = "hl-number-winrate-green";
+                        $winrate_display = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
+                        $m['winrate_display'] = $winrate_display;
+
+                        //Set hero matchup
+                        $matchup_friends[$mhero] = $m;
+                    }
+                }
+                $matchups['friends'] = $matchup_friends;
+
+                //Set matchups
+                $pagedata['matchups'] = $matchups;
+
 
                 //Close connection and set valid response
                 $db->close();
@@ -1072,8 +1162,6 @@ class HerodataController extends Controller {
                 $old_range = HotstatusPipeline::getMinMaxRangeForLastISODaysInclusive($offset_amount, $datetime->format(HotstatusPipeline::FORMAT_DATETIME), $offset_amount);
 
                 //Prepare statements
-                $db->prepare("SelectHeroes", "SELECT name, name_sort, role_blizzard, role_specific, image_hero FROM herodata_heroes");
-
                 $db->prepare("CountHeroesMatches",
                     "SELECT COALESCE(SUM(`played`), 0) AS `played`, COALESCE(SUM(`won`), 0) AS `won` FROM `heroes_matches_recent_granular` WHERE `hero` = ? ".$querySql." AND `date_end` >= ? AND `date_end` <= ?");
                 $db->bind("CountHeroesMatches", "sss", $r_hero, $date_range_start, $date_range_end);
@@ -1092,9 +1180,9 @@ class HerodataController extends Controller {
                 $minWinrate = 100.0;
                 $totalPlayed = 0;
                 $totalBanned = 0;
-                $result = $db->execute("SelectHeroes");
-                while ($row = $db->fetchArray($result)) {
-                    $r_hero = $row['name'];
+                $filter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
+                foreach ($filter as $heroname => $row) {
+                    $r_hero = $heroname;
 
                     /*
                      * Collect hero data
@@ -1178,7 +1266,7 @@ class HerodataController extends Controller {
                      * Construct hero object
                      */
                     $hero = [];
-                    $hero['name'] = $row['name'];
+                    $hero['name'] = $heroname;
                     $hero['name_sort'] = $row['name_sort'];
                     $hero['role_blizzard'] = $row['role_blizzard'];
                     $hero['role_specific'] = $row['role_specific'];
@@ -1276,8 +1364,6 @@ class HerodataController extends Controller {
                     $data[] = $dtrow;
                 }
 
-
-                $db->freeResult($result);
                 $db->close();
 
                 $validResponse = TRUE;

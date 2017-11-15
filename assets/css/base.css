@@ -1019,9 +1019,26 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 40px 0px;
 }
 
+.hl-matchups-image {
+    width:24px;
+    height:24px;
+    border: 1px;
+    border-style: solid;
+    border-radius: 8px;
+    border-color: #1B0748;
+}
+
 .padding-horizontal-0 {
     padding-left: 0px!important;
     padding-right: 0px!important;
+}
+
+.padding-right-0 {
+    padding-right: 0px!important;
+}
+
+.padding-left-0 {
+    padding-left: 0px!important;
 }
 
 /* Small and up */
