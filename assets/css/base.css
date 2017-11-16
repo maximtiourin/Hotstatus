@@ -1178,3 +1178,24 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #1B0748 !important;
     z-index: 9999;
 }
+
+.psearch-region {
+    color: #FFFFFF;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.psearch-player {
+    color: #59a7ff;
+    font-size: 16px;
+}
+
+.psearch-player:hover {
+    color: #c6c1ff;
+    text-decoration: solid;
+}
+
+.psearch-player-notfound {
+    color: #59a7ff;
+    font-size: 24px;
+}

@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{# Include snippets and then alias their blocks so as to order them as needed #}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+
+{# Append to title #}
+{% block title %}
+: Player Search
+{% endblock %}
+
+{# Inject dynamic content variables #}
+{% block dynamicVariables %}
+{% endblock %}
+
+{# Custom styling that require the use of path generation #}
+{% block style %}
+{% endblock %}
+
+{% block body %}
+    {# Begin HTML #}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xl-2"></div>
+            <div class="col-sm-12 col-md-12 col-xl-8">
+                <div class="hotstatus-container">
+                    {% if searchResults|length > 0 %}
+                        {% for region, playerArr in searchResults %}
+                            <div style="padding: 4px 15px;">
+                                <span class="psearch-region">{{ region }}</span>
+                                <div class="hotstatus-subcontainer">
+                                    {% for player in playerArr %}
+                                        <div>
+                                            <a href="{{ path("player", {"id": player['id']}) }}" class="psearch-player">{{ player['name'] ~ "#" ~ player['tag'] }}</a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="padding: 4px 15px;">
+                            <span class="psearch-region">No Results for Player '<span class="psearch-player-notfound">{{ search|e }}</span>'...</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-xl-2">
+                {% include ':snippets:advertising/responsive_vertical.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{# Stylesheets #}
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{# Javascript #}
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+{% endblock %}
+
+{# Tail Javascript #}
+{% block tailJavascript %}
+{% endblock %}
+
