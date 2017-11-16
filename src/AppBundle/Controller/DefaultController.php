@@ -180,7 +180,7 @@ class DefaultController extends Controller
                 //Store mysql value in cache
                 if ($validResponse && $connected_redis) {
                     $encoded = json_encode($pagedata);
-                    HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+                    HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYERSEARCH_TTL);
                 }
             }
 
@@ -200,11 +200,99 @@ class DefaultController extends Controller
      * @Route("/players/{id}", requirements={"id": "\d+"}, name="player")
      */
     public function playerAction($id) {
-        //TODO : get player object (name, tag, etc) and pass it to twig,
-        //TODO : rest of the player data will be loaded using 'playerloader', if player does not exist redirect error
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "playerAction";
+        $_VERSION = 0;
 
-        return $this->render(':default:player.html.twig', [
-        ]);
+        //Main Vars
+        $pagedata = [];
+        $validResponse = FALSE;
+        $validResult = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = $_ID . '_' . $id;
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResult = count($pagedata) > 0;
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MySqlDatabase();
+
+            $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Prepare Statement
+                $db->prepare("FindPlayer",
+                    "SELECT * FROM `players` WHERE `id` = ? LIMIT 1");
+                $db->bind("FindPlayer", "i", $r_id);
+
+                //Search for player
+                $player = [];
+                $r_id = $id;
+                $playerResult = $db->execute("FindPlayer");
+                $playerResultRows = $db->countResultRows($playerResult);
+                if ($playerResultRows > 0) {
+                    $row = $db->fetchArray($playerResult);
+
+                    $player['id'] = $row['id'];
+                    $player['name'] = $row['name'];
+                    $player['tag'] = $row['tag'];
+                    $player['region'] = HotstatusPipeline::$ENUM_REGIONS[$row['region']];
+                    $player['account_level'] = $row['account_level'];
+                }
+
+                $pagedata = $player;
+
+                $db->freeResult($playerResult);
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            $validResult = count($pagedata) > 0;
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $ttl = ($validResult) ? (HotstatusCache::CACHE_PLAYER_HIT_TTL) : (HotstatusCache::CACHE_PLAYER_MISS_TTL);
+
+                $encoded = json_encode($pagedata);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, $ttl);
+            }
+        }
+
+        $redis->close();
+
+        if ($validResult) {
+            return $this->render(':default:player.html.twig', [
+                "player" => $pagedata,
+            ]);
+        }
+        else {
+            return $this->redirectToRoute("playerError");
+        }
     }
 
     /**
