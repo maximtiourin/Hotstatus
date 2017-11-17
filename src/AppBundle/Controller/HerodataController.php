@@ -95,7 +95,7 @@ class HerodataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . "_" . $queryHero .((strlen($queryCacheSql) > 0) ? ("_" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -1103,7 +1103,7 @@ class HerodataController extends Controller {
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
 
         //Determine cache id from query parameters
-        $CACHE_ID = $_ID . ((strlen($queryCacheSql) > 0) ? ("_" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = $_ID . ((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
 
         /*
          * Begin building response
@@ -1404,7 +1404,7 @@ class HerodataController extends Controller {
         $pagedata = [];
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? ("_" . md5($querySql)) : (""));
+        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? (":" . md5($querySql)) : (""));
 
         $cacheval = NULL;
         if ($connected_redis !== FALSE) {

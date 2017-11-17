@@ -80,6 +80,9 @@ class DefaultController extends Controller
         $_ID = "playerSearchAction";
         $_VERSION = 0;
 
+        $_RATE_LIMIT = 5; //Activities
+        $_RATE_TIMERANGE = 60; //Seconds
+
         $search = $request->request->get("search");
 
         //Main Vars
@@ -107,86 +110,101 @@ class DefaultController extends Controller
         }
 
         if ($validSearch) {
-            //Determine Cache Id
-            $CACHE_ID = $_ID . "_" . $search;
+            //Determine Cache Id and Activity
+            $CACHE_ID = $_ID . ":" . $search;
+            $CACHE_ACTIVITY = $_ID . ":" . md5($request->getClientIp());
 
             //Get credentials
             $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
             //Get redis cache
             $redis = new RedisDatabase();
-            $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+            $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_RATELIMITING_DATABASE_INDEX);
 
-            //Try to get cached value
-            $cacheval = NULL;
+            //Rate Limit
+            $rateLimit = FALSE;
             if ($connected_redis !== FALSE) {
-                $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+                $rateLimit = HotstatusCache::rateLimitActivityList($redis, HotstatusCache::CACHE_ACTIVITY_TYPE,
+                    $CACHE_ACTIVITY, $request->getClientIp(), $_RATE_LIMIT, $_RATE_TIMERANGE);
             }
 
-            if ($connected_redis !== FALSE && $cacheval !== NULL) {
-                //Use cached value
-                $pagedata = json_decode($cacheval, true);
+            //Check Rate Limit
+            if (!$rateLimit) {
+                //Swap DB
+                $redis->selectDatabase(HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
 
-                $validResponse = TRUE;
-            }
-            else {
-                //Try to get Mysql value
-                $db = new MySqlDatabase();
+                //Try to get cached value
+                $cacheval = NULL;
+                if ($connected_redis !== FALSE) {
+                    $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+                }
 
-                $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
-
-                if ($connected_mysql !== FALSE) {
-                    $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
-
-                    //Prepare Statement
-                    if ($isNamePlusBattletag) {
-                        $db->prepare("SearchPlayer",
-                            "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? AND `tag` = ? LIMIT 25");
-                        $db->bind("SearchPlayer", "si", $r_name, $r_tag);
-                    }
-                    else {
-                        $db->prepare("SearchPlayer",
-                            "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? LIMIT 25");
-                        $db->bind("SearchPlayer", "s", $r_name);
-                    }
-
-                    //Search for player
-                    $pres = [];
-
-                    $playerResult = $db->execute("SearchPlayer");
-                    while ($row = $db->fetchArray($playerResult)) {
-                        $region = HotstatusPipeline::$ENUM_REGIONS[$row['region']];
-
-                        if (!key_exists($region, $pres)) {
-                            $pres[$region] = [];
-                        }
-
-                        $pres[$region][] = [
-                            "id" => $row['id'],
-                            "name" => $row['name'],
-                            "tag" => $row['tag'],
-                        ];
-                    }
-                    $db->freeResult($playerResult);
-
-                    $pagedata = $pres;
-
-                    //Close connection and set valid response
-                    $db->close();
+                if ($connected_redis !== FALSE && $cacheval !== NULL) {
+                    //Use cached value
+                    $pagedata = json_decode($cacheval, true);
 
                     $validResponse = TRUE;
                 }
+                else {
+                    //Try to get Mysql value
+                    $db = new MySqlDatabase();
 
-                //Store mysql value in cache
-                if ($validResponse && $connected_redis) {
-                    $encoded = json_encode($pagedata);
-                    HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYERSEARCH_TTL);
+                    $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+
+                    if ($connected_mysql !== FALSE) {
+                        $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                        //Prepare Statement
+                        if ($isNamePlusBattletag) {
+                            $db->prepare("SearchPlayer",
+                                "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? AND `tag` = ? LIMIT 25");
+                            $db->bind("SearchPlayer", "si", $r_name, $r_tag);
+                        }
+                        else {
+                            $db->prepare("SearchPlayer",
+                                "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? LIMIT 25");
+                            $db->bind("SearchPlayer", "s", $r_name);
+                        }
+
+                        //Search for player
+                        $pres = [];
+
+                        $playerResult = $db->execute("SearchPlayer");
+                        while ($row = $db->fetchArray($playerResult)) {
+                            $region = HotstatusPipeline::$ENUM_REGIONS[$row['region']];
+
+                            if (!key_exists($region, $pres)) {
+                                $pres[$region] = [];
+                            }
+
+                            $pres[$region][] = [
+                                "id" => $row['id'],
+                                "name" => $row['name'],
+                                "tag" => $row['tag'],
+                            ];
+                        }
+                        $db->freeResult($playerResult);
+
+                        $pagedata = $pres;
+
+                        //Close connection and set valid response
+                        $db->close();
+
+                        $validResponse = TRUE;
+                    }
+
+                    //Store mysql value in cache
+                    if ($validResponse && $connected_redis) {
+                        $encoded = json_encode($pagedata);
+                        HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYERSEARCH_TTL);
+                    }
                 }
             }
 
             $redis->close();
 
             return $this->render(':default:playerSearch.html.twig', [
+                "rateLimit" => $rateLimit,
                 "search" => $search,
                 "searchResults" => $pagedata,
             ]);

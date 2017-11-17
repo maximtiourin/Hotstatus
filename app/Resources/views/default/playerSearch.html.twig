@@ -30,7 +30,11 @@
             <div class="col-xl-2"></div>
             <div class="col-sm-12 col-md-12 col-xl-8">
                 <div class="hotstatus-container">
-                    {% if searchResults|length > 0 %}
+                    {% if rateLimit %}
+                        <div style="padding: 4px 15px;">
+                            <span class="psearch-region">You've performed too many searches recently, please wait before searching again...</span>
+                        </div>
+                    {% elseif searchResults|length > 0 %}
                         {% for region, playerArr in searchResults %}
                             <div style="padding: 4px 15px;">
                                 <span class="psearch-region">{{ region }}</span>
