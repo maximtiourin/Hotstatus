@@ -124,8 +124,8 @@ class DefaultController extends Controller
             //Rate Limit
             $rateLimit = FALSE;
             if ($connected_redis !== FALSE) {
-                $rateLimit = HotstatusCache::rateLimitActivityList($redis, HotstatusCache::CACHE_ACTIVITY_TYPE,
-                    $CACHE_ACTIVITY, $request->getClientIp(), $_RATE_LIMIT, $_RATE_TIMERANGE);
+                $rateLimit = HotstatusCache::rateLimitActivity($redis, HotstatusCache::CACHE_ACTIVITY_TYPE,
+                    $CACHE_ACTIVITY, $_RATE_LIMIT, $_RATE_TIMERANGE);
             }
 
             //Check Rate Limit
