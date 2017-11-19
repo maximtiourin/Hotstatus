@@ -2,6 +2,7 @@
 
 {# Include snippets and then alias their blocks so as to order them as needed #}
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+{% use ':snippets:players/playerloader.html.twig' with javascripts as playerloaderjavascripts %}
 
 {# Append to title #}
 {% block title %}
@@ -10,6 +11,7 @@
 
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
+    let player_id = {{ player.id }};
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}
@@ -29,9 +31,9 @@
         <div class="row">
             <div class="col-xl-2"></div>
             <div class="col-sm-12 col-md-12 col-xl-8">
-                <div class="hotstatus-container">
-                    {{ player|json_encode|raw }}
-                </div>
+                {% embed ':snippets:players/playerloader.html.twig' %}
+                    {% block javascripts %}{% endblock %}
+                {% endembed %}
             </div>
             <div class="col-xl-2">
                 {% include ':snippets:advertising/responsive_vertical.html.twig' %}
@@ -48,6 +50,7 @@
 {# Javascript #}
 {% block javascripts %}
     {{ block('stdjavascripts') }}
+    {{ block('playerloaderjavascripts') }}
 {% endblock %}
 
 {# Tail Javascript #}

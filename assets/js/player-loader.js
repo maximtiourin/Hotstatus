@@ -7,9 +7,16 @@ let PlayerLoader = {};
 /*
  * Handles loading on valid filters, making sure to only fire once until loading is complete
  */
-PlayerLoader.validateLoad = function(baseUrl, filterTypes) {
-    if (!PlayerLoader.ajax.internal.loading && HotstatusFilter.validFilters) {
+PlayerLoader.validateLoad = function(baseUrl/*, filterTypes*/) {
+    /*if (!PlayerLoader.ajax.internal.loading && HotstatusFilter.validFilters) {
         let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+        if (url !== PlayerLoader.ajax.url()) {
+            PlayerLoader.ajax.url(url).load();
+        }
+    }*/
+    if (!PlayerLoader.ajax.internal.loading) {
+        let url = baseUrl + '?player_id=' + player_id;
 
         if (url !== PlayerLoader.ajax.url()) {
             PlayerLoader.ajax.url(url).load();
@@ -49,6 +56,7 @@ PlayerLoader.ajax = {
         let self = PlayerLoader.ajax;
 
         let data = PlayerLoader.data;
+        let data_matches = data.matches;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -59,15 +67,22 @@ PlayerLoader.ajax = {
         $.getJSON(self.internal.url)
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
+                let json_matches = json.matches;
 
                 /*
                  * Empty dynamically filled containers
                  */
+                data_matches.empty();
 
                 /*
                  * Heroloader Container
                  */
                 $('#playerloader-container').removeClass('initial-load');
+
+                /*
+                 * Matches
+                 */
+                data_matches.generate(json.matches);
 
 
 
@@ -97,7 +112,17 @@ PlayerLoader.ajax = {
  * Handles binding data to the page
  */
 PlayerLoader.data = {
-
+    matches: {
+        generate: function(matches) {
+            //TODO - actually implement
+            for (let match of matches) {
+                $('#pl-recentmatches-container').append('<div>' + match.date + '</div>');
+            }
+        },
+        empty: function() {
+            $('#pl-recentmatches-container').empty();
+        }
+    }
 };
 
 
@@ -105,8 +130,9 @@ $(document).ready(function() {
     $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
 
     //Set the initial url based on default filters, and attempt to load after validation
-    /*let baseUrl = Routing.generate('herodata_pagedata_hero');
-    let filterTypes = ["gameType"];
+    let baseUrl = Routing.generate('playerdata_pagedata_player');
+    PlayerLoader.validateLoad(baseUrl);
+    /*let filterTypes = ["gameType"];
     HotstatusFilter.validateSelectors(null, filterTypes);
     PlayerLoader.validateLoad(baseUrl, filterTypes);
 

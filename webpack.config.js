@@ -23,6 +23,7 @@ Encore
     .addEntry('hotstatus', './assets/js/hotstatus.js')
     .addEntry('heroes-statslist', './assets/js/heroes-statslist.js')
     .addEntry('hero-loader', './assets/js/hero-loader.js')
+    .addEntry('player-loader', './assets/js/player-loader.js')
 
     // will output as web/build/global.css
     //.addStyleEntry('global', './assets/css/global.scss')

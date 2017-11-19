@@ -131,7 +131,9 @@ class DefaultController extends Controller
             //Check Rate Limit
             if (!$rateLimit) {
                 //Swap DB
-                $redis->selectDatabase(HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+                if ($connected_redis !== FALSE) {
+                    $redis->selectDatabase(HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+                }
 
                 //Try to get cached value
                 $cacheval = NULL;
