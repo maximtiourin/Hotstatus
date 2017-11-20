@@ -27,7 +27,7 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
-    const COUNT_DEFAULT_MATCHES = 5; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches has baked in default limit of 5)
+    const COUNT_DEFAULT_MATCHES = 5; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
     /**
      * Returns the relevant player data for a player necessary to build a player page
@@ -128,6 +128,15 @@ class PlayerdataController extends Controller {
                 /*
                  * Collect playerdata
                  */
+
+                /*
+                 * Set playerloader data
+                 */
+                $limits = [];
+
+                $limits['matches'] = self::COUNT_DEFAULT_MATCHES;
+
+                $pagedata['limits'] = $limits;
 
 
                 //Close connection and set valid response
