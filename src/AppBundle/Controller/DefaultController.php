@@ -306,8 +306,11 @@ class DefaultController extends Controller
         $redis->close();
 
         if ($validResult) {
+            HotstatusPipeline::filter_generate_season();
+
             return $this->render(':default:player.html.twig', [
                 "player" => $pagedata,
+                "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
             ]);
         }
         else {

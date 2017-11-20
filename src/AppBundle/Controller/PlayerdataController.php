@@ -35,10 +35,40 @@ class PlayerdataController extends Controller {
      * @Route("/playerdata/pagedata/{player}", options={"expose"=true}, name="playerdata_pagedata_player")
      */
     //condition="request.isXmlHttpRequest()",
-    public function getPageDataPlayerAction($player) {
+    public function getPageDataPlayerAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerAction";
         $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::player_initDefaultQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, false);
 
         /*
          * Begin building response
@@ -49,7 +79,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player";
+        $CACHE_ID = "$_ID:$player".((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -294,6 +324,111 @@ class PlayerdataController extends Controller {
         }*/ //TODO enable after testing
 
         return $response;
+    }
+
+    /*
+     * Initializes the queries object for the hero pagedata
+     */
+    private static function player_initDefaultQueries() {
+        HotstatusPipeline::filter_generate_season();
+
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "date",
+                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
+            ],
+        ];
+
+        return $q;
+    }
+
+    /*
+     * Given an array of query string fragments of type 'WhereOr', will construct a query string fragment joining them
+     * with AND keywords, while prepending a single AND keyword. Will return an empty string if supplied an empty array.
+     *
+     * EX:
+     *
+     * 0 fragments : ''
+     * 1 fragment  : ' AND frag1'
+     * 3 fragments : ' AND frag1 AND frag2 AND frag3'
+     */
+    private static function buildQuery_WhereAnd_String($whereors, $prependAnd = TRUE) {
+        $ret = "";
+
+        $i = 0;
+        $count = count($whereors);
+        if ($prependAnd && $count > 0) $ret = " AND ";
+        foreach ($whereors as $or) {
+            $ret .= $or;
+
+            if ($i < $count - 1) {
+                $ret .= " AND ";
+            }
+
+            $i++;
+        }
+
+        return $ret;
+    }
+
+    /*
+     * Given a comma separated string of values for a given field, will construct a query string fragment,
+     * taking into account mapping type and filter key, non-numeric values are surrounded by quotes EX:
+     *
+     * Map Type 'Raw'   : '(`field` = val1 OR `field` = val2 OR `field` = "val3")'
+     * Map Type 'Range' : '((`field` >= valmin1 AND `field` <= valmax1) OR (`field` >= valmin2 AND `field` <= valmax2) OR (`field` >= "valmin3" AND `field` <= "valmax3"))'
+     */
+    private static function buildQuery_WhereOr_String($key, $field, $str, $mappingType = self::QUERY_TYPE_RAW) {
+        $decode = htmlspecialchars_decode($str);
+
+        $values = explode(",", $str);
+
+        $ret = "(";
+
+        $i = 0;
+        $count = count($values);
+        foreach ($values as $value) {
+            if ($mappingType === self::QUERY_TYPE_RAW) {
+                $val = $value;
+                if (!is_numeric($value)) {
+                    $val = '"' . $value . '"';
+                }
+
+                $ret .= "`$field` = $val";
+            }
+            else if ($mappingType === self::QUERY_TYPE_RANGE) {
+                $obj = HotstatusPipeline::$filter[$key][$value];
+                $min = $obj["min"];
+                $max = $obj["max"];
+
+                if (!is_numeric($min)) {
+                    $min = '"' . $min . '"';
+                }
+                if (!is_numeric($max)) {
+                    $max = '"' . $max . '"';
+                }
+
+                if ($count > 1) $ret .= "(";
+
+                $ret .= "`$field` >= $min AND `$field` <= $max";
+
+                if ($count > 1) $ret .= ")";
+            }
+
+            if ($i < $count - 1) {
+                $ret .= " OR ";
+            }
+
+            $i++;
+        }
+
+        $ret .= ")";
+
+        return $ret;
     }
 
     private static function formatNumber($n, $decimalPlaces = 0) {

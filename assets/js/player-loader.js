@@ -5,41 +5,25 @@
 let PlayerLoader = {};
 
 /*
- * Handles loading on valid filters, making sure to only fire once until loading is complete
- */
-PlayerLoader.validateLoad = function(baseUrl/*, filterTypes*/) {
-    /*if (!PlayerLoader.ajax.internal.loading && HotstatusFilter.validFilters) {
-        let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
-
-        if (url !== PlayerLoader.ajax.url()) {
-            PlayerLoader.ajax.url(url).load();
-        }
-    }*/
-    if (!PlayerLoader.ajax.internal.loading) {
-        let url = baseUrl + '?player_id=' + player_id;
-
-        if (url !== PlayerLoader.ajax.url()) {
-            PlayerLoader.ajax.url(url).load();
-        }
-    }
-};
-
-/*
  * Handles Ajax requests
  */
-PlayerLoader.ajax = {
+PlayerLoader.ajax = {};
+
+/*
+ * The ajax handler for handling filters
+ */
+PlayerLoader.ajax.filter = {
     internal: {
-        loading: false, //Whether or not the player loader is currently loading a result
+        loading: false, //Whether or not currently loading a result
         url: '', //url to get a response from
         dataSrc: 'data', //The array of data is found in .data field
-        matchesOffset: 0, //The offset of the matches loaded, to allow for scroller paging
     },
     /*
      * If supplied a url will set the ajax url to the given url, and then return the ajax object.
      * Otherwise will return the current url the ajax object is set to request from.
      */
     url: function(url = null) {
-        let self = PlayerLoader.ajax;
+        let self = PlayerLoader.ajax.filter;
 
         if (url === null) {
             return self.internal.url;
@@ -50,14 +34,27 @@ PlayerLoader.ajax = {
         }
     },
     /*
+     * Handles loading on valid filters, making sure to only fire once until loading is complete
+     */
+    validateLoad: function(baseUrl, filterTypes) {
+        let self = PlayerLoader.ajax.filter;
+
+        if (!self.internal.loading && HotstatusFilter.validFilters) {
+            let url = HotstatusFilter.generateUrl(baseUrl, filterTypes);
+
+            if (url !== self.url()) {
+                self.url(url).load();
+            }
+        }
+    },
+    /*
      * Reloads data from the current internal url, looking for data in the current internal dataSrc field.
      * Returns the ajax object.
      */
     load: function() {
-        let self = PlayerLoader.ajax;
+        let self = PlayerLoader.ajax.filter;
 
         let data = PlayerLoader.data;
-        let data_matches = data.matches;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -68,12 +65,10 @@ PlayerLoader.ajax = {
         $.getJSON(self.internal.url)
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
-                let json_matches = json.matches;
 
                 /*
                  * Empty dynamically filled containers
                  */
-                data_matches.empty();
 
                 /*
                  * Heroloader Container
@@ -83,7 +78,6 @@ PlayerLoader.ajax = {
                 /*
                  * Matches
                  */
-                data_matches.generate(json.matches);
 
 
 
@@ -122,10 +116,6 @@ PlayerLoader.data = {
         },
         generate: function(matches) {
             //Generates the matches pane and fills with initial offering of match widgets
-            //TODO - actually implement
-            for (let match of matches) {
-                $('#pl-recentmatches-container').append('<div>' + match.date + '</div>');
-            }
         },
         empty: function() {
             //Empties the matches pane (will probably never need)
@@ -139,11 +129,14 @@ $(document).ready(function() {
     $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
 
     //Set the initial url based on default filters, and attempt to load after validation
-    let baseUrl = Routing.generate('playerdata_pagedata_player');
-    PlayerLoader.validateLoad(baseUrl);
-    /*let filterTypes = ["gameType"];
+    let baseUrl = Routing.generate('playerdata_pagedata_player', {player: player_id});
+
+    let filterTypes = ["season"];
+    let filterAjax = PlayerLoader.ajax.filter;
+
+    filterAjax.validateLoad(baseUrl);
     HotstatusFilter.validateSelectors(null, filterTypes);
-    PlayerLoader.validateLoad(baseUrl, filterTypes);
+    filterAjax.validateLoad(baseUrl, filterTypes);
 
     //Track filter changes and validate
     $('select.filter-selector').on('change', function(event) {
@@ -152,6 +145,6 @@ $(document).ready(function() {
 
     //Load new data on a select dropdown being closed (Have to use '*' selector workaround due to a 'Bootstrap + Chrome-only' bug)
     $('*').on('hidden.bs.dropdown', function(e) {
-        PlayerLoader.validateLoad(baseUrl, filterTypes);
-    });*/
+        filterAjax.validateLoad(baseUrl, filterTypes);
+    });
 });

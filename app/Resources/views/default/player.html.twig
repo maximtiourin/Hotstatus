@@ -33,6 +33,11 @@
             <div class="col-sm-12 col-md-12 col-xl-8">
                 {% embed ':snippets:players/playerloader.html.twig' %}
                     {% block javascripts %}{% endblock %}
+                    {% block filter %}
+                        <div>
+                            {% include ':snippets:heroes/filter/dropdown/select/seasons.html.twig' %}
+                        </div>
+                    {% endblock %}
                 {% endembed %}
             </div>
             <div class="col-xl-2">
