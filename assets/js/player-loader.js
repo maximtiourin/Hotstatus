@@ -102,7 +102,7 @@ PlayerLoader.ajax.filter = {
                 ajaxMatches.internal.limit = json.limits.matches;
 
                 //Load initial match set
-
+                ajaxMatches.load();
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -163,6 +163,7 @@ PlayerLoader.ajax.matches = {
         let self = PlayerLoader.ajax.matches;
 
         let data = PlayerLoader.data;
+        let data_matches = data.matches;
 
         //Generate url based on internal state
         self.internal.url = self.generateUrl();
@@ -176,6 +177,7 @@ PlayerLoader.ajax.matches = {
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_offsets = json.offsets;
                 let json_limits = json.limits;
+                let json_matches = json.matches;
 
                 /*
                  * Process Matches
@@ -185,7 +187,11 @@ PlayerLoader.ajax.matches = {
                 self.internal.offset = json_offsets.matches + self.internal.limit;
 
                 //Append new Match widgets for matches that aren't in the manifest
-
+                for (let match of json_matches) {
+                    if (!data_matches.isMatchGenerated(match)) {
+                        data_matches.generateMatch(match);
+                    }
+                }
 
 
 
@@ -216,26 +222,37 @@ PlayerLoader.data = {
             let self = PlayerLoader.data.matches;
 
             //Match component container
-            let html = '<div id="pl-recentmatch-container-' + match.id + '"></div>';
+            let html = '<div id="pl-recentmatch-container-' + match.id + '" class="pl-recentmatch-container"></div>';
 
             $('#pl-recentmatches-container').append(html);
 
             //Subcomponents
-            generateMatchWidget(match);
-            generateFullMatchPane(match);
+            self.generateMatchWidget(match);
+            self.generateFullMatchPane(match);
 
             //Log match in manifest
-            self.matchManifest[match.id] = true;
+            self.internal.matchManifest[match.id] = true;
         },
         generateMatchWidget: function(match) {
             //Generates the small match bar with simple info
-            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget"></div>';
+            let self = PlayerLoader.data.matches;
+
+            //Match Widget Container
+            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget ' + self.color_MatchWonLost(match.player.won) + '"></div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
         },
         generateFullMatchPane: function(match) {
             //Generates the full match pane that loads when a match widget is clicked for a detailed view
 
+        },
+        color_MatchWonLost: function(won) {
+            if (won) {
+                return 'pl-recentmatch-bg-won';
+            }
+            else {
+                return 'pl-recentmatch-bg-lost';
+            }
         },
         isMatchGenerated: function(matchid) {
             let self = PlayerLoader.data.matches;

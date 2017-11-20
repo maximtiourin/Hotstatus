@@ -255,6 +255,7 @@ class PlayerdataController extends Controller {
                 while ($row = $db->fetchArray($matchesResult)) {
                     $match = [];
 
+                    $arr_players = json_decode($row['players'], true);
                     $arr_team_level = json_decode($row['team_level'], true);
                     $arr_bans = json_decode($row['bans'], true);
                     $arr_mmr = json_decode($row['mmr'], true);
@@ -294,6 +295,31 @@ class PlayerdataController extends Controller {
                         $mmr['new'] = $m_mmr['new'];
 
                         $team['mmr'] = $mmr;
+
+                        //Players
+                        $players = [];
+
+                        foreach ($arr_players as $mplayer) {
+                            if ($mplayer['team'] == $t) {
+                                //TODO
+                                if ($mplayer['id'] == $player) {
+                                    $mainplayer = [];
+
+                                    //This is the main player, set additional data
+                                    $mainplayer['won'] = $match['winner'] == $t;
+
+                                    $match['player'] = $mainplayer;
+                                }
+
+                                $p = [];
+
+                                //Set relevant player info
+
+                                $players[] = $p;
+                            }
+                        }
+
+                        $team['players'] = $players;
 
 
                         //Set team
