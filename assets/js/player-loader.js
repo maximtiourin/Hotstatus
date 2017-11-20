@@ -32,6 +32,7 @@ PlayerLoader.ajax = {
         loading: false, //Whether or not the player loader is currently loading a result
         url: '', //url to get a response from
         dataSrc: 'data', //The array of data is found in .data field
+        matchesOffset: 0, //The offset of the matches loaded, to allow for scroller paging
     },
     /*
      * If supplied a url will set the ajax url to the given url, and then return the ajax object.
@@ -113,13 +114,21 @@ PlayerLoader.ajax = {
  */
 PlayerLoader.data = {
     matches: {
+        generateMatchWidget: function() {
+            //Generates the small match bar with simple info
+        },
+        generateFullMatchPane: function() {
+            //Generates the full match pane that loads when a match widget is clicked for a detailed view
+        },
         generate: function(matches) {
+            //Generates the matches pane and fills with initial offering of match widgets
             //TODO - actually implement
             for (let match of matches) {
                 $('#pl-recentmatches-container').append('<div>' + match.date + '</div>');
             }
         },
         empty: function() {
+            //Empties the matches pane (will probably never need)
             $('#pl-recentmatches-container').empty();
         }
     }
