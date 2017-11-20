@@ -37,7 +37,18 @@ PlayerLoader.ajax.filter = {
      * Returns the current season selected based on filter
      */
     getSeason: function() {
+        let val = HotstatusFilter.getSelectorValues("season");
 
+        let season = "Unknown";
+
+        if (typeof val === "string" || val instanceof String) {
+            season = val;
+        }
+        else if (val !== null && val.length > 0) {
+            season = val[0];
+        }
+
+        return season;
     },
     /*
      * Handles loading on valid filters, making sure to only fire once until loading is complete
@@ -74,8 +85,9 @@ PlayerLoader.ajax.filter = {
                 let json = jsonResponse[self.internal.dataSrc];
 
                 /*
-                 * Empty dynamically filled containers
+                 * Empty dynamically filled containers, reset all subajax objects
                  */
+                ajax.matches.reset();
 
                 /*
                  * Heroloader Container
@@ -88,6 +100,9 @@ PlayerLoader.ajax.filter = {
                 let ajaxMatches = ajax.matches;
                 ajaxMatches.internal.offset = 0;
                 ajaxMatches.internal.limit = json.limits.matches;
+
+                //Load initial match set
+
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -120,6 +135,15 @@ PlayerLoader.ajax.matches = {
         offset: 0, //Matches offset
         limit: 5, //Matches limit
     },
+    reset: function() {
+        let self = PlayerLoader.ajax.matches;
+
+        self.internal.loading = false;
+        self.internal.url = '';
+        self.internal.offset=  0;
+        self.internal.limit =  5;
+        PlayerLoader.data.matches.empty();
+    },
     generateUrl: function() {
         let self = PlayerLoader.ajax.matches;
 
@@ -146,14 +170,23 @@ PlayerLoader.ajax.matches = {
         //Enable Processing Indicator
         self.internal.loading = true;
 
-        //Main Filter Ajax Request
+        //+= Recent Matches Ajax Request
         $.getJSON(self.internal.url)
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
+                let json_offsets = json.offsets;
+                let json_limits = json.limits;
 
                 /*
-                 * Empty dynamically filled containers
+                 * Process Matches
                  */
+                //Set new limit and offset
+                self.internal.limit = json_limits.matches;
+                self.internal.offset = json_offsets.matches + self.internal.limit;
+
+                //Append new Match widgets for matches that aren't in the manifest
+
+
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -175,18 +208,43 @@ PlayerLoader.ajax.matches = {
  */
 PlayerLoader.data = {
     matches: {
-        generateMatchWidget: function() {
+        internal: {
+            matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
+        },
+        generateMatch: function(match) {
+            //Generates all subcomponents of a match display
+            let self = PlayerLoader.data.matches;
+
+            //Match component container
+            let html = '<div id="pl-recentmatch-container-' + match.id + '"></div>';
+
+            $('#pl-recentmatches-container').append(html);
+
+            //Subcomponents
+            generateMatchWidget(match);
+            generateFullMatchPane(match);
+
+            //Log match in manifest
+            self.matchManifest[match.id] = true;
+        },
+        generateMatchWidget: function(match) {
             //Generates the small match bar with simple info
+            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget"></div>';
+
+            $('#pl-recentmatch-container-' + match.id).append(html);
         },
-        generateFullMatchPane: function() {
+        generateFullMatchPane: function(match) {
             //Generates the full match pane that loads when a match widget is clicked for a detailed view
+
         },
-        generate: function(matches) {
-            //Generates the matches pane and fills with initial offering of match widgets
+        isMatchGenerated: function(matchid) {
+            let self = PlayerLoader.data.matches;
+
+            return self.internal.matchManifest.hasOwnProperty(matchid + "");
         },
         empty: function() {
-            //Empties the matches pane (will probably never need)
             $('#pl-recentmatches-container').empty();
+            PlayerLoader.data.matches.internal.matchManifest = {};
         }
     }
 };
