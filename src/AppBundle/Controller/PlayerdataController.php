@@ -263,7 +263,7 @@ class PlayerdataController extends Controller {
                     $match['id'] = $row['id'];
                     $match['gameType'] = $row['type'];
                     $match['map'] = $row['map'];
-                    $match['date'] = $row['date'];
+                    $match['date'] = (new \DateTime($row['date']))->getTimestamp();
                     $match['match_length'] = $row['match_length'];
                     $match['winner'] = $row['winner'];
                     $match['quality'] = $arr_mmr['quality'];
@@ -307,6 +307,8 @@ class PlayerdataController extends Controller {
 
                                     //This is the main player, set additional data
                                     $mainplayer['won'] = $match['winner'] == $t;
+                                    $mainplayer['hero'] = $mplayer['hero'];
+                                    $mainplayer['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
 
                                     $match['player'] = $mainplayer;
                                 }

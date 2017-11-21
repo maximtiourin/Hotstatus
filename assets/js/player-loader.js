@@ -238,7 +238,24 @@ PlayerLoader.data = {
             let self = PlayerLoader.data.matches;
 
             //Match Widget Container
-            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget ' + self.color_MatchWonLost(match.player.won) + '"></div>';
+            let timestamp = match.date;
+            let relative_date = Hotstatus.date.getRelativeTime(timestamp);
+            let date = (new Date(timestamp * 1000)).toLocaleString();
+            let match_time = Hotstatus.date.getMinuteSecondTime(match.match_length);
+            let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
+
+            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget ' + self.color_MatchWonLost(match.player.won) + '">' +
+                '<div class="recentmatch-simplewidget-leftpane">' +
+                '<div class="rm-sw-lp-gameType">' + match.gameType + '</div>' +
+                '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '">' + relative_date + '</span></div>' +
+                '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +
+                '<div class="rm-sw-lp-matchlength">' + match_time + '</div>' +
+                '</div>' +
+                '<div class="recentmatch-simplewidget-heropane">' +
+                '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
+                '<div class="rm-sw-hp-heroname">' + match.player.hero + '</div>' +
+                '</div>' +
+                '</div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
         },

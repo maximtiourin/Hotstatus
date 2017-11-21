@@ -1209,11 +1209,25 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-recentmatch-bg-won {
-    background-color: #52b8e1 !important;
+    background-color: #caffda !important;
+    border: 1px;
+    border-style: solid;
+    border-color: #749b7c;
 }
 
 .pl-recentmatch-bg-lost {
-    background-color: #e16968 !important;
+    background-color: #ffb8b7 !important;
+    border: 1px;
+    border-style: solid;
+    border-color: #9b6968;
+}
+
+.pl-recentmatch-won {
+    color: #3be159 !important;
+}
+
+.pl-recentmatch-lost {
+    color: #cd2e2d !important;
 }
 
 .pl-recentmatch-container {
@@ -1221,20 +1235,93 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-recentmatches-container {
-    background-color: rgba(46, 57, 59, 0.4);
+    /*background-color: rgba(46, 57, 59, 0.4);
     border: 1px;
     border-color: #4F495C;
     border-style: solid;
-    border-radius: 4px;
+    border-radius: 4px;*/
     padding: 7px 15px !important;
     margin: 2px 2px !important;
 }
 
 .recentmatch-simplewidget {
+    position: relative;
     width:540px;
-    height:100px;
-    border: 1px;
-    border-style: solid;
-    border-color: #1B0748;
+    height:80px;
     margin: 0 auto;
+    color: #4b4b4b;
+}
+
+.recentmatch-simplewidget-leftpane {
+    /*background-color: #162C7E*/;
+    position: absolute;
+    left:0px;
+    top:0px;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 98px;
+    height: 78px;
+    text-align: center;
+}
+
+.rm-sw-lp-gameType {
+    position: relative;
+    margin: 0 -100%;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: default;
+}
+
+.rm-sw-lp-date {
+    position: relative;
+    margin: 0 -100%;
+    font-size: 10px;
+    font-weight: normal;
+    cursor: help;
+}
+
+.rm-sw-lp-victory {
+    position: relative;
+    margin: 0 -100%;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: default;
+}
+
+.rm-sw-lp-matchlength {
+    position: relative;
+    margin: -2px -100%;
+    font-size: 11px;
+    font-weight: normal;
+    cursor: default;
+}
+
+.recentmatch-simplewidget-heropane {
+    /*background-color: #4d207e*/;
+    position: absolute;
+    left:98px;
+    top:0px;
+    white-space: nowrap;
+    overflow: visible;
+    width: 98px;
+    height: 78px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rm-sw-hp-portrait {
+    margin-top:6px;
+    border: 2px !important;
+    border-color: #151120 !important;
+    border-style: solid!important;
+    width: 50px;
+    height: 50px;
+}
+
+.rm-sw-hp-heroname {
+    position: relative;
+    margin: -2px -100%;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: default;
 }

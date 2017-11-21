@@ -26,6 +26,84 @@
                     self.internal.generated = true;
                 }
             }
+        },
+        date: {
+            /*
+             * Given a UTC unix timestamp, returns the relative time between that timestamp and now, in the string form of:
+             * 15 seconds ago || 3 minutes ago || 2 days ago
+             */
+            getRelativeTime: function(ts) {
+                let secs = (Math.round(Date.now() / 1000) - ts); //Time Difference in seconds
+
+                let plural = function(val) {
+                    if (val === 1) {
+                        return '';
+                    }
+                    else {
+                        return 's';
+                    }
+                };
+
+                let timestr = function(str, amt) {
+                    let val = Math.floor(amt);
+
+                    return val + " "+str+plural(val)+" ago";
+                };
+
+                //Seconds
+                let mins = secs / 60.0;
+                if (mins >= 1) {
+                    let hours = mins / 60.0;
+
+                    if (hours >= 1) {
+                        let days = hours / 24.0;
+
+                        if (days >= 1) {
+                            let months = days / 30.0;
+
+                            if (months >= 1) {
+                                let years = months / 12.0;
+
+                                if (years >= 1) {
+                                    return timestr("year", years);
+                                }
+                                else {
+                                    return timestr("month", months);
+                                }
+                            }
+                            else {
+                                return timestr("day", days);
+                            }
+                        }
+                        else {
+                            return timestr("hour", hours);
+                        }
+                    }
+                    else {
+                        return timestr("minute", mins);
+                    }
+                }
+                else {
+                    return timestr("second", secs);
+                }
+            },
+            /*
+             * Given a time in seconds, returns a string that describes the length of time in the string form of:
+             * {mins}m {secs}s
+             */
+            getMinuteSecondTime: function(secs) {
+
+
+                let mins = Math.floor(secs / 60.0);
+                if (mins >= 1) {
+                    let rsecs = secs % 60;
+
+                    return mins + "m " + rsecs + "s";
+                }
+                else {
+                    return secs + "s";
+                }
+            }
         }
     };
     window.Hotstatus = Hotstatus;
