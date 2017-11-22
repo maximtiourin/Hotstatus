@@ -244,8 +244,8 @@ PlayerLoader.data = {
             let match_time = Hotstatus.date.getMinuteSecondTime(match.match_length);
             let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
 
-            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget ' + self.color_MatchWonLost(match.player.won) + '">' +
-                '<div class="recentmatch-simplewidget-leftpane">' +
+            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
+                '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '">' +
                 '<div class="rm-sw-lp-gameType">' + match.gameType + '</div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '">' + relative_date + '</span></div>' +
                 '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +

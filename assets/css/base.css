@@ -1209,17 +1209,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-recentmatch-bg-won {
-    background-color: #caffda !important;
-    border: 1px;
-    border-style: solid;
-    border-color: #749b7c;
+    background-color: #00872b !important;
 }
 
 .pl-recentmatch-bg-lost {
-    background-color: #ffb8b7 !important;
-    border: 1px;
-    border-style: solid;
-    border-color: #9b6968;
+    background-color: #870300 !important;
 }
 
 .pl-recentmatch-won {
@@ -1249,7 +1243,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     width:540px;
     height:80px;
     margin: 0 auto;
-    color: #4b4b4b;
+    color: rgba(255, 255, 255, 0.65);
+    background-color: #384143 !important;
+    border: 2px;
+    border-style: solid;
+    border-color: #1c2223;
 }
 
 .recentmatch-simplewidget-leftpane {
@@ -1260,7 +1258,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     white-space: nowrap;
     overflow: hidden;
     width: 98px;
-    height: 78px;
+    height: 76px;
     text-align: center;
 }
 
@@ -1270,6 +1268,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     font-size: 11px;
     font-weight: bold;
     cursor: default;
+    color: #FFFFFF;
 }
 
 .rm-sw-lp-date {
@@ -1324,4 +1323,5 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     font-size: 14px;
     font-weight: 600;
     cursor: default;
+    color: #FFFFFF;
 }
