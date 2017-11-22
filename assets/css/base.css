@@ -1209,11 +1209,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-recentmatch-bg-won {
-    background-color: #00872b !important;
+    /*background-color: #00872b !important;*/
 }
 
 .pl-recentmatch-bg-lost {
-    background-color: #870300 !important;
+    /*background-color: #870300 !important;*/
 }
 
 .pl-recentmatch-won {
@@ -1329,7 +1329,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .recentmatch-simplewidget-statspane {
-    background-color: #7e1d25;
+    /*background-color: #7e1d25;*/
     position: absolute;
     left:196px;
     top:0px;
@@ -1347,8 +1347,13 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 16px;
     font-weight: bold;
-    cursor: default;
+    cursor: help;
     color: #FFFFFF;
+    z-index: 7;
+}
+
+.rm-sw-sp-kda-indiv-deaths {
+    color: #ff8989 !important;
 }
 
 .rm-sw-sp-kda {
@@ -1356,6 +1361,20 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 12px;
     font-weight: normal;
-    cursor: default;
-    color: #FFFFFF;
+    cursor: help;
+    z-index: 7;
+}
+
+.rm-sw-sp-kda-num {
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.rm-sw-sp-medal-container {
+    margin: -5px 0;
+    z-index: 6;
+}
+
+.rm-sw-sp-medal {
+    width:42px;
+    height:42px;
 }

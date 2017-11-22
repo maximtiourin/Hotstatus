@@ -133,26 +133,26 @@ PlayerLoader.ajax.matches = {
         url: '', //url to get a response from
         dataSrc: 'data', //The array of data is found in .data field
         offset: 0, //Matches offset
-        limit: 5, //Matches limit
+        limit: 10, //Matches limit (Initial limit is set by initial loader)
     },
     reset: function() {
         let self = PlayerLoader.ajax.matches;
 
         self.internal.loading = false;
         self.internal.url = '';
-        self.internal.offset=  0;
-        self.internal.limit =  5;
+        self.internal.offset = 0;
         PlayerLoader.data.matches.empty();
     },
     generateUrl: function() {
         let self = PlayerLoader.ajax.matches;
 
-        return Routing.generate("playerdata_pagedata_player_recentmatches", {
+        let bUrl = Routing.generate("playerdata_pagedata_player_recentmatches", {
             player: player_id,
             offset: self.internal.offset,
-            limit: self.internal.limit,
-            season: PlayerLoader.ajax.filter.getSeason()
+            limit: self.internal.limit
         });
+
+        return HotstatusFilter.generateUrl(bUrl, ["season", "gameType"]);
     },
     /*
      * Loads {limit} recent matches offset by {offset} from current internal url, looking for data in the current internal dataSrc field.
@@ -182,8 +182,7 @@ PlayerLoader.ajax.matches = {
                 /*
                  * Process Matches
                  */
-                //Set new limit and offset
-                self.internal.limit = json_limits.matches;
+                //Set new offset
                 self.internal.offset = json_offsets.matches + self.internal.limit;
 
                 //Append new Match widgets for matches that aren't in the manifest
@@ -243,6 +242,14 @@ PlayerLoader.data = {
             let date = (new Date(timestamp * 1000)).toLocaleString();
             let match_time = Hotstatus.date.getMinuteSecondTime(match.match_length);
             let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
+            let medal = match.player.medal;
+
+            let medalhtml = "";
+            if (medal.exists) {
+                medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div>'
+                    + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-sw-sp-medal" src="'
+                    + medal.image + '"></span></div>';
+            }
 
             let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '">' +
@@ -257,8 +264,9 @@ PlayerLoader.data = {
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane">' +
                 '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">'
-                        + match.player.kills + ' / ' + match.player.deaths + ' / ' + match.player.assists + '</span></div>' +
-                '<div class="rm-sw-sp-kda">' + match.player.kda + ' KDA</div>' +
+                        + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></div>' +
+                '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></div>' +
+                medalhtml +
                 '</div>' +
                 '</div>';
 
@@ -295,7 +303,7 @@ $(document).ready(function() {
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('playerdata_pagedata_player', {player: player_id});
 
-    let filterTypes = ["season"];
+    let filterTypes = ["season", "gameType"];
     let filterAjax = PlayerLoader.ajax.filter;
 
     filterAjax.validateLoad(baseUrl);

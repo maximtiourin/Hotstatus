@@ -27,7 +27,7 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
-    const COUNT_DEFAULT_MATCHES = 5; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
+    const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
     /**
      * Returns the relevant player data for a player necessary to build a player page
@@ -116,6 +116,7 @@ class PlayerdataController extends Controller {
                 $imgbasepath = $pkg->getUrl('');
 
                 //Get season date range
+                //TODO - make sure to use season queryValue rather than this baked in
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 $season = "2017 Season 2"; //TODO use older season for debug, use SEASON_CURRENT for actual
                 $seasonobj = HotstatusPipeline::$SEASONS[$season];
@@ -170,13 +171,43 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent matches for player based on offset and match limit
      *
-     * @Route("/playerdata/pagedata/{player}/recentmatches/{offset}/{limit}/{season}", defaults={"offset" = 0, "limit" = 5}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
+     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
      */
     //condition="request.isXmlHttpRequest()",
-    public function getPageDataPlayerRecentMatchesAction($player, $offset, $limit, $season) {
+    public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerRecentMatchesAction";
         $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::recentMatches_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -187,7 +218,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player:$offset:$limit";
+        $CACHE_ID = "$_ID:$player:$queryCacheSql:$offset:$limit";
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -225,7 +256,7 @@ class PlayerdataController extends Controller {
 
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-                $seasonobj = HotstatusPipeline::$SEASONS[$season];
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
                 $date_start = $seasonobj['start'];
                 $date_end = $seasonobj['end'];
 
@@ -233,12 +264,8 @@ class PlayerdataController extends Controller {
                 $db->prepare("GetRecentMatches",
                     "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players`, m.`bans`, m.`team_level`, m.`mmr` 
                     FROM `players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
-                    WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
+                    WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
                 $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
-
-                $db->prepare("GetMedal",
-                    "SELECT * FROM `herodata_awards` WHERE `id` = ?");
-                $db->bind("GetMedal", "s", $r_medal);
 
                 $r_player_id = $player;
                 $r_date_start = $date_start;
@@ -328,7 +355,13 @@ class PlayerdataController extends Controller {
                                     $mainplayer['kda'] = self::formatNumber($mp_kda, 2);
 
                                     //Medal
-                                    $mp_medals = json_decode($mp_stats['medals'], true);
+                                    $mp_medals_nonassoc = $mp_stats['medals'];
+
+                                    //Convert regular arr to assoc for filtering
+                                    $mp_medals = [];
+                                    foreach ($mp_medals_nonassoc as $mval) {
+                                        $mp_medals[$mval] = TRUE;
+                                    }
 
                                     //Delete invalid medals
                                     foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
@@ -345,12 +378,29 @@ class PlayerdataController extends Controller {
                                         }
                                     }
 
-                                    $mp_medal = null;
-
-                                    if (count($mp_medals) > 0) {
-                                        $r_medal = $mp_medals[0];
-                                        $db->execute("GetMedal");
+                                    //Convert assoc back to regular arr
+                                    $mp_medals_arr = [];
+                                    foreach ($mp_medals AS $mkey => $mval) {
+                                        $mp_medals_arr[] = $mkey;
                                     }
+
+                                    $mp_medal = [
+                                        "exists" => FALSE,
+                                    ];
+
+                                    if (count($mp_medals_arr) > 0) {
+                                        $medalid = $mp_medals_arr[0];
+
+                                        if (key_exists($medalid, HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
+                                            $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medalid];
+                                            $mp_medal['exists'] = TRUE;
+                                            $mp_medal['name'] = $medalobj['name'];
+                                            $mp_medal['desc_simple'] = $medalobj['desc_simple'];
+                                            $mp_medal['image'] = $imgbasepath . $medalobj['image'] . "_blue.png";
+                                        }
+                                    }
+
+                                    $mainplayer['medal'] = $mp_medal;
 
 
                                     $match['player'] = $mainplayer;
@@ -414,12 +464,43 @@ class PlayerdataController extends Controller {
 
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "date",
-                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
+                self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    private static function recentMatches_initQueries() {
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "type",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
         ];
 

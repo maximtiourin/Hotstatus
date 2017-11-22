@@ -311,6 +311,7 @@ class DefaultController extends Controller
             return $this->render(':default:player.html.twig', [
                 "player" => $pagedata,
                 "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
+                "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
             ]);
         }
         else {
