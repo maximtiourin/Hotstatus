@@ -271,7 +271,7 @@ PlayerLoader.data = {
             let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '">' +
                 '<div class="rm-sw-lp-gameType">' + match.gameType + '</div>' +
-                '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '">' + relative_date + '</span></div>' +
+                '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
                 '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +
                 '<div class="rm-sw-lp-matchlength">' + match_time + '</div>' +
                 '</div>' +
@@ -281,9 +281,9 @@ PlayerLoader.data = {
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane">' +
                 nomedalhtml +
-                '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">'
-                        + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></div>' +
-                '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></div>' +
+                '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists"><span class="rm-sw-sp-kda-indiv-text">'
+                        + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></span></div>' +
+                '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-text"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></span></div>' +
                 medalhtml +
                 '</div>' +
                 '</div>';

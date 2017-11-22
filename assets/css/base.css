@@ -1293,6 +1293,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 10px;
     font-weight: normal;
+}
+
+.rm-sw-lp-date-text {
     cursor: help;
 }
 
@@ -1368,9 +1371,13 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 16px;
     font-weight: bold;
-    cursor: help;
     color: #FFFFFF;
     z-index: 7;
+}
+
+.rm-sw-sp-kda-indiv-text {
+    cursor: help;
+    z-index: 8;
 }
 
 .rm-sw-sp-kda-indiv-deaths {
@@ -1382,8 +1389,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 12px;
     font-weight: normal;
-    cursor: help;
     z-index: 7;
+}
+
+.rm-sw-sp-kda-text {
+    cursor: help;
+    z-index: 8;
 }
 
 .rm-sw-sp-kda-num {
