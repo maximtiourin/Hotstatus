@@ -236,6 +236,10 @@ class PlayerdataController extends Controller {
                     WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
                 $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
 
+                $db->prepare("GetMedal",
+                    "SELECT * FROM `herodata_awards` WHERE `id` = ?");
+                $db->bind("GetMedal", "s", $r_medal);
+
                 $r_player_id = $player;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
@@ -309,6 +313,45 @@ class PlayerdataController extends Controller {
                                     $mainplayer['won'] = $match['winner'] == $t;
                                     $mainplayer['hero'] = $mplayer['hero'];
                                     $mainplayer['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+
+                                    //Stats
+                                    $mp_stats = $mplayer['stats'];
+                                    $mp_kills = $mp_stats['kills'];
+                                    $mp_deaths = $mp_stats['deaths'];
+                                    $mp_assists = $mp_stats['assists'];
+
+                                    $mp_kda = round((($mp_kills + $mp_assists) / ($mp_deaths * 1.00)), 2);
+
+                                    $mainplayer['kills'] = $mp_kills;
+                                    $mainplayer['deaths'] = $mp_deaths;
+                                    $mainplayer['assists'] = $mp_assists;
+                                    $mainplayer['kda'] = self::formatNumber($mp_kda, 2);
+
+                                    //Medal
+                                    $mp_medals = json_decode($mp_stats['medals'], true);
+
+                                    //Delete invalid medals
+                                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
+                                        if (key_exists($medalid, $mp_medals)) {
+                                            unset($mp_medals[$medalid]);
+                                        }
+                                    }
+
+                                    //Remap any necessary medal ids
+                                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
+                                        if (key_exists($mold, $mp_medals)) {
+                                            $mp_medals[$mnew] = $mp_medals[$mold];
+                                            unset($mp_medals[$mold]);
+                                        }
+                                    }
+
+                                    $mp_medal = null;
+
+                                    if (count($mp_medals) > 0) {
+                                        $r_medal = $mp_medals[0];
+                                        $db->execute("GetMedal");
+                                    }
+
 
                                     $match['player'] = $mainplayer;
                                 }

@@ -1260,6 +1260,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     width: 98px;
     height: 76px;
     text-align: center;
+    z-index: 1;
 }
 
 .rm-sw-lp-gameType {
@@ -1303,9 +1304,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     white-space: nowrap;
     overflow: visible;
     width: 98px;
-    height: 78px;
+    height: 76px;
     text-align: center;
     vertical-align: middle;
+    z-index: 2;
 }
 
 .rm-sw-hp-portrait {
@@ -1322,6 +1324,38 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: -2px -100%;
     font-size: 14px;
     font-weight: 600;
+    cursor: default;
+    color: #FFFFFF;
+}
+
+.recentmatch-simplewidget-statspane {
+    background-color: #7e1d25;
+    position: absolute;
+    left:196px;
+    top:0px;
+    white-space: nowrap;
+    overflow: visible;
+    width: 98px;
+    height: 76px;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 1;
+}
+
+.rm-sw-sp-kda-indiv {
+    position: relative;
+    margin: 0 -100%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: default;
+    color: #FFFFFF;
+}
+
+.rm-sw-sp-kda {
+    position: relative;
+    margin: 0 -100%;
+    font-size: 12px;
+    font-weight: normal;
     cursor: default;
     color: #FFFFFF;
 }

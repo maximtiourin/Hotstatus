@@ -255,6 +255,11 @@ PlayerLoader.data = {
                 '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
                 '<div class="rm-sw-hp-heroname">' + match.player.hero + '</div>' +
                 '</div>' +
+                '<div class="recentmatch-simplewidget-statspane">' +
+                '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">'
+                        + match.player.kills + ' / ' + match.player.deaths + ' / ' + match.player.assists + '</span></div>' +
+                '<div class="rm-sw-sp-kda">' + match.player.kda + ' KDA</div>' +
+                '</div>' +
                 '</div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
