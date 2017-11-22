@@ -160,7 +160,7 @@ PlayerLoader.ajax.matches = {
      */
     load: function() {
         let ajax = PlayerLoader.ajax;
-        let self = PlayerLoader.ajax.matches;
+        let self = ajax.matches;
 
         let data = PlayerLoader.data;
         let data_matches = data.matches;
@@ -169,6 +169,7 @@ PlayerLoader.ajax.matches = {
         self.internal.url = self.generateUrl();
 
         //Enable Processing Indicator
+        let displayMatchLoader = false;
         self.internal.loading = true;
 
         //+= Recent Matches Ajax Request
@@ -192,7 +193,10 @@ PlayerLoader.ajax.matches = {
                     }
                 }
 
-
+                //Set displayMatchLoader if we got as many matches as we asked for
+                if (json_matches.length >= self.internal.limit) {
+                    displayMatchLoader = true;
+                }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
                 $('[data-toggle="tooltip"]').tooltip();
@@ -201,6 +205,14 @@ PlayerLoader.ajax.matches = {
                 //Failure to load Data
             })
             .always(function() {
+                //Toggle display match loader button if hadNewMatch
+                if (displayMatchLoader) {
+                    data_matches.generate_matchLoader();
+                }
+                else {
+                    data_matches.remove_matchLoader();
+                }
+
                 self.internal.loading = false;
             });
 
@@ -214,6 +226,7 @@ PlayerLoader.ajax.matches = {
 PlayerLoader.data = {
     matches: {
         internal: {
+            matchLoaderGenerated: false,
             matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
         },
         generateMatch: function(match) {
@@ -245,10 +258,14 @@ PlayerLoader.data = {
             let medal = match.player.medal;
 
             let medalhtml = "";
+            let nomedalhtml = "";
             if (medal.exists) {
                 medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div>'
                     + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-sw-sp-medal" src="'
                     + medal.image + '"></span></div>';
+            }
+            else {
+                nomedalhtml = "<div class='rm-sw-sp-offset'></div>";
             }
 
             let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
@@ -263,6 +280,7 @@ PlayerLoader.data = {
                 '<div class="rm-sw-hp-heroname">' + match.player.hero + '</div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane">' +
+                nomedalhtml +
                 '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">'
                         + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></div>' +
                 '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></div>' +
@@ -275,6 +293,31 @@ PlayerLoader.data = {
         generateFullMatchPane: function(match) {
             //Generates the full match pane that loads when a match widget is clicked for a detailed view
 
+        },
+        remove_matchLoader: function() {
+            let self = PlayerLoader.data.matches;
+
+            self.internal.matchLoaderGenerated = false;
+            $('#pl-recentmatch-matchloader').remove();
+        },
+        generate_matchLoader: function() {
+            let self = PlayerLoader.data.matches;
+
+            self.remove_matchLoader();
+
+            let loaderhtml = '<div id="pl-recentmatch-matchloader">Load More Matches...</div>';
+
+            $('#pl-recentmatches-container').append(loaderhtml);
+
+            $('#pl-recentmatch-matchloader').click(function() {
+                let t = $(this);
+
+                t.html('<i class="fa fa-refresh fa-spin fa-1x fa-fw"></i>');
+
+                PlayerLoader.ajax.matches.load();
+            });
+
+            self.internal.matchLoaderGenerated = true;
         },
         color_MatchWonLost: function(won) {
             if (won) {
@@ -290,8 +333,11 @@ PlayerLoader.data = {
             return self.internal.matchManifest.hasOwnProperty(matchid + "");
         },
         empty: function() {
+            let self = PlayerLoader.data.matches;
+
             $('#pl-recentmatches-container').empty();
-            PlayerLoader.data.matches.internal.matchManifest = {};
+            self.internal.matchLoaderGenerated = false;
+            self.internal.matchManifest = {};
         }
     }
 };

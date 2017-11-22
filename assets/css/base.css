@@ -1238,6 +1238,22 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 2px 2px !important;
 }
 
+#pl-recentmatch-matchloader {
+    position: relative;
+    width:540px;
+    height:36px;
+    line-height: 36px;
+    font-size: 14px;
+    vertical-align: middle;
+    margin: 0 auto;
+    color: #FFFFFF;
+    background-color: #384143 !important;
+    border: 2px;
+    border-style: solid;
+    border-color: #1c2223;
+    cursor:pointer;
+}
+
 .recentmatch-simplewidget {
     position: relative;
     width:540px;
@@ -1340,6 +1356,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-align: center;
     vertical-align: middle;
     z-index: 1;
+}
+
+.rm-sw-sp-offset {
+    height:15px;
+    margin: 0 -100%;
 }
 
 .rm-sw-sp-kda-indiv {

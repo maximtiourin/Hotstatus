@@ -145,9 +145,9 @@ class HerodataController extends Controller {
                 $db->prepare("GetHeroAbilities",
                     "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
 
-                $db->prepare("Get3Medals",
+                /*$db->prepare("Get3Medals",
                     "SELECT * FROM `herodata_awards` WHERE `id` = ? OR `id` = ? OR `id` = ?");
-                $db->bind("Get3Medals", "sss", $r_medal_1, $r_medal_2, $r_medal_3);
+                $db->bind("Get3Medals", "sss", $r_medal_1, $r_medal_2, $r_medal_3);*/
 
                 $db->prepare("GetHeroTalents",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
@@ -902,12 +902,12 @@ class HerodataController extends Controller {
                     }
                 });
 
+                $smcount = count($sortedMedals);
+
                 //Fetch the top 3 medals
-                $r_medal_1 = "~";
+                /*$r_medal_1 = "~";
                 $r_medal_2 = "~";
                 $r_medal_3 = "~";
-
-                $smcount = count($sortedMedals);
 
                 if ($smcount > 0) {
                     $r_medal_1 = $sortedMedals[0]['key'];
@@ -917,25 +917,20 @@ class HerodataController extends Controller {
                             $r_medal_3 = $sortedMedals[2]['key'];
                         }
                     }
-                }
+                }*/
 
-                $medalsResult = $db->execute("Get3Medals");
-                $medalsResultRows = $db->countResultRows($medalsResult);
-                if ($medalsResultRows > 0) {
-                    while ($row = $db->fetchArray($medalsResult)) {
-                        for ($i = 0; $i < $smcount; $i++) {
-                            $medal = &$sortedMedals[$i];
+                for ($i = 0; $i < $smcount; $i++) {
+                    $medal = &$sortedMedals[$i];
 
-                            if ($medal['key'] === $row['id']) {
-                                $medal['name'] = $row['name'];
-                                $medal['desc_simple'] = $row['desc_simple'];
-                                $medal['image_blue'] = $imgbasepath . $row['image'] . "_blue.png";
-                                $medal['image_red'] = $imgbasepath . $row['image'] . "_red.png";
-                            }
-                        }
+                    if (key_exists($medal['key'], HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
+                        $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medal['key']];
+
+                        $medal['name'] = $medalobj['name'];
+                        $medal['desc_simple'] = $medalobj['desc_simple'];
+                        $medal['image_blue'] = $imgbasepath . $medalobj['image'] . "_blue.png";
+                        $medal['image_red'] = $imgbasepath . $medalobj['image'] . "_red.png";
                     }
                 }
-                $db->freeResult($medalsResult);
 
                 //Splice sortedMedals to top 3
                 $sortedMedalsSlice = array_splice($sortedMedals, 0, 3);

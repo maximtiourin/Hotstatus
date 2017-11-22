@@ -425,8 +425,8 @@ class PlayerdataController extends Controller {
                 }
 
                 $pagedata['matches'] = $matches;
-                $pagedata['offsets']['matches'] = $offset;
-                $pagedata['limits']['matches'] = $limit;
+                $pagedata['offsets']['matches'] = intval($offset);
+                $pagedata['limits']['matches'] = intval($limit);
 
                 //Close connection and set valid response
                 $db->close();
