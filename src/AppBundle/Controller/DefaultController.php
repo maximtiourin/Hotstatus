@@ -230,7 +230,7 @@ class DefaultController extends Controller
         $validResult = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . '_' . $id;
+        $CACHE_ID = $_ID . ':' . $id;
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);

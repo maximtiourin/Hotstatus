@@ -347,7 +347,10 @@ class PlayerdataController extends Controller {
                                     $mp_deaths = $mp_stats['deaths'];
                                     $mp_assists = $mp_stats['assists'];
 
-                                    $mp_kda = round((($mp_kills + $mp_assists) / ($mp_deaths * 1.00)), 2);
+                                    $mp_kda = $mp_kills + $mp_assists;
+                                    if ($mp_deaths > 0) {
+                                        $mp_kda = round(($mp_kda / ($mp_deaths * 1.00)), 2);
+                                    }
 
                                     $mainplayer['kills'] = $mp_kills;
                                     $mainplayer['deaths'] = $mp_deaths;
