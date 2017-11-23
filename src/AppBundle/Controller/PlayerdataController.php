@@ -116,10 +116,9 @@ class PlayerdataController extends Controller {
                 $imgbasepath = $pkg->getUrl('');
 
                 //Get season date range
-                //TODO - make sure to use season queryValue rather than this baked in
+                //TODO - make sure to use season queryValue rather than current baked in
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-                $season = "2017 Season 2"; //TODO use older season for debug, use SEASON_CURRENT for actual
-                $seasonobj = HotstatusPipeline::$SEASONS[$season];
+                $seasonobj = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_CURRENT];
                 $date_start = $seasonobj['start'];
                 $date_end = $seasonobj['end'];
 
