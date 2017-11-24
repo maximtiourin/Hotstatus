@@ -260,7 +260,7 @@ PlayerLoader.data = {
             let medalhtml = "";
             let nomedalhtml = "";
             if (medal.exists) {
-                medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div>'
+                medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div class=\'hl-talents-tooltip-name\'>'
                     + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-sw-sp-medal" src="'
                     + medal.image + '"></span></div>';
             }
@@ -269,7 +269,7 @@ PlayerLoader.data = {
             }
 
             let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
-                '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '">' +
+                '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + match.map_image + ');">' +
                 '<div class="rm-sw-lp-gameType">' + match.gameType + '</div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
                 '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +

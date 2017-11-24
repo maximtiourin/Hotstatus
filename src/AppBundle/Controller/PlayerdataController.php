@@ -266,9 +266,63 @@ class PlayerdataController extends Controller {
                     WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
                 $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
 
+                $db->prepare("GetTalentsForHero",
+                    "SELECT `name`, `name_internal`, `desc_simple`, `image` FROM `herodata_talents` WHERE `hero` = ?");
+                $db->bind("GetTalentsForHero", "s", $r_hero);
+
                 $r_player_id = $player;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
+
+                /*
+                 * Functions
+                 */
+                $processMedal = function($medals, $img_bpath, $color) {
+                    //Convert regular arr to assoc for filtering
+                    $mp_medals = [];
+                    foreach ($medals as $mval) {
+                        $mp_medals[$mval] = TRUE;
+                    }
+
+                    //Delete invalid medals
+                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
+                        if (key_exists($medalid, $mp_medals)) {
+                            unset($mp_medals[$medalid]);
+                        }
+                    }
+
+                    //Remap any necessary medal ids
+                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
+                        if (key_exists($mold, $mp_medals)) {
+                            $mp_medals[$mnew] = $mp_medals[$mold];
+                            unset($mp_medals[$mold]);
+                        }
+                    }
+
+                    //Convert assoc back to regular arr
+                    $mp_medals_arr = [];
+                    foreach ($mp_medals AS $mkey => $mval) {
+                        $mp_medals_arr[] = $mkey;
+                    }
+
+                    $mp_medal = [
+                        "exists" => FALSE,
+                    ];
+
+                    if (count($mp_medals_arr) > 0) {
+                        $medalid = $mp_medals_arr[0];
+
+                        if (key_exists($medalid, HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
+                            $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medalid];
+                            $mp_medal['exists'] = TRUE;
+                            $mp_medal['name'] = $medalobj['name'];
+                            $mp_medal['desc_simple'] = $medalobj['desc_simple'];
+                            $mp_medal['image'] = $img_bpath . $medalobj['image'] . "_$color.png";
+                        }
+                    }
+
+                    return $mp_medal;
+                };
 
                 /*
                  * Collect recent matches data
@@ -293,6 +347,7 @@ class PlayerdataController extends Controller {
                     $match['id'] = $row['id'];
                     $match['gameType'] = $row['type'];
                     $match['map'] = $row['map'];
+                    $match['map_image'] = $imgbasepath . 'ui/map_match_leftpane_' . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP][$match['map']]['name_sort'] . '.png';
                     $match['date'] = (new \DateTime($row['date']))->getTimestamp();
                     $match['match_length'] = $row['match_length'];
                     $match['winner'] = $row['winner'];
@@ -331,20 +386,74 @@ class PlayerdataController extends Controller {
 
                         foreach ($arr_players as $mplayer) {
                             if ($mplayer['team'] == $t) {
-                                //TODO
+                                $p = [];
+
+                                //Set relevant player info
+                                $p['id'] = $mplayer['id'];
+                                $p['hero'] = $mplayer['hero'];
+                                $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+                                $p['name'] = $mplayer['name'];
+
+                                //Stats
+                                $mstats = $mplayer['stats'];
+                                $p['stats'] = [
+                                    "kills" => $mstats['kills'],
+                                    "deaths" => $mstats[''],
+                                    "assists" => $mstats[''],
+                                    "healing" => $mstats[''],
+                                    "merc_camps" => $mstats[''],
+                                    "exp_contrib" => $mstats[''],
+                                    "hero_damage" => $mstats[''],
+                                    "siege_damage" => $mstats[''],
+                                ];
+
+                                //Additional
+                                $p['silenced'] = $mplayer['silenced'];
+                                $p['hero_level'] = $mplayer['hero_level'];
+                                $p['mmr_rating'] = $mplayer['mmr']['old']['rating'];
+
+                                //Medal
+                                $p['medal'] = $processMedal($mstats['medals'], $imgbasepath, "blue");
+
+                                //Talents
+                                $r_hero = $p['hero'];
+
+                                $talentMap = [];
+                                foreach ($mplayer['talents'] as $t_name_internal) {
+                                    $talentMap[$t_name_internal] = [];
+                                }
+
+                                $talentArr = [];
+
+                                $talentsResult = $db->execute("GetTalentsForHero");
+                                while ($trow = $db->fetchArray($talentsResult)) {
+                                    if (key_exists($trow['name_internal'], $talentMap)) {
+                                        $talentArr[] = [
+                                            "name" => $trow['name'],
+                                            "desc_simple" => $trow['desc_simple'],
+                                            "image" => $trow['image'],
+                                        ];
+                                    }
+                                }
+                                $db->freeResult($talentsResult);
+
+                                $p['talents'] = $talentArr;
+
+                                $players[] = $p;
+
+                                //Check if main player and set additional data
                                 if ($mplayer['id'] == $player) {
                                     $mainplayer = [];
 
                                     //This is the main player, set additional data
                                     $mainplayer['won'] = $match['winner'] == $t;
-                                    $mainplayer['hero'] = $mplayer['hero'];
-                                    $mainplayer['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+                                    $mainplayer['hero'] = $p['hero'];
+                                    $mainplayer['image_hero'] = $p['image_hero'];
 
                                     //Stats
-                                    $mp_stats = $mplayer['stats'];
-                                    $mp_kills = $mp_stats['kills'];
-                                    $mp_deaths = $mp_stats['deaths'];
-                                    $mp_assists = $mp_stats['assists'];
+                                    $mp_kills = $mstats['kills'];
+                                    $mp_deaths = $mstats['deaths'];
+                                    $mp_assists = $mstats['assists'];
 
                                     $mp_kda = $mp_kills + $mp_assists;
                                     if ($mp_deaths > 0) {
@@ -357,62 +466,13 @@ class PlayerdataController extends Controller {
                                     $mainplayer['kda'] = self::formatNumber($mp_kda, 2);
 
                                     //Medal
-                                    $mp_medals_nonassoc = $mp_stats['medals'];
+                                    $mainplayer['medal'] = $p['medal'];
 
-                                    //Convert regular arr to assoc for filtering
-                                    $mp_medals = [];
-                                    foreach ($mp_medals_nonassoc as $mval) {
-                                        $mp_medals[$mval] = TRUE;
-                                    }
-
-                                    //Delete invalid medals
-                                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
-                                        if (key_exists($medalid, $mp_medals)) {
-                                            unset($mp_medals[$medalid]);
-                                        }
-                                    }
-
-                                    //Remap any necessary medal ids
-                                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
-                                        if (key_exists($mold, $mp_medals)) {
-                                            $mp_medals[$mnew] = $mp_medals[$mold];
-                                            unset($mp_medals[$mold]);
-                                        }
-                                    }
-
-                                    //Convert assoc back to regular arr
-                                    $mp_medals_arr = [];
-                                    foreach ($mp_medals AS $mkey => $mval) {
-                                        $mp_medals_arr[] = $mkey;
-                                    }
-
-                                    $mp_medal = [
-                                        "exists" => FALSE,
-                                    ];
-
-                                    if (count($mp_medals_arr) > 0) {
-                                        $medalid = $mp_medals_arr[0];
-
-                                        if (key_exists($medalid, HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
-                                            $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medalid];
-                                            $mp_medal['exists'] = TRUE;
-                                            $mp_medal['name'] = $medalobj['name'];
-                                            $mp_medal['desc_simple'] = $medalobj['desc_simple'];
-                                            $mp_medal['image'] = $imgbasepath . $medalobj['image'] . "_blue.png";
-                                        }
-                                    }
-
-                                    $mainplayer['medal'] = $mp_medal;
-
+                                    //Talents
+                                    $mainplayer['talents'] = $p['talents'];
 
                                     $match['player'] = $mainplayer;
                                 }
-
-                                $p = [];
-
-                                //Set relevant player info
-
-                                $players[] = $p;
                             }
                         }
 
