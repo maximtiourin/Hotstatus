@@ -133,7 +133,7 @@ PlayerLoader.ajax.matches = {
         url: '', //url to get a response from
         dataSrc: 'data', //The array of data is found in .data field
         offset: 0, //Matches offset
-        limit: 10, //Matches limit (Initial limit is set by initial loader)
+        limit: 6, //Matches limit (Initial limit is set by initial loader)
     },
     reset: function() {
         let self = PlayerLoader.ajax.matches;
@@ -262,22 +262,57 @@ PlayerLoader.data = {
             if (medal.exists) {
                 medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div class=\'hl-talents-tooltip-name\'>'
                     + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-sw-sp-medal" src="'
-                    + medal.image + '"></span></div>';
+                    + medal.image + '_blue.png"></span></div>';
             }
             else {
                 nomedalhtml = "<div class='rm-sw-sp-offset'></div>";
             }
 
+            let talentshtml = "";
+
+            for (let i = 0; i < 7; i++) {
+                talentshtml += "<div class='rm-sw-tp-talent-bg'>";
+
+                if (match.player.talents.length > i) {
+                    let talent = match.player.talents[i];
+
+                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-sw-tp-talent" src="' + talent.image + '"></span>';
+                }
+
+                talentshtml += "</div>";
+            }
+
+            let playershtml = "";
+
+            let t = 0;
+            for (let team of match.teams) {
+                playershtml += '<div class="rm-sw-pp-team' + t + '">';
+
+                for (let player of team.players) {
+                    let special = '<a class="rm-sw-link" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
+                    if (player.id === match.player.id) {
+                        special = '<a class="rm-sw-special">';
+                    }
+
+                    playershtml += '<div class="rm-sw-pp-player"><span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><img class="rm-sw-pp-player-image" src="'
+                        + player.image_hero + '"></span>' + special + player.name + '</a></div>';
+                }
+
+                playershtml += '</div>';
+
+                t++;
+            }
+
             let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + match.map_image + ');">' +
-                '<div class="rm-sw-lp-gameType">' + match.gameType + '</div>' +
+                '<div class="rm-sw-lp-gameType"><span class="rm-sw-lp-gameType-text" data-toggle="tooltip" data-html="true" title="' + match.map + '">' + match.gameType + '</span></div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
                 '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +
                 '<div class="rm-sw-lp-matchlength">' + match_time + '</div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-heropane">' +
                 '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
-                '<div class="rm-sw-hp-heroname">' + match.player.hero + '</div>' +
+                '<div class="rm-sw-hp-heroname"><a class="rm-sw-link" href="' + Routing.generate("hero", {heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane">' +
                 nomedalhtml +
@@ -286,6 +321,12 @@ PlayerLoader.data = {
                 '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-text"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></span></div>' +
                 medalhtml +
                 '</div>' +
+                '<div class="recentmatch-simplewidget-talentspane"><div class="rm-sw-tp-talent-container">' +
+                talentshtml +
+                '</div></div>' +
+                '<div class="recentmatch-simplewidget-playerspane"><div class="rm-sw-pp-inner">' +
+                playershtml +
+                '</div></div>' +
                 '</div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
@@ -331,6 +372,9 @@ PlayerLoader.data = {
             let self = PlayerLoader.data.matches;
 
             return self.internal.matchManifest.hasOwnProperty(matchid + "");
+        },
+        talenttooltip: function(name, desc) {
+            return '<span class=\'hl-talents-tooltip-name\'>' + name + '</span><br>' + desc;
         },
         empty: function() {
             let self = PlayerLoader.data.matches;

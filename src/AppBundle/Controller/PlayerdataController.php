@@ -27,7 +27,7 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
-    const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
+    const COUNT_DEFAULT_MATCHES = 6; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
     /**
      * Returns the relevant player data for a player necessary to build a player page
@@ -170,7 +170,7 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent matches for player based on offset and match limit
      *
-     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
+     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 6}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
      */
     //condition="request.isXmlHttpRequest()",
     public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
@@ -277,7 +277,7 @@ class PlayerdataController extends Controller {
                 /*
                  * Functions
                  */
-                $processMedal = function($medals, $img_bpath, $color) {
+                $processMedal = function($medals, $img_bpath) {
                     //Convert regular arr to assoc for filtering
                     $mp_medals = [];
                     foreach ($medals as $mval) {
@@ -317,7 +317,7 @@ class PlayerdataController extends Controller {
                             $mp_medal['exists'] = TRUE;
                             $mp_medal['name'] = $medalobj['name'];
                             $mp_medal['desc_simple'] = $medalobj['desc_simple'];
-                            $mp_medal['image'] = $img_bpath . $medalobj['image'] . "_$color.png";
+                            $mp_medal['image'] = $img_bpath . $medalobj['image'];
                         }
                     }
 
@@ -358,6 +358,8 @@ class PlayerdataController extends Controller {
                     for ($t = 0; $t <= 1; $t++) {
                         $team = [];
 
+                        $team['color'] = ($t == 0) ? ("blue") : ("red");
+
                         //Team level
                         $team['level'] = $arr_team_level[$t];
 
@@ -390,21 +392,22 @@ class PlayerdataController extends Controller {
 
                                 //Set relevant player info
                                 $p['id'] = $mplayer['id'];
-                                $p['hero'] = $mplayer['hero'];
                                 $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
                                 $p['name'] = $mplayer['name'];
+                                $p['hero'] = $mplayer['hero'];
 
-                                //Stats
+                                //In-depth stats disabled for recentmatches fetch, individual full match stats must be specifically requested by user
+                                /*//Stats
                                 $mstats = $mplayer['stats'];
                                 $p['stats'] = [
                                     "kills" => $mstats['kills'],
-                                    "deaths" => $mstats[''],
-                                    "assists" => $mstats[''],
-                                    "healing" => $mstats[''],
-                                    "merc_camps" => $mstats[''],
-                                    "exp_contrib" => $mstats[''],
-                                    "hero_damage" => $mstats[''],
-                                    "siege_damage" => $mstats[''],
+                                    "deaths" => $mstats['deaths'],
+                                    "assists" => $mstats['assists'],
+                                    "healing" => $mstats['healing'],
+                                    "merc_camps" => $mstats['merc_camps'],
+                                    "exp_contrib" => $mstats['exp_contrib'],
+                                    "hero_damage" => $mstats['hero_damage'],
+                                    "siege_damage" => $mstats['siege_damage'],
                                 ];
 
                                 //Additional
@@ -413,7 +416,7 @@ class PlayerdataController extends Controller {
                                 $p['mmr_rating'] = $mplayer['mmr']['old']['rating'];
 
                                 //Medal
-                                $p['medal'] = $processMedal($mstats['medals'], $imgbasepath, "blue");
+                                $p['medal'] = $processMedal($mstats['medals'], $imgbasepath);
 
                                 //Talents
                                 $r_hero = $p['hero'];
@@ -431,13 +434,13 @@ class PlayerdataController extends Controller {
                                         $talentArr[] = [
                                             "name" => $trow['name'],
                                             "desc_simple" => $trow['desc_simple'],
-                                            "image" => $trow['image'],
+                                            "image" => $imgbasepath . $trow['image'] . '.png',
                                         ];
                                     }
                                 }
                                 $db->freeResult($talentsResult);
 
-                                $p['talents'] = $talentArr;
+                                $p['talents'] = $talentArr;*/
 
                                 $players[] = $p;
 
@@ -446,11 +449,13 @@ class PlayerdataController extends Controller {
                                     $mainplayer = [];
 
                                     //This is the main player, set additional data
+                                    $mainplayer['id'] = $p['id'];
                                     $mainplayer['won'] = $match['winner'] == $t;
                                     $mainplayer['hero'] = $p['hero'];
                                     $mainplayer['image_hero'] = $p['image_hero'];
 
                                     //Stats
+                                    $mstats = $mplayer['stats'];
                                     $mp_kills = $mstats['kills'];
                                     $mp_deaths = $mstats['deaths'];
                                     $mp_assists = $mstats['assists'];
@@ -466,10 +471,31 @@ class PlayerdataController extends Controller {
                                     $mainplayer['kda'] = self::formatNumber($mp_kda, 2);
 
                                     //Medal
-                                    $mainplayer['medal'] = $p['medal'];
+                                    $mainplayer['medal'] = $processMedal($mstats['medals'], $imgbasepath);
 
                                     //Talents
-                                    $mainplayer['talents'] = $p['talents'];
+                                    $r_hero = $mplayer['hero'];
+
+                                    $talentMap = [];
+                                    foreach ($mplayer['talents'] as $t_name_internal) {
+                                        $talentMap[$t_name_internal] = [];
+                                    }
+
+                                    $talentArr = [];
+
+                                    $talentsResult = $db->execute("GetTalentsForHero");
+                                    while ($trow = $db->fetchArray($talentsResult)) {
+                                        if (key_exists($trow['name_internal'], $talentMap)) {
+                                            $talentArr[] = [
+                                                "name" => $trow['name'],
+                                                "desc_simple" => $trow['desc_simple'],
+                                                "image" => $imgbasepath . $trow['image'] . '.png',
+                                            ];
+                                        }
+                                    }
+                                    $db->freeResult($talentsResult);
+
+                                    $mainplayer['talents'] = $talentArr;
 
                                     $match['player'] = $mainplayer;
                                 }

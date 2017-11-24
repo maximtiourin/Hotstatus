@@ -1240,7 +1240,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 #pl-recentmatch-matchloader {
     position: relative;
-    width:540px;
+    width:680px;
     height:36px;
     line-height: 36px;
     font-size: 14px;
@@ -1256,7 +1256,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .recentmatch-simplewidget {
     position: relative;
-    width:540px;
+    width:680px;
     height:80px;
     margin: 0 auto;
     color: #FFFFFF;
@@ -1286,9 +1286,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 0 -100%;
     font-size: 11px;
     font-weight: bold;
-    cursor: default;
     color: #FFFFFF;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+}
+
+.rm-sw-lp-gameType-text {
+    cursor: help;
 }
 
 .rm-sw-lp-date {
@@ -1413,6 +1416,132 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-sw-sp-medal {
+    display: inline-block;
     width:42px;
     height:42px;
+}
+
+.recentmatch-simplewidget-talentspane {
+    /*background-color: #7e1d25;*/
+    position: absolute;
+    left:294px;
+    top:0px;
+    text-wrap: normal;
+    overflow: visible;
+    width: 182px;
+    height: 76px;
+    text-align: center;
+    vertical-align: middle;
+    z-index: 1;
+}
+
+.rm-sw-tp-talent-container {
+    /*background-color: #7e4f2f;*/
+    position:absolute;
+    width:100%;
+    height:26px;
+    margin:auto;
+    left:0;
+    right:0;
+    top:0;
+    bottom:0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.rm-sw-tp-talent-bg {
+    background-color: #0c0a0f;
+    position:relative;
+    display:inline-block;
+    width:26px;
+    height:26px;
+    padding: 1px 1px;
+    border:1px;
+    border-style:solid;
+    border-color: #1B0748;
+}
+
+.rm-sw-tp-talent {
+    position:absolute;
+    left:0;
+    top:0;
+    width:24px;
+    height:24px;
+}
+
+.recentmatch-simplewidget-playerspane {
+    /*background-color: #7e1d25*/;
+    position: absolute;
+    left:476px;
+    top:0px;
+    text-wrap: normal;
+    overflow: visible;
+    width: 200px;
+    height: 76px;
+    padding: 0px 6px;
+    text-align: center;
+    z-index: 1;
+}
+
+.rm-sw-pp-inner {
+    /*background-color: #7e445e*/;
+    position: relative;
+    width:100%;
+    height:100%;
+}
+
+.rm-sw-pp-team0 {
+    position:absolute;
+    left:0;
+    top:0;
+    width:94px;
+    height:70px;
+}
+
+.rm-sw-pp-team1 {
+    position:absolute;
+    left:94px;
+    top:0;
+    width:94px;
+    height:70px;
+}
+
+.rm-sw-pp-player {
+    position:relative;
+    width:100%;
+    height:15px;
+    text-wrap: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    line-height: 15px;
+    text-align: left;
+}
+
+.rm-sw-pp-player-image {
+    display:inline-block;
+    margin-right:6px;
+    width:15px;
+    height:15px;
+    border:1px;
+    border-style:solid;
+    border-color: #1B0748;
+    cursor:help;
+}
+
+.rm-sw-link {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.rm-sw-link:hover {
+    color: #8782ff;
+    text-decoration: none;
+}
+
+.rm-sw-special {
+    color: #ffae38 !important;
+    text-decoration: none;
+    cursor: default;
 }

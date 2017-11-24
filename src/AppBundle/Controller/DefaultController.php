@@ -217,7 +217,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/players/{id}", requirements={"id": "\d+"}, name="player")
+     * @Route("/players/{id}", options={"expose"=true}, requirements={"id": "\d+"}, name="player")
      */
     public function playerAction($id) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
