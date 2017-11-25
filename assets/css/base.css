@@ -1240,7 +1240,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 #pl-recentmatch-matchloader {
     position: relative;
-    width:680px;
+    width:720px;
     height:36px;
     line-height: 36px;
     font-size: 14px;
@@ -1256,7 +1256,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .recentmatch-simplewidget {
     position: relative;
-    width:680px;
+    width:720px;
     height:80px;
     margin: 0 auto;
     color: #FFFFFF;
@@ -1370,6 +1370,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     z-index: 1;
 }
 
+.rm-sw-sp-inner {
+    position: relative;
+    width:100%;
+    height:100%;
+}
+
 .rm-sw-sp-offset {
     height:15px;
     margin: 0 -100%;
@@ -1412,7 +1418,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-sp-medal-container {
     margin: -5px 0;
-    z-index: 6;
 }
 
 .rm-sw-sp-medal {
@@ -1530,12 +1535,26 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     cursor:help;
 }
 
+.rm-sw-toxic {
+    margin-right: 2px;
+}
+
 .rm-sw-link {
-    color: #FFFFFF;
+     color: #FFFFFF;
+     text-decoration: none;
+ }
+
+.rm-sw-link:hover {
+    color: #8782ff;
     text-decoration: none;
 }
 
-.rm-sw-link:hover {
+.rm-sw-link-toxic {
+    color: #d5ff3e;
+    text-decoration: none;
+}
+
+.rm-sw-link-toxic:hover {
     color: #8782ff;
     text-decoration: none;
 }
@@ -1544,4 +1563,31 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #ffae38 !important;
     text-decoration: none;
     cursor: default;
+}
+
+.recentmatch-simplewidget-inspect {
+    background-color: #1c2223;
+    position: absolute;
+    left:676px;
+    top:0px;
+    width: 40px;
+    height: 76px;
+    text-align: center;
+    padding-top: 50px;
+    color: #38464b;
+    cursor:pointer;
+}
+
+.recentmatch-fullmatch {
+    background-color: #1c2223;
+    position: relative;
+    width:720px;
+    height:420px;
+    left:676px;
+    top:0px;
+    color: #FFFFFF;
+    border: 2px;
+    border-style: solid;
+    border-color: #1c2223;
+    cursor:pointer;
 }

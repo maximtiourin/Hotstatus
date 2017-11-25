@@ -400,6 +400,7 @@ class PlayerdataController extends Controller {
                                 $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
                                 $p['name'] = $mplayer['name'];
                                 $p['hero'] = $mplayer['hero'];
+                                $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
 
                                 //In-depth stats disabled for recentmatches fetch
                                 /*//Stats
@@ -458,6 +459,7 @@ class PlayerdataController extends Controller {
                                     $mainplayer['won'] = $match['winner'] == $t;
                                     $mainplayer['hero'] = $p['hero'];
                                     $mainplayer['image_hero'] = $p['image_hero'];
+                                    $mainplayer['silenced'] = $p['silenced'];
 
                                     //Stats
                                     $mstats = $mplayer['stats'];
@@ -483,7 +485,11 @@ class PlayerdataController extends Controller {
 
                                     $talentMap = [];
                                     foreach ($mplayer['talents'] as $t_name_internal) {
-                                        $talentMap[$t_name_internal] = [];
+                                        $talentMap[$t_name_internal] = [
+                                            "name" => $t_name_internal,
+                                            "desc_simple" => "Talent no longer exists...",
+                                            "image" => $imgbasepath . 'storm_ui_icon_monk_trait1.png',
+                                        ];
                                     }
 
                                     $talentsResult = $db->execute("GetTalentsForHero");
@@ -556,6 +562,292 @@ class PlayerdataController extends Controller {
 
         return $response;
     }
+
+    /**
+     * Returns match data for a match
+     *
+     * @Route("/playerdata/pagedata/match/{matchid}", requirements={"matchid": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_match")
+     */
+    //condition="request.isXmlHttpRequest()",
+    public function getPageDataMatchAction(Request $request, $matchid) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataMatchAction";
+        $_VERSION = 0;
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = "$_ID:$matchid";
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
+
+                //Prepare Statements
+                $db->prepare("GetMatch",
+                    "SELECT `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
+                $db->bind("GetMatch", "i", $r_match_id);
+
+                $db->prepare("GetTalentsForHero",
+                    "SELECT `name`, `name_internal`, `desc_simple`, `image` FROM `herodata_talents` WHERE `hero` = ?");
+                $db->bind("GetTalentsForHero", "s", $r_hero);
+
+                $r_match_id = $matchid;
+
+                /*
+                 * Functions
+                 */
+                $processMedal = function($medals, $img_bpath) {
+                    //Convert regular arr to assoc for filtering
+                    $mp_medals = [];
+                    foreach ($medals as $mval) {
+                        $mp_medals[$mval] = TRUE;
+                    }
+
+                    //Delete invalid medals
+                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
+                        if (key_exists($medalid, $mp_medals)) {
+                            unset($mp_medals[$medalid]);
+                        }
+                    }
+
+                    //Remap any necessary medal ids
+                    foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
+                        if (key_exists($mold, $mp_medals)) {
+                            $mp_medals[$mnew] = $mp_medals[$mold];
+                            unset($mp_medals[$mold]);
+                        }
+                    }
+
+                    //Convert assoc back to regular arr
+                    $mp_medals_arr = [];
+                    foreach ($mp_medals AS $mkey => $mval) {
+                        $mp_medals_arr[] = $mkey;
+                    }
+
+                    $mp_medal = [
+                        "exists" => FALSE,
+                    ];
+
+                    if (count($mp_medals_arr) > 0) {
+                        $medalid = $mp_medals_arr[0];
+
+                        if (key_exists($medalid, HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
+                            $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medalid];
+                            $mp_medal['exists'] = TRUE;
+                            $mp_medal['name'] = $medalobj['name'];
+                            $mp_medal['desc_simple'] = $medalobj['desc_simple'];
+                            $mp_medal['image'] = $img_bpath . $medalobj['image'];
+                        }
+                    }
+
+                    return $mp_medal;
+                };
+
+                /*
+                 * Collect Match Data
+                 */
+
+                /*
+                 * Match
+                 */
+                $match = [];
+                $matchResult = $db->execute("GetMatch");
+                while ($row = $db->fetchArray($matchResult)) {
+                    $arr_players = json_decode($row['players'], true);
+                    $arr_team_level = json_decode($row['team_level'], true);
+                    $arr_bans = json_decode($row['bans'], true);
+                    $arr_mmr = json_decode($row['mmr'], true);
+
+                    $match['winner'] = $row['winner'];
+                    $match['quality'] = $arr_mmr['quality'];
+
+                    //Teams
+                    $match['teams'] = [];
+                    for ($t = 0; $t <= 1; $t++) {
+                        $team = [];
+
+                        //In-depth stats disabled for recentmatches fetch
+                        $team['color'] = ($t == 0) ? ("blue") : ("red");
+
+                        //Team level
+                        $team['level'] = $arr_team_level[$t];
+
+                        //Bans
+                        $team['bans'] = [];
+                        $bans = $arr_bans[$t];
+                        for ($b = 0; $b < count($bans); $b++) {
+                            $ban = HotstatusPipeline::filter_getHeroNameFromHeroAttribute($bans[$b]);
+
+                            if ($ban !== HotstatusPipeline::UNKNOWN) {
+                                $team['bans'][] = $ban;
+                            }
+                        }
+
+                        //MMR
+                        $m_mmr = $arr_mmr["$t"];
+                        $mmr = [];
+
+                        $mmr['old'] = $m_mmr['old'];
+                        $mmr['new'] = $m_mmr['new'];
+
+                        $team['mmr'] = $mmr;
+
+                        //Players
+                        $players = [];
+
+                        foreach ($arr_players as $mplayer) {
+                            if ($mplayer['team'] == $t) {
+                                $p = [];
+
+                                //Set relevant player info
+                                $p['id'] = $mplayer['id'];
+                                $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+                                $p['name'] = $mplayer['name'];
+                                $p['hero'] = $mplayer['hero'];
+                                $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
+
+                                //Stats
+                                $mstats = $mplayer['stats'];
+
+                                $mp_kda = $mstats['kills'] + $mstats['assists'];
+                                if ($mstats['deaths'] > 0) {
+                                    $mp_kda = round(($mp_kda / ($mstats['deaths'] * 1.00)), 2);
+                                }
+
+                                $p['stats'] = [
+                                    "kills" => $mstats['kills'],
+                                    "deaths" => $mstats['deaths'],
+                                    "assists" => $mstats['assists'],
+                                    "kda" => self::formatNumber($mp_kda, 2),
+                                    "healing" => $mstats['healing'],
+                                    "merc_camps" => $mstats['merc_camps'],
+                                    "exp_contrib" => $mstats['exp_contrib'],
+                                    "hero_damage" => $mstats['hero_damage'],
+                                    "siege_damage" => $mstats['siege_damage'],
+                                ];
+
+                                //Additional
+                                $p['hero_level'] = $mplayer['hero_level'];
+                                $p['mmr_rating'] = $mplayer['mmr']['old']['rating'];
+
+                                //Medal
+                                $p['medal'] = $processMedal($mstats['medals'], $imgbasepath);
+
+                                //Talents
+                                $r_hero = $mplayer['hero'];
+
+                                $talentMap = [];
+                                foreach ($mplayer['talents'] as $t_name_internal) {
+                                    $talentMap[$t_name_internal] = [
+                                        "name" => $t_name_internal,
+                                        "desc_simple" => "Talent no longer exists...",
+                                        "image" => $imgbasepath . 'storm_ui_icon_monk_trait1.png',
+                                    ];
+                                }
+
+                                $talentsResult = $db->execute("GetTalentsForHero");
+                                while ($trow = $db->fetchArray($talentsResult)) {
+                                    if (key_exists($trow['name_internal'], $talentMap)) {
+                                        $talentMap[$trow['name_internal']] = [
+                                            "name" => $trow['name'],
+                                            "desc_simple" => $trow['desc_simple'],
+                                            "image" => $imgbasepath . $trow['image'] . '.png',
+                                        ];
+                                    }
+                                }
+                                $db->freeResult($talentsResult);
+
+                                //Set talent arr
+                                $talentArr = [];
+                                foreach ($talentMap as $name_internal => $talent) {
+                                    $talentArr[] = [
+                                        "name" => $talent['name'],
+                                        "desc_simple" => $talent['desc_simple'],
+                                        "image" => $talent['image'],
+                                    ];
+                                }
+
+                                $p['talents'] = $talentArr;
+
+                                $players[] = $p;
+                            }
+                        }
+
+                        $team['players'] = $players;
+
+
+                        //Set team
+                        $match['teams'][$t] = $team;
+                    }
+                }
+
+                $pagedata['match'] = $match;
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO after testing
+            }
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        /*$response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }*/ //TODO enable after testing
+
+        return $response;
+    }
+
 
     /*
      * Initializes the queries object for the hero pagedata

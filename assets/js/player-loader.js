@@ -130,7 +130,9 @@ PlayerLoader.ajax.filter = {
 PlayerLoader.ajax.matches = {
     internal: {
         loading: false, //Whether or not currently loading a result
+        matchloading: false, //Whether or not currently loading a fullmatch result
         url: '', //url to get a response from
+        matchurl: '', //url to get a fullmatch response from
         dataSrc: 'data', //The array of data is found in .data field
         offset: 0, //Matches offset
         limit: 6, //Matches limit (Initial limit is set by initial loader)
@@ -139,7 +141,9 @@ PlayerLoader.ajax.matches = {
         let self = PlayerLoader.ajax.matches;
 
         self.internal.loading = false;
+        self.internal.matchloading = false;
         self.internal.url = '';
+        self.internal.matchurl = '';
         self.internal.offset = 0;
         PlayerLoader.data.matches.empty();
     },
@@ -153,6 +157,11 @@ PlayerLoader.ajax.matches = {
         });
 
         return HotstatusFilter.generateUrl(bUrl, ["season", "gameType"]);
+    },
+    generateMatchUrl: function(match_id) {
+        return Routing.generate("playerdata_pagedata_match", {
+            matchid: match_id,
+        });
     },
     /*
      * Loads {limit} recent matches offset by {offset} from current internal url, looking for data in the current internal dataSrc field.
@@ -217,6 +226,45 @@ PlayerLoader.ajax.matches = {
             });
 
         return self;
+    },
+    /*
+     * Loads the match of given id to be displayed under match simplewidget
+     */
+    loadMatch: function(matchid) {
+        let ajax = PlayerLoader.ajax;
+        let self = ajax.matches;
+
+        let data = PlayerLoader.data;
+        let data_matches = data.matches;
+
+        //Generate url based on internal state
+        self.internal.matchurl = self.generateMatchUrl(matchid);
+
+        //Enable Processing Indicator
+        self.internal.matchloading = true;
+
+        //+= Recent Matches Ajax Request
+        $.getJSON(self.internal.matchurl)
+            .done(function(jsonResponse) {
+                let json = jsonResponse[self.internal.dataSrc];
+                let json_match = json.match;
+
+                /*
+                 * Process Match
+                 */
+
+
+                //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
+                $('[data-toggle="tooltip"]').tooltip();
+            })
+            .fail(function() {
+                //Failure to load Data
+            })
+            .always(function() {
+                self.internal.matchloading = false;
+            });
+
+        return self;
     }
 };
 
@@ -238,12 +286,14 @@ PlayerLoader.data = {
 
             $('#pl-recentmatches-container').append(html);
 
+            //Log match in manifest
+            self.internal.matchManifest[match.id + ""] = {
+                fullGenerated: false, //Whether or not the full match data has been loaded for the first time
+                fullDisplay: false //Whether or not the full match data is currently toggled to display
+            };
+
             //Subcomponents
             self.generateMatchWidget(match);
-            self.generateFullMatchPane(match);
-
-            //Log match in manifest
-            self.internal.matchManifest[match.id] = true;
         },
         generateMatchWidget: function(match) {
             //Generates the small match bar with simple info
@@ -257,6 +307,34 @@ PlayerLoader.data = {
             let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
             let medal = match.player.medal;
 
+            //Silence
+            let silence = function(isSilenced) {
+                let r = '';
+
+                if (isSilenced) {
+                    r = 'rm-sw-link-toxic';
+                }
+                else {
+                    r = 'rm-sw-link';
+                }
+
+                return r;
+            };
+
+            let silence_image = function(isSilenced, size) {
+                let s = '';
+
+                if (isSilenced) {
+                    if (size > 0) {
+                        let path = image_bpath + '/ui/icon_toxic.png';
+                        s += '<span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<span class=\'rm-sw-link-toxic\'>Silenced</span>"><img class="rm-sw-toxic" style="width:' + size + 'px;height:' + size + 'px;" src="' + path + '"></span>';
+                    }
+                }
+
+                return s;
+            };
+
+            //Medal
             let medalhtml = "";
             let nomedalhtml = "";
             if (medal.exists) {
@@ -268,8 +346,8 @@ PlayerLoader.data = {
                 nomedalhtml = "<div class='rm-sw-sp-offset'></div>";
             }
 
+            //Talents
             let talentshtml = "";
-
             for (let i = 0; i < 7; i++) {
                 talentshtml += "<div class='rm-sw-tp-talent-bg'>";
 
@@ -282,20 +360,20 @@ PlayerLoader.data = {
                 talentshtml += "</div>";
             }
 
+            //Players
             let playershtml = "";
-
             let t = 0;
             for (let team of match.teams) {
                 playershtml += '<div class="rm-sw-pp-team' + t + '">';
 
                 for (let player of team.players) {
-                    let special = '<a class="rm-sw-link" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
+                    let special = '<a class="'+silence(player.silenced)+'" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
                     if (player.id === match.player.id) {
                         special = '<a class="rm-sw-special">';
                     }
 
                     playershtml += '<div class="rm-sw-pp-player"><span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><img class="rm-sw-pp-player-image" src="'
-                        + player.image_hero + '"></span>' + special + player.name + '</a></div>';
+                        + player.image_hero + '"></span>' + silence_image(player.silenced, 12) + special + player.name + '</a></div>';
                 }
 
                 playershtml += '</div>';
@@ -303,7 +381,7 @@ PlayerLoader.data = {
                 t++;
             }
 
-            let html = '<div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
+            let html = '<div id="recentmatch-container-'+ match.id +'"><div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + match.map_image + ');">' +
                 '<div class="rm-sw-lp-gameType"><span class="rm-sw-lp-gameType-text" data-toggle="tooltip" data-html="true" title="' + match.map + '">' + match.gameType + '</span></div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
@@ -312,28 +390,50 @@ PlayerLoader.data = {
                 '</div>' +
                 '<div class="recentmatch-simplewidget-heropane">' +
                 '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
-                '<div class="rm-sw-hp-heroname"><a class="rm-sw-link" href="' + Routing.generate("hero", {heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
+                '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("hero", {heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
                 '</div>' +
-                '<div class="recentmatch-simplewidget-statspane">' +
+                '<div class="recentmatch-simplewidget-statspane"><div class="rm-sw-sp-inner">' +
                 nomedalhtml +
                 '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists"><span class="rm-sw-sp-kda-indiv-text">'
                         + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></span></div>' +
                 '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-text"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></span></div>' +
                 medalhtml +
-                '</div>' +
+                '</div></div>' +
                 '<div class="recentmatch-simplewidget-talentspane"><div class="rm-sw-tp-talent-container">' +
                 talentshtml +
                 '</div></div>' +
                 '<div class="recentmatch-simplewidget-playerspane"><div class="rm-sw-pp-inner">' +
                 playershtml +
                 '</div></div>' +
-                '</div>';
+                '<div id="recentmatch-simplewidget-inspect-' + match.id + '" class="recentmatch-simplewidget-inspect">' +
+                '<i class="fa fa-chevron-down" aria-hidden="true"></i>' +
+                '</div>' +
+                '</div></div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
-        },
-        generateFullMatchPane: function(match) {
-            //Generates the full match pane that loads when a match widget is clicked for a detailed view
 
+            //Create click listeners for inspect pane
+            $('#recentmatch-simplewidget-inspect' + match.id).click(function() {
+                let t = $(this);
+
+                self.generateFullMatchPane(match.id);
+            });
+        },
+        generateFullMatchPane: function(matchid) {
+            //Generates the full match pane that loads when a match widget is clicked for a detailed view, if it's already loaded, toggle its display
+            let self = PlayerLoader.data.matches;
+
+            if (self.internal.matchManifest[matchid + ""].fullGenerated) {
+                //Toggle display
+            }
+            else {
+                //Generate full match pane
+                $('#recentmatch-container-'+matchid).append('<div id="recentmatch-fullmatch-'+ matchid +'" class="recentmatch-fullmatch"></div>');
+
+                //Log as generated in manifest
+                self.internal.matchManifest[matchid + ""].fullGenerated = true;
+                self.internal.matchManifest[matchid + ""].fullDisplay = true;
+            }
         },
         remove_matchLoader: function() {
             let self = PlayerLoader.data.matches;
