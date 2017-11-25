@@ -261,7 +261,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetRecentMatches",
-                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players`, m.`bans`, m.`team_level`, m.`mmr` 
+                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players` 
                     FROM `players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
                     WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
                 $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
@@ -340,9 +340,11 @@ class PlayerdataController extends Controller {
                     $match = [];
 
                     $arr_players = json_decode($row['players'], true);
-                    $arr_team_level = json_decode($row['team_level'], true);
+
+                    //In-depth stats disabled for recentmatches fetch
+                    /*$arr_team_level = json_decode($row['team_level'], true);
                     $arr_bans = json_decode($row['bans'], true);
-                    $arr_mmr = json_decode($row['mmr'], true);
+                    $arr_mmr = json_decode($row['mmr'], true);*/
 
                     $match['id'] = $row['id'];
                     $match['gameType'] = $row['type'];
@@ -351,14 +353,17 @@ class PlayerdataController extends Controller {
                     $match['date'] = (new \DateTime($row['date']))->getTimestamp();
                     $match['match_length'] = $row['match_length'];
                     $match['winner'] = $row['winner'];
-                    $match['quality'] = $arr_mmr['quality'];
+
+                    //In-depth stats disabled for recentmatches fetch
+                    //$match['quality'] = $arr_mmr['quality'];
 
                     //Teams
                     $match['teams'] = [];
                     for ($t = 0; $t <= 1; $t++) {
                         $team = [];
 
-                        $team['color'] = ($t == 0) ? ("blue") : ("red");
+                        //In-depth stats disabled for recentmatches fetch
+                        /*$team['color'] = ($t == 0) ? ("blue") : ("red");
 
                         //Team level
                         $team['level'] = $arr_team_level[$t];
@@ -381,7 +386,7 @@ class PlayerdataController extends Controller {
                         $mmr['old'] = $m_mmr['old'];
                         $mmr['new'] = $m_mmr['new'];
 
-                        $team['mmr'] = $mmr;
+                        $team['mmr'] = $mmr;*/
 
                         //Players
                         $players = [];
@@ -396,7 +401,7 @@ class PlayerdataController extends Controller {
                                 $p['name'] = $mplayer['name'];
                                 $p['hero'] = $mplayer['hero'];
 
-                                //In-depth stats disabled for recentmatches fetch, individual full match stats must be specifically requested by user
+                                //In-depth stats disabled for recentmatches fetch
                                 /*//Stats
                                 $mstats = $mplayer['stats'];
                                 $p['stats'] = [
@@ -481,12 +486,10 @@ class PlayerdataController extends Controller {
                                         $talentMap[$t_name_internal] = [];
                                     }
 
-                                    $talentArr = [];
-
                                     $talentsResult = $db->execute("GetTalentsForHero");
                                     while ($trow = $db->fetchArray($talentsResult)) {
                                         if (key_exists($trow['name_internal'], $talentMap)) {
-                                            $talentArr[] = [
+                                            $talentMap[$trow['name_internal']] = [
                                                 "name" => $trow['name'],
                                                 "desc_simple" => $trow['desc_simple'],
                                                 "image" => $imgbasepath . $trow['image'] . '.png',
@@ -494,6 +497,16 @@ class PlayerdataController extends Controller {
                                         }
                                     }
                                     $db->freeResult($talentsResult);
+
+                                    //Set talent arr
+                                    $talentArr = [];
+                                    foreach ($talentMap as $name_internal => $talent) {
+                                        $talentArr[] = [
+                                            "name" => $talent['name'],
+                                            "desc_simple" => $talent['desc_simple'],
+                                            "image" => $talent['image'],
+                                        ];
+                                    }
 
                                     $mainplayer['talents'] = $talentArr;
 
