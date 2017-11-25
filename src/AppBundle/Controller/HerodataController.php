@@ -120,7 +120,7 @@ class HerodataController extends Controller {
             //Try to get Mysql value
             $db = new MysqlDatabase();
 
-            $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
@@ -1130,7 +1130,7 @@ class HerodataController extends Controller {
             //Try to get Mysql value
             $db = new MysqlDatabase();
 
-            $connected_mysql = $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 
             $data = [];
             if ($connected_mysql !== FALSE) {
