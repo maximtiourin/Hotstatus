@@ -1582,9 +1582,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     background-color: #1c2223;
     position: relative;
     width:720px;
-    height:420px;
-    left:676px;
-    top:0px;
+    margin: 0 auto;
     color: #FFFFFF;
     border: 2px;
     border-style: solid;

@@ -413,8 +413,10 @@ PlayerLoader.data = {
             $('#pl-recentmatch-container-' + match.id).append(html);
 
             //Create click listeners for inspect pane
-            $('#recentmatch-simplewidget-inspect' + match.id).click(function() {
+            $('#recentmatch-simplewidget-inspect-' + match.id).click(function() {
                 let t = $(this);
+
+                console.log("click");
 
                 self.generateFullMatchPane(match.id);
             });
@@ -425,8 +427,11 @@ PlayerLoader.data = {
 
             if (self.internal.matchManifest[matchid + ""].fullGenerated) {
                 //Toggle display
+                console.log("toggle"); //TODO
             }
             else {
+                console.log("gen"); //TODO
+
                 //Generate full match pane
                 $('#recentmatch-container-'+matchid).append('<div id="recentmatch-fullmatch-'+ matchid +'" class="recentmatch-fullmatch"></div>');
 
