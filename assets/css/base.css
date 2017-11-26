@@ -1472,6 +1472,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     top:0;
     width:24px;
     height:24px;
+    cursor:help;
 }
 
 .recentmatch-simplewidget-playerspane {
@@ -1602,6 +1603,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border-color: #1c2223;
 }
 
+.rm-fm-team-container {
+    position:relative;
+    width:100%;
+}
+
 .rm-fm-rowheader {
     background-color: #0c31b0;
     position:relative;
@@ -1649,13 +1655,13 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .rm-fm-rh-bans-container {
     background-color: #6db044;
     position:absolute;
-    width:100px;
+    width:140px;
     height:100%;
     left:120px;
     top:0px;
     text-align: center;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 600;
     overflow: hidden;
     white-space: nowrap;
     cursor: default;
@@ -1665,10 +1671,30 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     display:inline-block;
     width: 32px;
     height: 32px;
-    border:1px;
+    border:2px;
     border-style:solid;
     border-color: #1B0748;
     margin: 0 2px;
+    cursor:help;
+}
+
+.rm-fm-rh-mmr-container {
+    background-color: #b05734;
+    position:absolute;
+    width:76px;
+    height:100%;
+    left:640px;
+    top:0px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.rm-fm-rh-mmr {
+    font-size: 14px;
 }
 
 .rm-fm-row {
@@ -1676,5 +1702,42 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     position:relative;
     width:100%;
     height:40px;
+    line-height: 40px;
     margin: 2px 0;
+}
+
+.rm-fm-r-heroimage-container {
+    background-color: #1ab061;
+    position:absolute;
+    width:40px;
+    height:100%;
+    left:0px;
+    top:0px;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.rm-fm-r-heroimage {
+    display:inline-block;
+    width: 32px;
+    height: 32px;
+    border:2px;
+    border-style:solid;
+    border-radius: 11px;
+    border-color: #1B0748;
+    cursor:help;
+}
+
+.rm-fm-r-herolevel {
+    position: absolute;
+    left:0;
+    top:-14px;
+    width:100%;
+    color: #FFFFFF;
+    font-size:12px;
+    font-weight:bold;
+    text-align: center;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }

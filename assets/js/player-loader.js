@@ -463,12 +463,17 @@ PlayerLoader.data = {
             //Loop through teams
             let t = 0;
             for (let team of match.teams) {
+                //Team Container
+                fullmatch_container.append('<div id="recentmatch-fullmatch-team-container-'+ matchid +'"></div>');
+                let team_container = $('#recentmatch-fullmatch-team-container-'+ matchid);
+
                 //Team Row Header
-                self.generateFullMatchRowHeader(fullmatch_container, team, match.winner === t, match.hasBans);
+                self.generateFullMatchRowHeader(team_container, team, match.winner === t, match.hasBans);
 
                 //Loop through players for team
                 for (let player of team.players) {
-
+                    //Player Row
+                    self.generateFullmatchRow(team_container, player);
                 }
 
                 t++;
@@ -502,7 +507,23 @@ PlayerLoader.data = {
                 '<div class="rm-fm-rh-bans-container">' +
                 bans +
                 '</div>' +
+                //Mmr Container
+                '<div class="rm-fm-rh-mmr-container">MMR: <span class="rm-fm-rh-mmr">' +
+                team.mmr.old.rating +
+                '</span></div>' +
                 '</div>';
+
+            container.append(html);
+        },
+        generateFullmatchRow: function(container, player) {
+            let self = PlayerLoader.data.matches;
+
+            let html = '<div class="rm-fm-row">' +
+            //Hero Image Container (With Hero Level)
+            '<div class="rm-fm-r-heroimage-container">' +
+            '<span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
+            '</div>' +
+            '</div>';
 
             container.append(html);
         },
