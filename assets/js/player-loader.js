@@ -243,6 +243,8 @@ PlayerLoader.ajax.matches = {
         //Enable Processing Indicator
         self.internal.matchloading = true;
 
+        $('#recentmatch-fullmatch-'+ matchid).prepend('<div class="fullmatch-processing"><i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></div>');
+
         //+= Recent Matches Ajax Request
         $.getJSON(self.internal.matchurl)
             .done(function(jsonResponse) {
@@ -252,6 +254,7 @@ PlayerLoader.ajax.matches = {
                 /*
                  * Process Match
                  */
+                data_matches.generateFullMatchRows(matchid, json_match);
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -261,6 +264,8 @@ PlayerLoader.ajax.matches = {
                 //Failure to load Data
             })
             .always(function() {
+                $('.fullmatch-processing').remove();
+
                 self.internal.matchloading = false;
             });
 
@@ -424,21 +429,82 @@ PlayerLoader.data = {
         generateFullMatchPane: function(matchid) {
             //Generates the full match pane that loads when a match widget is clicked for a detailed view, if it's already loaded, toggle its display
             let self = PlayerLoader.data.matches;
+            let ajax = PlayerLoader.ajax.matches;
 
             if (self.internal.matchManifest[matchid + ""].fullGenerated) {
                 //Toggle display
-                console.log("toggle"); //TODO
+                let matchman = self.internal.matchManifest[matchid + ""];
+                matchman.fullDisplay = !matchman.fullDisplay;
+                let selector = $('#recentmatch-fullmatch-'+ matchid);
+
+                if (matchman.fullDisplay) {
+                    selector.slideDown(100);
+                }
+                else {
+                    selector.slideUp(100);
+                }
             }
             else {
-                console.log("gen"); //TODO
-
                 //Generate full match pane
                 $('#recentmatch-container-'+matchid).append('<div id="recentmatch-fullmatch-'+ matchid +'" class="recentmatch-fullmatch"></div>');
+
+                //Load data
+                ajax.loadMatch(matchid);
 
                 //Log as generated in manifest
                 self.internal.matchManifest[matchid + ""].fullGenerated = true;
                 self.internal.matchManifest[matchid + ""].fullDisplay = true;
             }
+        },
+        generateFullMatchRows: function(matchid, match) {
+            let self = PlayerLoader.data.matches;
+            let fullmatch_container = $('#recentmatch-fullmatch-'+ matchid);
+
+            //Loop through teams
+            let t = 0;
+            for (let team of match.teams) {
+                //Team Row Header
+                self.generateFullMatchRowHeader(fullmatch_container, team, match.winner === t, match.hasBans);
+
+                //Loop through players for team
+                for (let player of team.players) {
+
+                }
+
+                t++;
+            }
+        },
+        generateFullMatchRowHeader: function(container, team, winner, hasBans) {
+            let self = PlayerLoader.data.matches;
+
+            //Victory
+            let victory = (winner) ? ('<span class="rm-fm-rh-victory">Victory</span>') : ('<span class="rm-fm-rh-defeat">Defeat</span>');
+
+            //Bans
+            let bans = '';
+            if (hasBans) {
+                bans += 'Bans: ';
+                for (let ban of team.bans) {
+                    bans += '<span data-toggle="tooltip" data-html="true" title="' + ban.name + '"><img class="rm-fm-rh-ban" src="'+ ban.image +'"></span>';
+                }
+            }
+
+            let html = '<div class="rm-fm-rowheader">' +
+                //Victory Container
+                '<div class="rm-fm-rh-victory-container">' +
+                victory +
+                '</div>' +
+                //Team Level Container
+                '<div class="rm-fm-rh-level-container">' +
+                team.level +
+                '</div>' +
+                //Bans Container
+                '<div class="rm-fm-rh-bans-container">' +
+                bans +
+                '</div>' +
+                '</div>';
+
+            container.append(html);
         },
         remove_matchLoader: function() {
             let self = PlayerLoader.data.matches;

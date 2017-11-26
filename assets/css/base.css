@@ -1578,6 +1578,19 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     cursor:pointer;
 }
 
+.fullmatch-processing {
+    position:relative;
+    left:50% !important;
+    width:100% !important;
+    height:120px !important;
+    padding-top: 20px;
+    margin-left:-50% !important;
+    text-align:center !important;
+    font-size:1em !important;
+    color: #494455 !important;
+    z-index: 9999;
+}
+
 .recentmatch-fullmatch {
     background-color: #1c2223;
     position: relative;
@@ -1587,5 +1600,81 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border: 2px;
     border-style: solid;
     border-color: #1c2223;
-    cursor:pointer;
+}
+
+.rm-fm-rowheader {
+    background-color: #0c31b0;
+    position:relative;
+    width:100%;
+    height:40px;
+    line-height: 40px;
+    margin: 2px 0;
+}
+
+.rm-fm-rh-victory-container {
+    background-color: #1eb0b0;
+    position:absolute;
+    width:80px;
+    height:100%;
+    left:0px;
+    top:0px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+    cursor: default;
+}
+
+.rm-fm-rh-victory {
+    color: #3be159 !important;
+}
+
+.rm-fm-rh-defeat {
+    color: #cd2e2d !important;
+}
+
+.rm-fm-rh-level-container {
+    background-color: #8125b0;
+    position:absolute;
+    width:40px;
+    height:100%;
+    left:80px;
+    top:0px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: default;
+}
+
+.rm-fm-rh-bans-container {
+    background-color: #6db044;
+    position:absolute;
+    width:100px;
+    height:100%;
+    left:120px;
+    top:0px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.rm-fm-rh-ban {
+    display:inline-block;
+    width: 32px;
+    height: 32px;
+    border:1px;
+    border-style:solid;
+    border-color: #1B0748;
+    margin: 0 2px;
+}
+
+.rm-fm-row {
+    background-color: #b0123c;
+    position:relative;
+    width:100%;
+    height:40px;
+    margin: 2px 0;
 }

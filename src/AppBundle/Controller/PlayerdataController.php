@@ -34,7 +34,7 @@ class PlayerdataController extends Controller {
      *
      * @Route("/playerdata/pagedata/{player}", options={"expose"=true}, name="playerdata_pagedata_player")
      */
-    //condition="request.isXmlHttpRequest()",
+    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerAction";
@@ -172,7 +172,7 @@ class PlayerdataController extends Controller {
      *
      * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 6}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
      */
-    //condition="request.isXmlHttpRequest()",
+    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerRecentMatchesAction";
@@ -568,7 +568,7 @@ class PlayerdataController extends Controller {
      *
      * @Route("/playerdata/pagedata/match/{matchid}", requirements={"matchid": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_match")
      */
-    //condition="request.isXmlHttpRequest()",
+    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataMatchAction(Request $request, $matchid) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataMatchAction";
@@ -621,7 +621,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetMatch",
-                    "SELECT `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
+                    "SELECT `type`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
                 $db->bind("GetMatch", "i", $r_match_id);
 
                 $db->prepare("GetTalentsForHero",
@@ -698,6 +698,9 @@ class PlayerdataController extends Controller {
                     $match['winner'] = $row['winner'];
                     $match['quality'] = $arr_mmr['quality'];
 
+                    $mtype = $row['type'];
+                    $match['hasBans'] = ($mtype === "Hero League" || $mtype === "Team League" || $mtype === "Unranked Draft");
+
                     //Teams
                     $match['teams'] = [];
                     for ($t = 0; $t <= 1; $t++) {
@@ -716,7 +719,10 @@ class PlayerdataController extends Controller {
                             $ban = HotstatusPipeline::filter_getHeroNameFromHeroAttribute($bans[$b]);
 
                             if ($ban !== HotstatusPipeline::UNKNOWN) {
-                                $team['bans'][] = $ban;
+                                $team['bans'][] = [
+                                    "name" => $ban,
+                                    "image" => $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$ban]['image_hero'] . '.png',
+                                ];
                             }
                         }
 
