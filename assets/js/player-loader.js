@@ -521,7 +521,7 @@ PlayerLoader.data = {
             let html = '<div class="rm-fm-row">' +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
-            '<span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
+            '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
             '</div>' +
             '</div>';
 
