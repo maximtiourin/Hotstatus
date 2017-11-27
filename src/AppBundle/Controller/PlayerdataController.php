@@ -470,12 +470,19 @@ class PlayerdataController extends Controller {
                                     $mp_kda = $mp_kills + $mp_assists;
                                     if ($mp_deaths > 0) {
                                         $mp_kda = round(($mp_kda / ($mp_deaths * 1.00)), 2);
+                                        $mp_kda_raw = $mp_kda;
+                                        $mp_kda = self::formatNumber($mp_kda, 2);
+                                    }
+                                    else {
+                                        $mp_kda = "Perfect";
+                                        $mp_kda_raw = 999999999;
                                     }
 
                                     $mainplayer['kills'] = $mp_kills;
                                     $mainplayer['deaths'] = $mp_deaths;
                                     $mainplayer['assists'] = $mp_assists;
-                                    $mainplayer['kda'] = self::formatNumber($mp_kda, 2);
+                                    $mainplayer['kda'] = $mp_kda;
+                                    $mainplayer['kda_raw'] = $mp_kda_raw;
 
                                     //Medal
                                     $mainplayer['medal'] = $processMedal($mstats['medals'], $imgbasepath);
@@ -701,6 +708,29 @@ class PlayerdataController extends Controller {
                     $mtype = $row['type'];
                     $match['hasBans'] = ($mtype === "Hero League" || $mtype === "Team League" || $mtype === "Unranked Draft");
 
+                    //Min/Max Stats
+                    $match['stats'] = [
+                        "hero_damage" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                        "siege_damage" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                        "merc_camps" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                        "healing" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                        "damage_taken" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                        "exp_contrib" => [
+                            "max" => PHP_INT_MIN,
+                        ],
+                    ];
+
+
                     //Teams
                     $match['teams'] = [];
                     for ($t = 0; $t <= 1; $t++) {
@@ -755,19 +785,41 @@ class PlayerdataController extends Controller {
                                 $mp_kda = $mstats['kills'] + $mstats['assists'];
                                 if ($mstats['deaths'] > 0) {
                                     $mp_kda = round(($mp_kda / ($mstats['deaths'] * 1.00)), 2);
+                                    $mp_kda_raw = $mp_kda;
+                                    $mp_kda = self::formatNumber($mp_kda, 2);
+                                }
+                                else {
+                                    $mp_kda = "Perfect";
+                                    $mp_kda_raw = 999999999;
                                 }
 
                                 $p['stats'] = [
                                     "kills" => $mstats['kills'],
                                     "deaths" => $mstats['deaths'],
                                     "assists" => $mstats['assists'],
-                                    "kda" => self::formatNumber($mp_kda, 2),
-                                    "healing" => $mstats['healing'],
-                                    "merc_camps" => $mstats['merc_camps'],
-                                    "exp_contrib" => $mstats['exp_contrib'],
-                                    "hero_damage" => $mstats['hero_damage'],
-                                    "siege_damage" => $mstats['siege_damage'],
+                                    "kda_raw" => $mp_kda_raw,
+                                    "kda" => $mp_kda,
+                                    "healing_raw" => $mstats['healing'],
+                                    "healing" => self::formatNumber($mstats['healing']),
+                                    "damage_taken_raw" => $mstats['damage_taken'],
+                                    "damage_taken" => self::formatNumber($mstats['damage_taken']),
+                                    "merc_camps_raw" => $mstats['merc_camps'],
+                                    "merc_camps" => self::formatNumber($mstats['merc_camps']),
+                                    "exp_contrib_raw" => $mstats['exp_contrib'],
+                                    "exp_contrib" => self::formatNumber($mstats['exp_contrib']),
+                                    "hero_damage_raw" => $mstats['hero_damage'],
+                                    "hero_damage" => self::formatNumber($mstats['hero_damage']),
+                                    "siege_damage_raw" => $mstats['siege_damage'],
+                                    "siege_damage" => self::formatNumber($mstats['siege_damage']),
                                 ];
+
+                                //Maintain min/max stats
+                                foreach ($match['stats'] as $statkey => &$statobj) {
+                                    $max = &$statobj['max'];
+                                    $pstat = $p['stats'][$statkey . '_raw'];
+
+                                    if ($max < $pstat) $max = $pstat;
+                                }
 
                                 //Additional
                                 $p['hero_level'] = $mplayer['hero_level'];

@@ -347,6 +347,15 @@ PlayerLoader.data = {
                 return s;
             };
 
+            //Good kda
+            let goodkda = 'rm-sw-sp-kda-num';
+            if (match.player.kda_raw >= 3) {
+                goodkda = 'rm-sw-sp-kda-num-good'
+            }
+            if (match.player.kda_raw >= 6) {
+                goodkda = 'rm-sw-sp-kda-num-great'
+            }
+
             //Medal
             let medalhtml = "";
             let nomedalhtml = "";
@@ -409,7 +418,7 @@ PlayerLoader.data = {
                 nomedalhtml +
                 '<div class="rm-sw-sp-kda-indiv"><span data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists"><span class="rm-sw-sp-kda-indiv-text">'
                         + match.player.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + match.player.deaths + '</span> / ' + match.player.assists + '</span></span></div>' +
-                '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><span class="rm-sw-sp-kda-text"><span class="rm-sw-sp-kda-num">' + match.player.kda + '</span> KDA</span></span></div>' +
+                '<div class="rm-sw-sp-kda"><span data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><div class="rm-sw-sp-kda-text"><span class="'+ goodkda +'">' + match.player.kda + '</span> KDA</div></span></div>' +
                 medalhtml +
                 '</div></div>' +
                 '<div class="recentmatch-simplewidget-talentspane"><div class="rm-sw-tp-talent-container">' +
@@ -444,10 +453,10 @@ PlayerLoader.data = {
                 let selector = $('#recentmatch-fullmatch-'+ matchid);
 
                 if (matchman.fullDisplay) {
-                    selector.slideDown(100);
+                    selector.slideDown(250);
                 }
                 else {
-                    selector.slideUp(100);
+                    selector.slideUp(250);
                 }
             }
             else {
@@ -483,7 +492,7 @@ PlayerLoader.data = {
                 //Loop through players for team
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(matchid, team_container, player, team.color);
+                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats);
                 }
 
                 t++;
@@ -525,7 +534,7 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(matchid, container, player, teamColor) {
+        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats) {
             let self = PlayerLoader.data.matches;
 
             //Match player
@@ -592,6 +601,51 @@ PlayerLoader.data = {
                 talentshtml += "</div>";
             }
 
+            //Stats
+            let stats = player.stats;
+
+            let goodkda = 'rm-sw-sp-kda-num';
+            if (stats.kda_raw >= 3) {
+                goodkda = 'rm-sw-sp-kda-num-good'
+            }
+            if (stats.kda_raw >= 6) {
+                goodkda = 'rm-sw-sp-kda-num-great'
+            }
+
+            let rowstat_tooltip = function (val, desc) {
+                return val +'<br>'+ desc;
+            };
+
+            let rowstats = [
+                {key: "hero_damage", class: "herodamage", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Hero Damage'},
+                {key: "siege_damage", class: "siegedamage", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Siege Damage'},
+                {key: "merc_camps", class: "merccamps", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Merc Camps Taken'},
+                {key: "healing", class: "healing", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Healing'},
+                {key: "damage_taken", class: "damagetaken", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Damage Taken'},
+                {key: "exp_contrib", class: "expcontrib", width: 0, value: "", valueDisplay: "", html: '', tooltip: 'Experience Contribution'}
+            ];
+
+            for (stat of rowstats) {
+                let max = matchStats[stat.key]["max"];
+
+                let percentOnRange = 0;
+                if (max > 0) {
+                    percentOnRange = (stats[stat.key + "_raw"] / (max * 1.00)) * 100.0;
+                }
+
+                stat.width = percentOnRange;
+
+                stat.value = stats[stat.key];
+                stat.valueDisplay = stat.value;
+                if (stats[stat.key + "_raw"] <= 0) {
+                    stat.valueDisplay = '<span class="rm-fm-r-stats-number-none">' + stat.value + '</span>';
+                }
+
+                stat.tooltip = rowstat_tooltip(stat.value, stat.tooltip);
+
+                stat.html = '<span data-toggle="tooltip" data-html="true" title="' + stat.tooltip + '"><div class="rm-fm-r-stats-row"><div class="rm-fm-r-stats-'+ stat.class +' rm-fm-r-stats-bar" style="width: '+ stat.width +'%"></div><div class="rm-fm-r-stats-number">'+ stat.valueDisplay +'</div></div></span>';
+            }
+
             //Build html
             let html = '<div class="rm-fm-row">' +
             //Hero Image Container (With Hero Level)
@@ -610,6 +664,24 @@ PlayerLoader.data = {
             '<div class="rm-fm-r-talents-container"><div class="rm-fm-r-talent-container">' +
             talentshtml +
             '</div></div>' +
+            //KDA Container
+            '<div class="rm-fm-r-kda-container">' +
+            '<div class="rm-fm-r-kda-indiv"><span style="cursor:help;" data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">'
+            + stats.kills + ' / <span class="rm-sw-sp-kda-indiv-deaths">' + stats.deaths + '</span> / ' + stats.assists + '</span></div>' +
+            '<div class="rm-fm-r-kda"><span style="cursor:help;" data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths"><div class="rm-sw-sp-kda-text"><span class="'+ goodkda +'">' + stats.kda + '</span> KDA</div></span></div>' +
+            '</div>' +
+            //Stats Offense Container
+            '<div class="rm-fm-r-stats-offense-container">' +
+            rowstats[0].html +
+            rowstats[1].html +
+            rowstats[2].html +
+            '</div>' +
+            //Stats Utility Container
+            '<div class="rm-fm-r-stats-utility-container">' +
+            rowstats[3].html +
+            rowstats[4].html +
+            rowstats[5].html +
+            '</div>' +
             '</div>';
 
             container.append(html);
