@@ -7,7 +7,14 @@ let PlayerLoader = {};
 /*
  * Handles Ajax requests
  */
-PlayerLoader.ajax = {};
+PlayerLoader.ajax = {
+    /*
+     * Executes function after given milliseconds
+     */
+    delay: function(milliseconds, func) {
+        setTimeout(func, milliseconds);
+    }
+};
 
 /*
  * The ajax handler for handling filters
@@ -444,7 +451,9 @@ PlayerLoader.data = {
                 }
             }
             else {
-                if (!PlayerLoader.ajax.matches.matchloading) {
+                if (!ajax.internal.matchloading) {
+                    ajax.internal.matchloading = true;
+
                     //Generate full match pane
                     $('#recentmatch-container-' + matchid).append('<div id="recentmatch-fullmatch-' + matchid + '" class="recentmatch-fullmatch"></div>');
 
@@ -613,6 +622,7 @@ PlayerLoader.data = {
         },
         generate_matchLoader: function() {
             let self = PlayerLoader.data.matches;
+            let ajax = PlayerLoader.ajax.matches;
 
             self.remove_matchLoader();
 
@@ -621,7 +631,9 @@ PlayerLoader.data = {
             $('#pl-recentmatches-container').append(loaderhtml);
 
             $('#pl-recentmatch-matchloader').click(function() {
-                if (!PlayerLoader.ajax.matches.loading) {
+                if (!ajax.internal.loading) {
+                    ajax.internal.loading = true;
+
                     let t = $(this);
 
                     t.html('<i class="fa fa-refresh fa-spin fa-1x fa-fw"></i>');
