@@ -37,6 +37,11 @@
 
 .color-statslist-toolbar { color: #3d4b52 }
 
+/* Image downscaling settings - Made necessary when I realized Chrome had crappy downscaling of png images making them blurry */
+img {
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and Safari) */
+}
+
 /* General screen size dependent sizing */
 @media screen and (max-width: 767px) {
     /*body { padding-top: 76px; }*/
@@ -1752,6 +1757,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     padding-left: 8px;
     text-align: left;
     overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -1763,7 +1769,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .rm-fm-r-medal-container {
     background-color: #0f3859;
     position:absolute;
-    width:48px;
+    width:42px;
     height:100%;
     left:140px;
     top:0px;
@@ -1775,7 +1781,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .rm-fm-r-medal-inner {
     background-color: #3a5927;
     position:absolute;
-    top: -4px;
+    top: -3px;
     text-align: center;
     overflow: hidden;
     white-space: nowrap;
@@ -1783,8 +1789,8 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-fm-r-medal {
     position:relative;
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
 }
 
 .rm-fm-r-talents-container {
@@ -1792,7 +1798,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     position:absolute;
     width:182px;
     height:100%;
-    left:188px;
+    left:182px;
     top:0px;
     text-align: center;
     vertical-align: middle;
