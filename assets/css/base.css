@@ -1741,3 +1741,19 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-align: center;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }
+
+.rm-fm-r-playername-container {
+    background-color: #b05c80;
+    position:absolute;
+    width:100px;
+    height:100%;
+    left:40px;
+    top:0px;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.rm-fm-r-playername {
+    font-size:18px;
+}

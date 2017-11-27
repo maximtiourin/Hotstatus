@@ -294,7 +294,8 @@ PlayerLoader.data = {
             //Log match in manifest
             self.internal.matchManifest[match.id + ""] = {
                 fullGenerated: false, //Whether or not the full match data has been loaded for the first time
-                fullDisplay: false //Whether or not the full match data is currently toggled to display
+                fullDisplay: false, //Whether or not the full match data is currently toggled to display
+                matchPlayer: match.player.id //Id of the match's player for whom the match is being displayed, for use with highlighting inside of fullmatch (while decoupling mainplayer)
             };
 
             //Subcomponents
@@ -473,7 +474,7 @@ PlayerLoader.data = {
                 //Loop through players for team
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(team_container, player);
+                    self.generateFullmatchRow(matchid, team_container, player);
                 }
 
                 t++;
@@ -515,13 +516,59 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(container, player) {
+        generateFullmatchRow: function(matchid, container, player) {
             let self = PlayerLoader.data.matches;
+
+            //Match player
+            let matchPlayerId = self.internal.matchManifest[matchid + ""].matchPlayer;
+
+            //Silence
+            let silence = function(isSilenced) {
+                let r = '';
+
+                if (isSilenced) {
+                    r = 'rm-sw-link-toxic';
+                }
+                else {
+                    r = 'rm-sw-link';
+                }
+
+                return r;
+            };
+
+            let silence_image = function(isSilenced, size) {
+                let s = '';
+
+                if (isSilenced) {
+                    if (size > 0) {
+                        let path = image_bpath + '/ui/icon_toxic.png';
+                        s += '<span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<span class=\'rm-sw-link-toxic\'>Silenced</span>"><img class="rm-sw-toxic" style="width:' + size + 'px;height:' + size + 'px;" src="' + path + '"></span>';
+                    }
+                }
+
+                return s;
+            };
+
+            //Player name
+            let playername = '';
+            let special = '';
+            if (player.id === matchPlayerId) {
+                special = '<a class="rm-fm-r-playername rm-sw-special">';
+            }
+            else {
+                special = '<a class="rm-fm-r-playername '+ silence(player.silenced) +'">';
+            }
+            playername += silence_image(player.silenced, 18) + special + player.name + '</a>';
+
 
             let html = '<div class="rm-fm-row">' +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
             '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
+            '</div>' +
+            //Player Name Container
+            '<div class="rm-fm-r-heroimage-container">' +
+            playername +
             '</div>' +
             '</div>';
 
