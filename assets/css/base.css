@@ -1749,11 +1749,88 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     height:100%;
     left:40px;
     top:0px;
+    padding-left: 8px;
     text-align: left;
     overflow: hidden;
     white-space: nowrap;
 }
 
 .rm-fm-r-playername {
-    font-size:18px;
+    font-size:12px!important;
+    font-weight:500!important;
+}
+
+.rm-fm-r-medal-container {
+    background-color: #0f3859;
+    position:absolute;
+    width:48px;
+    height:100%;
+    left:140px;
+    top:0px;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.rm-fm-r-medal-inner {
+    background-color: #3a5927;
+    position:absolute;
+    top: -4px;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.rm-fm-r-medal {
+    position:relative;
+    width: 48px;
+    height: 48px;
+}
+
+.rm-fm-r-talents-container {
+    background-color: #651f8a;
+    position:absolute;
+    width:182px;
+    height:100%;
+    left:188px;
+    top:0px;
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.rm-fm-r-talent-container {
+    /*background-color: #7e4f2f;*/
+    position:absolute;
+    width:100%;
+    height:26px;
+    margin:auto;
+    left:0;
+    right:0;
+    top:0;
+    bottom:0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.rm-fm-r-talent-bg {
+    background-color: #0c0a0f;
+    position:relative;
+    display:inline-block;
+    width:26px;
+    height:26px;
+    padding: 1px 1px;
+    border:1px;
+    border-style:solid;
+    border-color: #1B0748;
+}
+
+.rm-fm-r-talent {
+    position:absolute;
+    left:0;
+    top:0;
+    width:24px;
+    height:24px;
+    cursor:help;
 }

@@ -422,8 +422,6 @@ PlayerLoader.data = {
             $('#recentmatch-simplewidget-inspect-' + match.id).click(function() {
                 let t = $(this);
 
-                console.log("click");
-
                 self.generateFullMatchPane(match.id);
             });
         },
@@ -446,15 +444,17 @@ PlayerLoader.data = {
                 }
             }
             else {
-                //Generate full match pane
-                $('#recentmatch-container-'+matchid).append('<div id="recentmatch-fullmatch-'+ matchid +'" class="recentmatch-fullmatch"></div>');
+                if (!PlayerLoader.ajax.matches.matchloading) {
+                    //Generate full match pane
+                    $('#recentmatch-container-' + matchid).append('<div id="recentmatch-fullmatch-' + matchid + '" class="recentmatch-fullmatch"></div>');
 
-                //Load data
-                ajax.loadMatch(matchid);
+                    //Load data
+                    ajax.loadMatch(matchid);
 
-                //Log as generated in manifest
-                self.internal.matchManifest[matchid + ""].fullGenerated = true;
-                self.internal.matchManifest[matchid + ""].fullDisplay = true;
+                    //Log as generated in manifest
+                    self.internal.matchManifest[matchid + ""].fullGenerated = true;
+                    self.internal.matchManifest[matchid + ""].fullDisplay = true;
+                }
             }
         },
         generateFullMatchRows: function(matchid, match) {
@@ -474,7 +474,7 @@ PlayerLoader.data = {
                 //Loop through players for team
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(matchid, team_container, player);
+                    self.generateFullmatchRow(matchid, team_container, player, team.color);
                 }
 
                 t++;
@@ -516,7 +516,7 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(matchid, container, player) {
+        generateFullmatchRow: function(matchid, container, player, teamColor) {
             let self = PlayerLoader.data.matches;
 
             //Match player
@@ -556,20 +556,51 @@ PlayerLoader.data = {
                 special = '<a class="rm-fm-r-playername rm-sw-special">';
             }
             else {
-                special = '<a class="rm-fm-r-playername '+ silence(player.silenced) +'">';
+                special = '<a class="rm-fm-r-playername '+ silence(player.silenced) +'" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
             }
-            playername += silence_image(player.silenced, 18) + special + player.name + '</a>';
+            playername += silence_image(player.silenced, 14) + special + player.name + '</a>';
 
+            //Medal
+            let medal = player.medal;
+            let medalhtml = "";
+            if (medal.exists) {
+                medalhtml = '<div class="rm-fm-r-medal-inner"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div class=\'hl-talents-tooltip-name\'>'
+                    + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-fm-r-medal" src="'
+                    + medal.image + '_'+ teamColor +'.png"></span></div>';
+            }
 
+            //Talents
+            let talentshtml = "";
+            for (let i = 0; i < 7; i++) {
+                talentshtml += "<div class='rm-fm-r-talent-bg'>";
+
+                if (player.talents.length > i) {
+                    let talent = player.talents[i];
+
+                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-fm-r-talent" src="' + talent.image + '"></span>';
+                }
+
+                talentshtml += "</div>";
+            }
+
+            //Build html
             let html = '<div class="rm-fm-row">' +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
             '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
             '</div>' +
             //Player Name Container
-            '<div class="rm-fm-r-heroimage-container">' +
+            '<div class="rm-fm-r-playername-container">' +
             playername +
             '</div>' +
+            //Medal Container
+            '<div class="rm-fm-r-medal-container">' +
+            medalhtml +
+            '</div>' +
+            //Talents Container
+            '<div class="rm-fm-r-talents-container"><div class="rm-fm-r-talent-container">' +
+            talentshtml +
+            '</div></div>' +
             '</div>';
 
             container.append(html);
@@ -590,11 +621,13 @@ PlayerLoader.data = {
             $('#pl-recentmatches-container').append(loaderhtml);
 
             $('#pl-recentmatch-matchloader').click(function() {
-                let t = $(this);
+                if (!PlayerLoader.ajax.matches.loading) {
+                    let t = $(this);
 
-                t.html('<i class="fa fa-refresh fa-spin fa-1x fa-fw"></i>');
+                    t.html('<i class="fa fa-refresh fa-spin fa-1x fa-fw"></i>');
 
-                PlayerLoader.ajax.matches.load();
+                    PlayerLoader.ajax.matches.load();
+                }
             });
 
             self.internal.matchLoaderGenerated = true;
