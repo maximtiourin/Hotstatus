@@ -1942,3 +1942,21 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .rm-fm-r-stats-expcontrib {
     background-color: #5a00af;
 }
+
+.rm-fm-r-mmr-container {
+    background-color: #194877;
+    position:absolute;
+    width:76px;
+    height:100%;
+    left:640px;
+    top:0px;
+    line-height: 35px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rm-fm-r-mmr {
+    position:relative;
+    width:32px;
+    height:32px;
+}

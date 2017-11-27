@@ -682,6 +682,10 @@ PlayerLoader.data = {
             rowstats[4].html +
             rowstats[5].html +
             '</div>' +
+            //MMR Container
+            '<div class="rm-fm-r-mmr-container">' +
+            '<img class="rm-fm-r-mmr" src="'+ image_bpath + 'ui/ranked_player_icon_' + player.mmr.rank +'.png">' +
+            '</div>' +
             '</div>';
 
             container.append(html);

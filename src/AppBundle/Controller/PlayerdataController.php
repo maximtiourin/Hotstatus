@@ -823,7 +823,11 @@ class PlayerdataController extends Controller {
 
                                 //Additional
                                 $p['hero_level'] = $mplayer['hero_level'];
-                                $p['mmr_rating'] = $mplayer['mmr']['old']['rating'];
+                                $p['mmr'] = [
+                                    "old" => $mplayer['mmr']['old']['rating'],
+                                    "new" => $mplayer['mmr']['new']['rating'],
+                                    "rank" => HotstatusPipeline::getRankNameForPlayerRating($mplayer['mmr']['old']['rating']),
+                                ];
 
                                 //Medal
                                 $p['medal'] = $processMedal($mstats['medals'], $imgbasepath);
