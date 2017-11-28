@@ -10,18 +10,22 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-12 col-md-12 col-lg-3 col-xl-3 padding-sm-right-0">
+        <div class="col">
             <div class="row">
                 <div class="col">
                     {# Left Pane #}
+                    {# Player Summary #}
+                    <div class="hotstatus-subcontainer">
+                        {% block player_summary %}{% endblock %}
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-12 col-md-12 col-lg-9 col-xl-9 padding-sm-left-0">
+        <div class="col">
             <div class="row">
                 <div class="col text-center">
                     {# Right Pane #}
-                    <div id="pl-recentmatches-container" class="pl-recentmatches-container horizontal-scroller">{# PLAYERLOADER GENERATED #}</div>
+                    <div id="pl-recentmatches-container" class="pl-recentmatches-container hotstatus-subcontainer horizontal-scroller">{# PLAYERLOADER GENERATED #}</div>
                 </div>
             </div>
         </div>
