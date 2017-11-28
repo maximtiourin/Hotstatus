@@ -1251,7 +1251,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-lp-gameType {
     position: relative;
-    margin: 0 -100%;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
     font-size: 11px;
     font-weight: bold;
     color: #FFFFFF;
@@ -1264,7 +1266,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-lp-date {
     position: relative;
-    margin: 0 -100%;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
     font-size: 10px;
     font-weight: 600;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
@@ -1276,7 +1280,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-lp-victory {
     position: relative;
-    margin: 0 -100%;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
     font-size: 20px;
     font-weight: bold;
     cursor: default;
@@ -1285,7 +1291,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-lp-matchlength {
     position: relative;
-    margin: -2px -100%;
+    width: 100%;
+    margin: -2px auto;
+    text-align: center;
     font-size: 11px;
     font-weight: normal;
     cursor: default;
@@ -1317,7 +1325,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-hp-heroname {
     position: relative;
-    margin: -2px -100%;
+    width: 100%;
+    margin: -2px auto;
+    text-align: center;
     font-size: 14px;
     font-weight: 600;
     cursor: default;
@@ -1351,9 +1361,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-sp-kda-indiv {
     position: relative;
-    margin: 0 -100%;
+    width: 100%;
+    margin:0 auto;
     font-size: 16px;
     font-weight: bold;
+    text-align: center;
     color: #FFFFFF;
     z-index: 7;
 }
@@ -1369,10 +1381,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-sw-sp-kda {
     position: relative;
-    margin: 0 -100%;
+    width: 100%;
+    margin:0 auto;
     font-size: 12px;
     font-weight: normal;
     font-family: arial sans-serif;
+    text-align: center;
     z-index: 7;
 }
 
@@ -1396,11 +1410,16 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-sw-sp-medal-container {
-    margin: -5px 0;
+    position: absolute;
+    width: 100%;
+    height: 44px;
+    margin:-5px auto;
+    text-align: center;
+    z-index: 6;
 }
 
 .rm-sw-sp-medal {
-    display: inline-block;
+    position:relative;
     width:42px;
     height:42px;
 }
@@ -1588,7 +1607,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-rowheader {
-    background-color: #0c31b0;
     position:relative;
     width:100%;
     height:40px;
@@ -1597,7 +1615,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-rh-victory-container {
-    background-color: #1eb0b0;
     position:absolute;
     width:80px;
     height:100%;
@@ -1619,7 +1636,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-rh-level-container {
-    background-color: #8125b0;
     position:absolute;
     width:40px;
     height:100%;
@@ -1632,13 +1648,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-rh-bans-container {
-    background-color: #6db044;
     position:absolute;
     width:140px;
     height:100%;
-    left:120px;
+    left:144px;
     top:0px;
-    text-align: center;
+    text-align: left;
     font-size: 14px;
     font-weight: 600;
     overflow: hidden;
@@ -1657,8 +1672,35 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     cursor:help;
 }
 
+.rm-fm-rh-kda-container {
+    position:absolute;
+    width:80px;
+    height:100%;
+    left:364px;
+    top:0px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.rm-fm-rh-statistics-container {
+    position:absolute;
+    width:196px;
+    height:100%;
+    left:444px;
+    top:0px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+}
+
 .rm-fm-rh-mmr-container {
-    background-color: #b05734;
     position:absolute;
     width:76px;
     height:100%;
@@ -1677,7 +1719,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-row {
-    background-color: #b0123c;
     position:relative;
     width:100%;
     height:40px;
@@ -1685,8 +1726,17 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 2px 0;
 }
 
+/* Odd */
+.rm-fm-row-1 {
+    background-color: rgba(255,255,255,0.04);
+}
+
+/* Even */
+.rm-fm-row-0 {
+    background-color: rgba(255,255,255,0.06);
+}
+
 .rm-fm-r-heroimage-container {
-    background-color: #1ab061;
     position:absolute;
     width:40px;
     height:100%;
@@ -1722,7 +1772,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-playername-container {
-    background-color: #b05c80;
     position:absolute;
     width:100px;
     height:100%;
@@ -1741,7 +1790,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-medal-container {
-    background-color: #0f3859;
     position:absolute;
     width:42px;
     height:100%;
@@ -1753,7 +1801,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-medal-inner {
-    background-color: #3a5927;
     position:absolute;
     top: -3px;
     text-align: center;
@@ -1768,7 +1815,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-talents-container {
-    background-color: #651f8a;
     position:absolute;
     width:182px;
     height:100%;
@@ -1781,7 +1827,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-talent-container {
-    /*background-color: #7e4f2f;*/
     position:absolute;
     width:100%;
     height:26px;
@@ -1816,7 +1861,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-kda-container {
-    background-color: #8a733c;
     position:absolute;
     width:80px;
     height:100%;
@@ -1853,7 +1897,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-stats-offense-container {
-    background-color: #3c6c8a;
     position:absolute;
     width:98px;
     height:100%;
@@ -1865,7 +1908,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-stats-utility-container {
-    background-color: #468a72;
     position:absolute;
     width:98px;
     height:100%;
@@ -1944,7 +1986,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .rm-fm-r-mmr-container {
-    background-color: #194877;
     position:absolute;
     width:76px;
     height:100%;
@@ -1955,8 +1996,41 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     vertical-align: middle;
 }
 
+.rm-fm-r-mmr-tooltip-area {
+    position:relative;
+    margin:auto auto;
+    width:36px;
+}
+
 .rm-fm-r-mmr {
     position:relative;
     width:32px;
     height:32px;
+}
+
+.rm-fm-r-mmr-delta-pos {
+    color: #00ff00;
+}
+
+.rm-fm-r-mmr-delta-neg {
+    color: #ff0000;
+}
+
+.rm-fm-r-mmr-number {
+    position:absolute;
+    width: 100%;
+    left:0px;
+    top:0;
+    right:0;
+    bottom:0;
+    text-align: center;
+    margin: 21px -.35px;
+    font-size: 11px;
+    font-weight: bold;
+    line-height:20px;
+    color: #FFFFFF;
+    overflow: visible;
+    text-wrap: none;
+    white-space: nowrap;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }

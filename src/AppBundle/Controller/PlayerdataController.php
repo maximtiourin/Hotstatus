@@ -823,10 +823,14 @@ class PlayerdataController extends Controller {
 
                                 //Additional
                                 $p['hero_level'] = $mplayer['hero_level'];
+
+                                //Mmr
+                                $mmr_new = (is_numeric($mplayer['mmr']['new']['rating'])) ? ($mplayer['mmr']['new']['rating']) : (0);
+                                $mmr_old = (is_numeric($mplayer['mmr']['old']['rating'])) ? ($mplayer['mmr']['old']['rating']) : (0);
                                 $p['mmr'] = [
-                                    "old" => $mplayer['mmr']['old']['rating'],
-                                    "new" => $mplayer['mmr']['new']['rating'],
+                                    "delta" => $mmr_new - $mmr_old,
                                     "rank" => HotstatusPipeline::getRankNameForPlayerRating($mplayer['mmr']['old']['rating']),
+                                    "tier" => HotstatusPipeline::getRankTierForPlayerRating($mplayer['mmr']['old']['rating']),
                                 ];
 
                                 //Medal

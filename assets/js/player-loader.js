@@ -490,9 +490,11 @@ PlayerLoader.data = {
                 self.generateFullMatchRowHeader(team_container, team, match.winner === t, match.hasBans);
 
                 //Loop through players for team
+                let p = 0;
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats);
+                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats, p % 2);
+                    p++;
                 }
 
                 t++;
@@ -526,6 +528,10 @@ PlayerLoader.data = {
                 '<div class="rm-fm-rh-bans-container">' +
                 bans +
                 '</div>' +
+                //KDA Container
+                '<div class="rm-fm-rh-kda-container">KDA</div>' +
+                //Statistics Container
+                '<div class="rm-fm-rh-statistics-container">Performance</div>' +
                 //Mmr Container
                 '<div class="rm-fm-rh-mmr-container">MMR: <span class="rm-fm-rh-mmr">' +
                 team.mmr.old.rating +
@@ -534,7 +540,7 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats) {
+        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats, oddEven) {
             let self = PlayerLoader.data.matches;
 
             //Match player
@@ -646,8 +652,17 @@ PlayerLoader.data = {
                 stat.html = '<span data-toggle="tooltip" data-html="true" title="' + stat.tooltip + '"><div class="rm-fm-r-stats-row"><div class="rm-fm-r-stats-'+ stat.class +' rm-fm-r-stats-bar" style="width: '+ stat.width +'%"></div><div class="rm-fm-r-stats-number">'+ stat.valueDisplay +'</div></div></span>';
             }
 
+            //MMR
+            let mmrDeltaType = "neg";
+            let mmrDeltaPrefix = "";
+            if (player.mmr.delta >= 0) {
+                mmrDeltaType = "pos";
+                mmrDeltaPrefix = "+";
+            }
+            let mmrDelta = player.mmr.rank +' '+ player.mmr.tier +' (<span class=\'rm-fm-r-mmr-delta-'+ mmrDeltaType +'\'>'+ mmrDeltaPrefix + player.mmr.delta +'</span>)';
+
             //Build html
-            let html = '<div class="rm-fm-row">' +
+            let html = '<div class="rm-fm-row rm-fm-row-'+ oddEven +'">' +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
             '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
@@ -684,7 +699,7 @@ PlayerLoader.data = {
             '</div>' +
             //MMR Container
             '<div class="rm-fm-r-mmr-container">' +
-            '<img class="rm-fm-r-mmr" src="'+ image_bpath + 'ui/ranked_player_icon_' + player.mmr.rank +'.png">' +
+            '<div class="rm-fm-r-mmr-tooltip-area" style="cursor:help;" data-toggle="tooltip" data-html="true" title="'+ mmrDelta +'"><img class="rm-fm-r-mmr" src="'+ image_bpath + 'ui/ranked_player_icon_' + player.mmr.rank +'.png"><div class="rm-fm-r-mmr-number">'+ player.mmr.tier +'</div></div>' +
             '</div>' +
             '</div>';
 
