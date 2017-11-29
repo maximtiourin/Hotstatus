@@ -134,7 +134,7 @@ class HerodataController extends Controller {
                 //Prepare Statements
                 $db->prepare("GetHeroData",
                     "SELECT `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero` 
-                    FROM herodata_heroes WHERE `name` = \"$queryHero\"");
+                    FROM herodata_heroes WHERE `name` = \"$queryHero\" LIMIT 1");
 
                 $db->prepare("GetHeroStats",
                     "SELECT `range_match_length`, `range_hero_level`, `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
