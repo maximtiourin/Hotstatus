@@ -402,6 +402,13 @@ class PlayerdataController extends Controller {
                                 $p['hero'] = $mplayer['hero'];
                                 $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
 
+                                //Get party info
+                                $party = 0;
+                                if (count($mplayer['party']) > 0) {
+                                    $party = $mplayer['party'][0]['party_id'];
+                                }
+                                $p['party'] = $party;
+
                                 //In-depth stats disabled for recentmatches fetch
                                 /*//Stats
                                 $mstats = $mplayer['stats'];
@@ -778,6 +785,13 @@ class PlayerdataController extends Controller {
                                 $p['name'] = $mplayer['name'];
                                 $p['hero'] = $mplayer['hero'];
                                 $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
+
+                                //Get party info
+                                $party = 0;
+                                if (count($mplayer['party']) > 0) {
+                                    $party = $mplayer['party'][0]['party_id'];
+                                }
+                                $p['party'] = $party;
 
                                 //Stats
                                 $mstats = $mplayer['stats'];

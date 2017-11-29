@@ -289,6 +289,13 @@ PlayerLoader.data = {
             matchLoaderGenerated: false,
             matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
         },
+        empty: function() {
+            let self = PlayerLoader.data.matches;
+
+            $('#pl-recentmatches-container').empty();
+            self.internal.matchLoaderGenerated = false;
+            self.internal.matchManifest = {};
+        },
         generateMatch: function(match) {
             //Generates all subcomponents of a match display
             let self = PlayerLoader.data.matches;
@@ -298,11 +305,16 @@ PlayerLoader.data = {
 
             $('#pl-recentmatches-container').append(html);
 
+            //Generate one-time party colors for match
+            let partiesColors = [1, 2, 3, 4, 5]; //Array of colors to use for party at index = partyIndex - 1
+            Hotstatus.utility.shuffle(partiesColors);
+
             //Log match in manifest
             self.internal.matchManifest[match.id + ""] = {
                 fullGenerated: false, //Whether or not the full match data has been loaded for the first time
                 fullDisplay: false, //Whether or not the full match data is currently toggled to display
-                matchPlayer: match.player.id //Id of the match's player for whom the match is being displayed, for use with highlighting inside of fullmatch (while decoupling mainplayer)
+                matchPlayer: match.player.id, //Id of the match's player for whom the match is being displayed, for use with highlighting inside of fullmatch (while decoupling mainplayer)
+                partiesColors: partiesColors //Colors to use for the party indexes
             };
 
             //Subcomponents
@@ -384,18 +396,34 @@ PlayerLoader.data = {
 
             //Players
             let playershtml = "";
+            let partiesCounter = [0, 0, 0, 0, 0]; //Counts index of party member, for use with creating connectors, up to 5 parties possible
+            let partiesColors = self.internal.matchManifest[match.id + ""].partiesColors;
             let t = 0;
             for (let team of match.teams) {
                 playershtml += '<div class="rm-sw-pp-team' + t + '">';
 
                 for (let player of team.players) {
+                    let party = '';
+                    if (player.party > 0) {
+                        let partyOffset = player.party - 1;
+                        let partyColor = partiesColors[partyOffset];
+
+                        party = '<div class="rm-party rm-party-sm rm-party-'+ partyColor +'"></div>';
+
+                        if (partiesCounter[partyOffset] > 0) {
+                            party += '<div class="rm-party-sm rm-party-sm-connecter rm-party-'+ partyColor +'"></div>';
+                        }
+
+                        partiesCounter[partyOffset]++;
+                    }
+
                     let special = '<a class="'+silence(player.silenced)+'" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
                     if (player.id === match.player.id) {
                         special = '<a class="rm-sw-special">';
                     }
 
                     playershtml += '<div class="rm-sw-pp-player"><span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><img class="rm-sw-pp-player-image" src="'
-                        + player.image_hero + '"></span>' + silence_image(player.silenced, 12) + special + player.name + '</a></div>';
+                        + player.image_hero + '"></span>' + party + silence_image(player.silenced, 12) + special + player.name + '</a></div>';
                 }
 
                 playershtml += '</div>';
@@ -480,6 +508,7 @@ PlayerLoader.data = {
             let fullmatch_container = $('#recentmatch-fullmatch-'+ matchid);
 
             //Loop through teams
+            let partiesCounter = [0, 0, 0, 0, 0]; //Counts index of party member, for use with creating connectors, up to 5 parties possible
             let t = 0;
             for (let team of match.teams) {
                 //Team Container
@@ -493,7 +522,13 @@ PlayerLoader.data = {
                 let p = 0;
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats, p % 2);
+                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats, p % 2, partiesCounter);
+
+                    if (player.party > 0) {
+                        let partyOffset = player.party - 1;
+                        partiesCounter[partyOffset]++;
+                    }
+
                     p++;
                 }
 
@@ -540,7 +575,7 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats, oddEven) {
+        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats, oddEven, partiesCounter) {
             let self = PlayerLoader.data.matches;
 
             //Match player
@@ -661,8 +696,24 @@ PlayerLoader.data = {
             }
             let mmrDelta = player.mmr.rank +' '+ player.mmr.tier +' (<span class=\'rm-fm-r-mmr-delta-'+ mmrDeltaType +'\'>'+ mmrDeltaPrefix + player.mmr.delta +'</span>)';
 
+            //Party
+            let party = '';
+            let partiesColors = self.internal.matchManifest[matchid + ""].partiesColors;
+            if (player.party > 0) {
+                let partyOffset = player.party - 1;
+                let partyColor = partiesColors[partyOffset];
+
+                party = '<div class="rm-party rm-party-md rm-party-'+ partyColor +'"></div>';
+
+                if (partiesCounter[partyOffset] > 0) {
+                    party += '<div class="rm-party-md rm-party-md-connecter rm-party-'+ partyColor +'"></div>';
+                }
+            }
+
             //Build html
             let html = '<div class="rm-fm-row rm-fm-row-'+ oddEven +'">' +
+            //Party Stripe
+            party +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
             '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
@@ -750,13 +801,6 @@ PlayerLoader.data = {
         },
         talenttooltip: function(name, desc) {
             return '<span class=\'hl-talents-tooltip-name\'>' + name + '</span><br>' + desc;
-        },
-        empty: function() {
-            let self = PlayerLoader.data.matches;
-
-            $('#pl-recentmatches-container').empty();
-            self.internal.matchLoaderGenerated = false;
-            self.internal.matchManifest = {};
         }
     }
 };

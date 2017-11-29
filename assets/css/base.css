@@ -2035,6 +2035,65 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }
 
+.rm-party {
+    position:absolute;
+    left: 0px;
+    right: 0;
+    bottom: 0;
+}
+
+.rm-party-sm {
+    top: 2px;
+    width:1px;
+    height:100%;
+}
+
+.rm-party-sm-connecter {
+    position:absolute;
+    left: 0px;
+    top: 0px;
+    right: 0;
+    bottom: 0;
+    width:1px;
+    height:2px;
+}
+
+.rm-party-md {
+    top: 0px;
+    width:2px;
+    height:100%;
+}
+
+.rm-party-md-connecter {
+    position:absolute;
+    left: 0px;
+    top: -2px;
+    right: 0;
+    bottom: 0;
+    width:2px;
+    height:2px;
+}
+
+.rm-party-1 {
+    background-color: #d70002;
+}
+
+.rm-party-2 {
+    background-color: #d7d000;
+}
+
+.rm-party-3 {
+    background-color: #c3008f;
+}
+
+.rm-party-4 {
+    background-color: #009b1f;
+}
+
+.rm-party-5 {
+    background-color: #00b8c3;
+}
+
 .playersummary-container {
     position:relative;
     width:100%;
