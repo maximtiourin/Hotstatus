@@ -204,7 +204,7 @@ PlayerLoader.ajax.matches = {
 
                 //Append new Match widgets for matches that aren't in the manifest
                 for (let match of json_matches) {
-                    if (!data_matches.isMatchGenerated(match)) {
+                    if (!data_matches.isMatchGenerated(match.id)) {
                         data_matches.generateMatch(match);
                     }
                 }
@@ -295,6 +295,11 @@ PlayerLoader.data = {
             $('#pl-recentmatches-container').empty();
             self.internal.matchLoaderGenerated = false;
             self.internal.matchManifest = {};
+        },
+        isMatchGenerated: function(matchid) {
+            let self = PlayerLoader.data.matches;
+
+            return self.internal.matchManifest.hasOwnProperty(matchid + "");
         },
         generateMatch: function(match) {
             //Generates all subcomponents of a match display
@@ -793,11 +798,6 @@ PlayerLoader.data = {
             else {
                 return 'pl-recentmatch-bg-lost';
             }
-        },
-        isMatchGenerated: function(matchid) {
-            let self = PlayerLoader.data.matches;
-
-            return self.internal.matchManifest.hasOwnProperty(matchid + "");
         },
         talenttooltip: function(name, desc) {
             return '<span class=\'hl-talents-tooltip-name\'>' + name + '</span><br>' + desc;
