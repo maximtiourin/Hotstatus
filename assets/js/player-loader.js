@@ -84,7 +84,10 @@ PlayerLoader.ajax.filter = {
         //Enable Processing Indicator
         self.internal.loading = true;
 
-        $('#playerloader-container').prepend('<div class="heroloader-processing"><i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></div>');
+        //$('#playerloader-container').prepend('<div class="playerloader-processing"><i class="fa fa-refresh fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></div>');
+
+        //-- Initial Matches First Load
+        $('#pl-recentmatches-loader').append('<div class="playerloader-processing"><i class="fa fa-refresh fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span></div>');
 
         //Main Filter Ajax Request
         $.getJSON(self.internal.url)
@@ -124,8 +127,14 @@ PlayerLoader.ajax.filter = {
                 //Failure to load Data
             })
             .always(function() {
-                //Disable Processing Indicator
-                $('.heroloader-processing').remove();
+                //Disable processing indicator
+                setTimeout(function() {
+                    $('.playerloader-processing').fadeIn().delay(750).queue(function(){
+                        $(this).remove();
+                    });
+                });
+
+                console.log('test');
 
                 self.internal.loading = false;
             });

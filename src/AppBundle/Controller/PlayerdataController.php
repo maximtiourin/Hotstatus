@@ -168,6 +168,161 @@ class PlayerdataController extends Controller {
     }
 
     /**
+     * Returns top heroes for player based on offset and hero limit
+     *
+     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/topheroes", defaults={"offset" = 0, "limit" = 5}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
+     */
+    //condition="request.isXmlHttpRequest()", //TODO
+    public function getPageDataPlayerTopHeroesAction(Request $request, $player, $offset, $limit) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataPlayerTopHeroesAction";
+        $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::topHeroes_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = "$_ID:$player:$queryCacheSql:$offset:$limit";
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
+
+                //Get season date range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
+                $date_start = $seasonobj['start'];
+                $date_end = $seasonobj['end'];
+
+
+
+                //Prepare Statements
+                $db->prepare("GetRecentMatches",
+                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players` 
+                    FROM `players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
+                    WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
+                $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
+
+                $db->prepare("GetTopHeroes",
+                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_recent_matches_granular` WHERE `id` = $player AND `date_end` >= ? AND `date_end` <= ? $querySql");
+
+                $r_player_id = $player;
+                $r_date_start = $date_start;
+                $r_date_end = $date_end;
+
+                /*
+                 * Functions
+                 */
+
+
+                /*
+                 * Collect recent matches data
+                 */
+
+                $pagedata['offsets'] = [];
+                $pagedata['limits'] = [];
+
+                /*
+                 * Matches
+                 */
+
+                $pagedata['offsets']['matches'] = intval($offset);
+                $pagedata['limits']['matches'] = intval($limit);
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+            }
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        /*$response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }*/ //TODO enable after testing
+
+        return $response;
+    }
+
+    /**
      * Returns recent matches for player based on offset and match limit
      *
      * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 6}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
@@ -950,6 +1105,29 @@ class PlayerdataController extends Controller {
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
                 self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    private static function topHeroes_initQueries() {
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "type",
                 self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
         ];

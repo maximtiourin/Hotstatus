@@ -2099,14 +2099,44 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     width:100%;
     margin: 0 auto;
     text-align: center;
+}
+
+.playersummary-player {
+    color:#FFFFFF;
+    cursor:default;
+}
+
+.playersummary-player-region {
+    position: absolute;
+    left:-6px;
+    top:-4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.playersummary-player-battletag {
+    font-size:24px;
+    font-weight: bold;
     overflow: hidden;
     text-wrap: none;
     white-space: nowrap;
 }
 
-.playersummary-player {
-    color:#FFFFFF;
-    font-size:24px;
+.playersummary-player-level {
+    position: absolute;
+    right:-6px;
+    top:-4px;
+    text-align: right;
+    font-size: 14px;
     font-weight: bold;
-    cursor:default;
+}
+
+.playerloader-processing {
+    position:absolute;
+    width:100% !important;
+    height:100% !important;
+    text-align:center !important;
+    font-size:2em !important;
+    color: #1B0748 !important;
+    z-index: 9999;
 }

@@ -43,7 +43,19 @@
                     {% block player_summary %}
                         <div class="playersummary-container">
                             <div class="playersummary-player">
-                                {{ player.name }}#{{ player.tag }}
+                                <div class="playersummary-player-region">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Region">
+                                        {{  player.region }}
+                                    </span>
+                                </div>
+                                <div class="playersummary-player-battletag">
+                                    {{ player.name }}#{{ player.tag }}
+                                </div>
+                                <div class="playersummary-player-level">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Account Level">
+                                        {{  player.account_level }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     {% endblock %}
