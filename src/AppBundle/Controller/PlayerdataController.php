@@ -170,7 +170,7 @@ class PlayerdataController extends Controller {
     /**
      * Returns top heroes for player based on offset and hero limit
      *
-     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/topheroes", defaults={"offset" = 0, "limit" = 5}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
+     * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
      */
     //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerTopHeroesAction(Request $request, $player, $offset, $limit) {
@@ -217,7 +217,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player:$queryCacheSql:$offset:$limit";
+        $CACHE_ID = "$_ID:$player:$queryCacheSql";
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -259,40 +259,126 @@ class PlayerdataController extends Controller {
                 $date_start = $seasonobj['start'];
                 $date_end = $seasonobj['end'];
 
-
-
                 //Prepare Statements
-                $db->prepare("GetRecentMatches",
-                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players` 
-                    FROM `players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
-                    WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
-                $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
-
                 $db->prepare("GetTopHeroes",
-                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_recent_matches_granular` WHERE `id` = $player AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_recent_matches_granular` 
+                    WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetTopHeroes", "ss", $r_player_id, $r_date_start, $r_date_end);
 
                 $r_player_id = $player;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
 
                 /*
-                 * Functions
+                 * Get Heroes Stats
                  */
+                $heroes = [];
+                $topHeroesResult = $db->execute("GetTopHeroes");
+                while ($row = $db->fetchArray($topHeroesResult)) {
+                    $heroname = $row['hero'];
 
+                    if (!key_exists($heroname, $heroes)) {
+                        $heroes[$heroname] = [
+                            "name" => $heroname,
+                            "image_hero" => $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['image_hero'] . ".png",
+                            "played" => 0,
+                            "won" => 0,
+                            "kills" => 0,
+                            "assists" => 0,
+                            "deaths" => 0,
+                            "kills_avg" => 0,
+                            "assists_avg" => 0,
+                            "deaths_avg" => 0,
+                            "kda_avg" => 0,
+                            "winrate" => 0,
+                            "winrate_raw" => 0,
+                        ];
+                    }
+
+                    $hero = &$heroes[$heroname];
+
+                    $a_played = &$hero['played'];
+                    $a_won = &$hero['won'];
+                    $a_kills = &$hero['kills'];
+                    $a_assists = &$hero['assists'];
+                    $a_deaths = &$hero['deaths'];
+
+                    $a_played += $row['played'];
+                    $a_won += $row['won'];
+                    $a_kills += $row['kills'];
+                    $a_assists += $row['assists'];
+                    $a_deaths += $row['deaths'];
+                }
 
                 /*
-                 * Collect recent matches data
+                 * Get Top Heroes
                  */
+                $topheroes = [];
+                foreach ($heroes as $heroname => &$hero) {
+                    $a_played = &$hero['played'];
+                    $a_won = &$hero['won'];
+                    $a_kills = &$hero['kills'];
+                    $a_assists = &$hero['assists'];
+                    $a_deaths = &$hero['deaths'];
 
-                $pagedata['offsets'] = [];
-                $pagedata['limits'] = [];
+                    //Winrate
+                    $c_winrate = 0;
+                    if ($a_played > 0) {
+                        $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
+                    }
+                    $colorclass = "hl-number-winrate-red";
+                    if ($c_winrate >= 50.0) $colorclass = "hl-number-winrate-green";
+                    $hero['winrate'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $c_winrate) . '</span>';
+                    $hero['winrate_raw'] = $c_winrate;
 
-                /*
-                 * Matches
-                 */
+                    //Kills
+                    $c_avg_kills = 0;
+                    $c_avg_kills_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_kills_raw = $a_kills / ($a_played * 1.00);
+                        $c_avg_kills = round($c_avg_kills_raw, 1);
+                    }
+                    $hero['kills_avg'] = self::formatNumber($c_avg_kills, 1);
 
-                $pagedata['offsets']['matches'] = intval($offset);
-                $pagedata['limits']['matches'] = intval($limit);
+                    //Assists
+                    $c_avg_assists = 0;
+                    $c_avg_assists_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_assists_raw = $a_assists / ($a_played * 1.00);
+                        $c_avg_assists = round($c_avg_assists_raw, 1);
+                    }
+                    $hero['assists_avg'] = self::formatNumber($c_avg_assists, 1);
+
+                    //Deaths
+                    $c_avg_deaths = 0;
+                    $c_avg_deaths_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_deaths_raw = $a_deaths / ($a_played * 1.00);
+                        $c_avg_deaths = round($c_avg_deaths_raw, 1);
+                    }
+                    $hero['deaths_avg'] = self::formatNumber($c_avg_deaths, 1);
+                    
+                    //KDA
+                    $c_avg_kda = $c_avg_kills_raw + $c_avg_assists_raw;
+                    if ($c_avg_deaths_raw > 0) {
+                        $c_avg_kda_raw = ($c_avg_kda / ($c_avg_deaths_raw * 1.00));
+                        $c_avg_kda = round($c_avg_kda_raw, 2);
+                        $hero['kda_avg'] = self::formatNumber($c_avg_kda, 2);
+                    }
+                    else {
+                        $hero['kda_avg'] = "Perfect";
+                        $c_avg_kda_raw = 999999999;
+                    }
+
+                    $topheroes[] = $hero;
+                }
+
+                //Sort Hero Objects in descending order
+                usort($topheroes, function($a, $b) {
+                    return $b['played'] - $a['played']; //Descending Order
+                });
+
+                $pagedata['heroes'] = $topheroes;
 
                 //Close connection and set valid response
                 $db->close();

@@ -2140,3 +2140,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #1B0748 !important;
     z-index: 9999;
 }
+
+.pl-topheroes-container {
+    text-align: left;
+}

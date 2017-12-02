@@ -143,6 +143,82 @@ PlayerLoader.ajax.filter = {
     }
 };
 
+PlayerLoader.ajax.topheroes = {
+    internal: {
+        loading: false, //Whether or not currently loading a result
+        url: '', //url to get a response from
+        dataSrc: 'data', //The array of data is found in .data field
+    },
+    reset: function() {
+        let self = PlayerLoader.ajax.topheroes;
+
+        self.internal.loading = false;
+        self.internal.url = '';
+        PlayerLoader.data.matches.empty();
+    },
+    generateUrl: function() {
+        let self = PlayerLoader.ajax.topheroes;
+
+        let bUrl = Routing.generate("playerdata_pagedata_player_topheroes", {
+            player: player_id
+        });
+
+        return HotstatusFilter.generateUrl(bUrl, ["season", "gameType"]);
+    },
+    /*
+     * Loads Top Heroes from current internal url, looking for data in the current internal dataSrc field.
+     * Returns the ajax object.
+     */
+    load: function() {
+        let ajax = PlayerLoader.ajax;
+        let self = ajax.topheroes;
+
+        let data = PlayerLoader.data;
+        let data_matches = data.topheroes;
+
+        //Generate url based on internal state
+        self.internal.url = self.generateUrl();
+
+        //Enable Processing Indicator
+        self.internal.loading = true;
+
+        //+= Top Heroes Ajax Request
+        $.getJSON(self.internal.url)
+            .done(function(jsonResponse) {
+                let json = jsonResponse[self.internal.dataSrc];
+                let json_heroes = json.heroes;
+
+                /*
+                 * Process Top Heroes
+                 */
+
+                //Set displayMatchLoader if we got as many matches as we asked for
+                if (json_matches.length >= self.internal.limit) {
+                    displayMatchLoader = true;
+                }
+
+                //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
+                $('[data-toggle="tooltip"]').tooltip();
+            })
+            .fail(function() {
+                //Failure to load Data
+            })
+            .always(function() {
+                //Toggle display topheroes loader button if more heroes to display
+                if (displayMatchLoader) {
+                    data_matches.generate_matchLoader();
+                }
+                else {
+                    data_matches.remove_matchLoader();
+                }
+
+                self.internal.loading = false;
+            });
+
+        return self;
+    }
+};
+
 PlayerLoader.ajax.matches = {
     internal: {
         loading: false, //Whether or not currently loading a result
@@ -293,6 +369,28 @@ PlayerLoader.ajax.matches = {
  * Handles binding data to the page
  */
 PlayerLoader.data = {
+    topheroes: {
+        internal: {
+            heroOffset: 0, //How many heroes are currently displayed
+            heroLimit: 5, //How many heroes should be displayed at a time
+            heroData: [] //Holds the Top Heroes array of heroes
+        },
+        empty: function() {
+            let self = PlayerLoader.data.topheroes;
+
+            $('#pl-topheroes-container').empty();
+            self.internal.heroOffset = 0;
+            self.internal.heroData = [];
+        },
+        generateTopHeroes: function(heroes) {
+            let self = PlayerLoader.data.topheroes;
+
+            self.internal.heroData = heroes;
+        },
+        generateTopHero: function(hero) {
+
+        }
+    },
     matches: {
         internal: {
             matchLoaderGenerated: false,
