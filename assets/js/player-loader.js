@@ -98,6 +98,7 @@ PlayerLoader.ajax.filter = {
                  * Empty dynamically filled containers, reset all subajax objects
                  */
                 ajax.matches.reset();
+                ajax.topheroes.reset();
 
                 /*
                  * Heroloader Container
@@ -113,6 +114,14 @@ PlayerLoader.ajax.filter = {
 
                 //Load initial match set
                 ajaxMatches.load();
+
+                /*
+                 * Initial Top Heroes
+                 */
+                let ajaxTopHeroes = ajax.topheroes;
+
+                //Load initial top heroes
+                ajaxTopHeroes.load();
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -134,8 +143,6 @@ PlayerLoader.ajax.filter = {
                     });
                 });
 
-                console.log('test');
-
                 self.internal.loading = false;
             });
 
@@ -154,7 +161,7 @@ PlayerLoader.ajax.topheroes = {
 
         self.internal.loading = false;
         self.internal.url = '';
-        PlayerLoader.data.matches.empty();
+        PlayerLoader.data.topheroes.empty();
     },
     generateUrl: function() {
         let self = PlayerLoader.ajax.topheroes;
@@ -192,11 +199,18 @@ PlayerLoader.ajax.topheroes = {
                  * Process Top Heroes
                  */
                 if (json_heroes.length > 0) {
-                    data_topheroes.generateInitialTopHeroes(json_heroes);
+                    data_topheroes.generateTopHeroesContainer();
 
-                    if (json_heroes.length > data_topheroes.internal.heroLimit) {
-                        data_topheroes.generateTopHeroesLoader();
+                    data_topheroes.generateTopHeroesTable();
+
+                    let topHeroesTable = data_topheroes.getTopHeroesTableConfig(json_heroes.length);
+
+                    topHeroesTable.data = [];
+                    for (let hero of json_heroes) {
+                        topHeroesTable.data.push(data_topheroes.generateTopHeroesTableData(hero));
                     }
+
+                    data_topheroes.initTopHeroesTable(topHeroesTable);
                 }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -365,42 +379,92 @@ PlayerLoader.ajax.matches = {
 PlayerLoader.data = {
     topheroes: {
         internal: {
-            heroOffset: 0, //How many heroes are currently displayed
             heroLimit: 5, //How many heroes should be displayed at a time
-            heroData: [] //Holds the Top Heroes array of heroes
         },
         empty: function() {
-            let self = PlayerLoader.data.topheroes;
-
-            $('#pl-topheroes-container').empty();
-            self.internal.heroOffset = 0;
-            self.internal.heroData = [];
+            $('#pl-topheroes-container').remove();
         },
-        generateInitialTopHeroes: function(heroes) {
-            let self = PlayerLoader.data.topheroes;
+        generateTopHeroesContainer: function() {
+            let html = '<div id="pl-topheroes-container" class="pl-topheroes-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
+                '</div>';
 
-            self.internal.heroData = heroes;
-
-            self.generateTopHeroes();
+            $('#player-leftpane-container').append(html);
         },
-        generateTopHeroes: function() {
-            let self = PlayerLoader.data.topheroes;
+        generateTopHeroesTableData: function(hero) {
+            let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="'+ hero.image_hero +'"></div>' +
+                '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("hero", {heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
 
-            let t = self.internal;
 
-            let limit = Math.min(t.heroOffset + t.heroLimit, t.heroData.length);
-
-            if (t.heroOffset < t.heroData.length) {
-                for (let i = t.heroOffset; i < limit; i++) {
-                    self.generateTopHero(t.heroData[i]); //TODO
-                }
+            //Good kda
+            let goodkda = 'rm-sw-sp-kda-num';
+            if (hero.kda_raw >= 3) {
+                goodkda = 'rm-sw-sp-kda-num-good'
             }
+            if (hero.kda_raw >= 6) {
+                goodkda = 'rm-sw-sp-kda-num-great'
+            }
+
+            let kda = '<span class="'+ goodkda +'">' + hero.kda_avg + '</span> KDA';
+
+            let kdaindiv = hero.kills_avg + ' / <span class="pl-th-kda-indiv-deaths">' + hero.deaths_avg + '</span> / ' + hero.assists_avg;
+
+            let kdafield = '<div class="pl-th-kdapane">' +
+                //KDA actual
+                '<div class="pl-th-kda-kda">' +
+                kda +
+                '</div>' +
+                //KDA indiv
+                '<div class="pl-th-kda-indiv">' +
+                kdaindiv +
+                '</div>' +
+                '</div>';
+
+            let winratefield = hero.winrate;
+
+            return [herofield, kdafield, winratefield];
         },
-        generateTopHero: function(hero) {
-            //TODO
+        getTopHeroesTableConfig: function(rowLength) {
+            let self = PlayerLoader.data.topheroes;
+
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {},
+                {},
+                {}
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.sorting = false;
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = self.internal.heroLimit; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            datatable.pagingType = "simple";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'trp>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            datatable.drawCallback = function() {
+                $('.paginated-tooltip[data-toggle="tooltip"]').tooltip();
+            };
+
+            return datatable;
         },
-        generateTopHeroesLoader: function() {
-            //TODO
+        generateTopHeroesTable: function() {
+            $('#pl-topheroes-container').append('<table id="pl-topheroes-table" class="pl-topheroes-table hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class="d-none"></thead></table>');
+        },
+        initTopHeroesTable: function(dataTableConfig) {
+            $('#pl-topheroes-table').DataTable(dataTableConfig);
         }
     },
     matches: {
@@ -934,7 +998,7 @@ $(document).ready(function() {
     let filterTypes = ["season", "gameType"];
     let filterAjax = PlayerLoader.ajax.filter;
 
-    filterAjax.validateLoad(baseUrl);
+    //filterAjax.validateLoad(baseUrl);
     HotstatusFilter.validateSelectors(null, filterTypes);
     filterAjax.validateLoad(baseUrl, filterTypes);
 

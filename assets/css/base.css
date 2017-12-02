@@ -2094,6 +2094,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     background-color: #00b8c3;
 }
 
+.player-leftpane-container {
+    width: 320px;
+}
+
 .playersummary-container {
     position:relative;
     width:100%;
@@ -2115,8 +2119,9 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .playersummary-player-battletag {
-    font-size:24px;
+    font-size:20px;
     font-weight: bold;
+    margin: 0 20px;
     overflow: hidden;
     text-wrap: none;
     white-space: nowrap;
@@ -2142,5 +2147,60 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-topheroes-container {
-    text-align: left;
+    text-align: center;
+    cursor: default;
+}
+
+.pl-th-heropane {
+    text-align: center;
+    width: 80px;
+    text-wrap: none;
+    white-space: nowrap;
+}
+
+.pl-th-hp-heroimage {
+    margin-top: 4px;
+    margin-bottom: -4px;
+    width:32px;
+    height:32px;
+    border-radius: 24px;
+    border: 2px;
+    border-color: #151120 ;
+    border-style: solid;
+}
+
+.pl-th-hp-heroname {
+    font-size: 12px;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.pl-th-hp-heroname:hover {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8782ff;
+    text-decoration: none;
+}
+
+.pl-th-kdapane {
+    text-align: center;
+    width: 90px;
+    text-wrap: none;
+    white-space: nowrap;
+    font-family: arial sans-serif;
+}
+
+.pl-th-kda-indiv {
+    font-size:11px;
+    color: #ffffff;
+}
+
+.pl-th-kda-indiv-deaths {
+    color: #ff8989 !important;
+}
+
+.pl-th-kda-kda {
+    font-size: 14px;
+    color: #9593af;
 }

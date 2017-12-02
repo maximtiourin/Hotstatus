@@ -173,7 +173,7 @@ class PlayerdataController extends Controller {
      * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
      */
     //condition="request.isXmlHttpRequest()", //TODO
-    public function getPageDataPlayerTopHeroesAction(Request $request, $player, $offset, $limit) {
+    public function getPageDataPlayerTopHeroesAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerTopHeroesAction";
         $_VERSION = 0;
@@ -261,9 +261,9 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetTopHeroes",
-                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_recent_matches_granular` 
+                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_matches_recent_granular` 
                     WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
-                $db->bind("GetTopHeroes", "ss", $r_player_id, $r_date_start, $r_date_end);
+                $db->bind("GetTopHeroes", "iss", $r_player_id, $r_date_start, $r_date_end);
 
                 $r_player_id = $player;
                 $r_date_start = $date_start;
@@ -305,9 +305,9 @@ class PlayerdataController extends Controller {
 
                     $a_played += $row['played'];
                     $a_won += $row['won'];
-                    $a_kills += $row['kills'];
-                    $a_assists += $row['assists'];
-                    $a_deaths += $row['deaths'];
+                    $a_kills += $row['stats_kills'];
+                    $a_assists += $row['stats_assists'];
+                    $a_deaths += $row['stats_deaths'];
                 }
 
                 /*
@@ -326,9 +326,7 @@ class PlayerdataController extends Controller {
                     if ($a_played > 0) {
                         $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
                     }
-                    $colorclass = "hl-number-winrate-red";
-                    if ($c_winrate >= 50.0) $colorclass = "hl-number-winrate-green";
-                    $hero['winrate'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $c_winrate) . '</span>';
+                    $hero['winrate'] = sprintf("%03.1f%%", $c_winrate);
                     $hero['winrate_raw'] = $c_winrate;
 
                     //Kills
@@ -369,6 +367,7 @@ class PlayerdataController extends Controller {
                         $hero['kda_avg'] = "Perfect";
                         $c_avg_kda_raw = 999999999;
                     }
+                    $hero['kda_raw'] = $c_avg_kda_raw;
 
                     $topheroes[] = $hero;
                 }
@@ -1213,7 +1212,7 @@ class PlayerdataController extends Controller {
                 self::QUERY_ISSET => false,
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "type",
+                self::QUERY_SQLCOLUMN => "gameType",
                 self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
         ];

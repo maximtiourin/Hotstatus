@@ -14,11 +14,15 @@
             <div class="row">
                 <div class="col">
                     {# Left Pane #}
-                    {# Player Summary #}
-                    <div class="hotstatus-subcontainer">
-                        {% block player_summary %}{% endblock %}
+                    <div class="horizontal-scroller">
+                        <div id="player-leftpane-container" class="player-leftpane-container">
+                            {# Player Summary #}
+                            <div class="hotstatus-subcontainer">
+                                {% block player_summary %}{% endblock %}
+                            </div>
+                            {# Top Heroes PLAYERLOADER GENERATED #}
+                        </div>
                     </div>
-                    <div id="pl-topheroes-container" class="pl-topheroes-container hotstatus-subcontainer">{# PLAYERLOADER GENERATED #}</div>
                 </div>
             </div>
         </div>
