@@ -174,7 +174,7 @@ PlayerLoader.ajax.topheroes = {
         let self = ajax.topheroes;
 
         let data = PlayerLoader.data;
-        let data_matches = data.topheroes;
+        let data_topheroes = data.topheroes;
 
         //Generate url based on internal state
         self.internal.url = self.generateUrl();
@@ -191,10 +191,12 @@ PlayerLoader.ajax.topheroes = {
                 /*
                  * Process Top Heroes
                  */
+                if (json_heroes.length > 0) {
+                    data_topheroes.generateInitialTopHeroes(json_heroes);
 
-                //Set displayMatchLoader if we got as many matches as we asked for
-                if (json_matches.length >= self.internal.limit) {
-                    displayMatchLoader = true;
+                    if (json_heroes.length > data_topheroes.internal.heroLimit) {
+                        data_topheroes.generateTopHeroesLoader();
+                    }
                 }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -204,14 +206,6 @@ PlayerLoader.ajax.topheroes = {
                 //Failure to load Data
             })
             .always(function() {
-                //Toggle display topheroes loader button if more heroes to display
-                if (displayMatchLoader) {
-                    data_matches.generate_matchLoader();
-                }
-                else {
-                    data_matches.remove_matchLoader();
-                }
-
                 self.internal.loading = false;
             });
 
@@ -382,13 +376,31 @@ PlayerLoader.data = {
             self.internal.heroOffset = 0;
             self.internal.heroData = [];
         },
-        generateTopHeroes: function(heroes) {
+        generateInitialTopHeroes: function(heroes) {
             let self = PlayerLoader.data.topheroes;
 
             self.internal.heroData = heroes;
+
+            self.generateTopHeroes();
+        },
+        generateTopHeroes: function() {
+            let self = PlayerLoader.data.topheroes;
+
+            let t = self.internal;
+
+            let limit = Math.min(t.heroOffset + t.heroLimit, t.heroData.length);
+
+            if (t.heroOffset < t.heroData.length) {
+                for (let i = t.heroOffset; i < limit; i++) {
+                    self.generateTopHero(t.heroData[i]); //TODO
+                }
+            }
         },
         generateTopHero: function(hero) {
-
+            //TODO
+        },
+        generateTopHeroesLoader: function() {
+            //TODO
         }
     },
     matches: {
