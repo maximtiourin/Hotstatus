@@ -326,7 +326,7 @@ class PlayerdataController extends Controller {
                     if ($a_played > 0) {
                         $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
                     }
-                    $hero['winrate'] = sprintf("%03.1f%%", $c_winrate);
+                    $hero['winrate'] = sprintf("%03.1f", $c_winrate);
                     $hero['winrate_raw'] = $c_winrate;
 
                     //Kills
@@ -374,7 +374,7 @@ class PlayerdataController extends Controller {
 
                 //Sort Hero Objects in descending order
                 usort($topheroes, function($a, $b) {
-                    return $b['played'] - $a['played']; //Descending Order
+                    return (($b['played'] * 1000) + ($b['winrate_raw'])) - (($a['played'] * 1000) + ($a['winrate_raw'])); //Descending Order (First - Played, Second - Winrate Raw)
                 });
 
                 $pagedata['heroes'] = $topheroes;

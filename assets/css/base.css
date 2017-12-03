@@ -1176,6 +1176,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     overflow-x: auto;
 }
 
+.pl-norecentmatches {
+    color: #FFFFFF;
+    font-size: 16px;
+    cursor: default;
+}
+
 .pl-recentmatch-bg-won {
     /*background-color: #00872b !important;*/
 }
@@ -2149,6 +2155,13 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .pl-topheroes-container {
     text-align: center;
     cursor: default;
+    height:385px;
+}
+
+.pl-topheroes-pagination {
+    position: absolute;
+    left: 32px;
+    bottom: 7px;
 }
 
 .pl-th-heropane {
@@ -2170,14 +2183,14 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-th-hp-heroname {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #FFFFFF;
     text-decoration: none;
 }
 
 .pl-th-hp-heroname:hover {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #8782ff;
     text-decoration: none;
@@ -2203,4 +2216,48 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .pl-th-kda-kda {
     font-size: 14px;
     color: #9593af;
+}
+
+.pl-th-winratepane {
+    text-align: center;
+    width: 48px;
+    text-wrap: none;
+    white-space: nowrap;
+    font-family: arial sans-serif;
+}
+
+.pl-th-wr-winrate {
+    font-size:13px;
+    color: #ffffff;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.pl-th-wr-winrate-good {
+    font-size:13px;
+    color: #b0ffa7;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.pl-th-wr-winrate-great {
+    font-size:13px;
+    color: #ffd835;
+    font-weight: 500;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.pl-th-wr-winrate-bad {
+    font-size:13px;
+    color: #d7d7d7;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.pl-th-wr-winrate-terrible {
+    font-size:13px;
+    color: #ff8c87;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.pl-th-wr-played {
+    font-size:11px;
+    color: #ffffff;
 }

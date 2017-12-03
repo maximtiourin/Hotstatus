@@ -80,6 +80,7 @@ PlayerLoader.ajax.filter = {
         let self = PlayerLoader.ajax.filter;
 
         let data = PlayerLoader.data;
+        let data_matches = data.matches;
 
         //Enable Processing Indicator
         self.internal.loading = true;
@@ -108,6 +109,8 @@ PlayerLoader.ajax.filter = {
                 /*
                  * Initial matches
                  */
+                data_matches.generateRecentMatchesContainer();
+
                 let ajaxMatches = ajax.matches;
                 ajaxMatches.internal.offset = 0;
                 ajaxMatches.internal.limit = json.limits.matches;
@@ -292,19 +295,24 @@ PlayerLoader.ajax.matches = {
                 /*
                  * Process Matches
                  */
-                //Set new offset
-                self.internal.offset = json_offsets.matches + self.internal.limit;
+                if (json_matches.length > 0) {
+                    //Set new offset
+                    self.internal.offset = json_offsets.matches + self.internal.limit;
 
-                //Append new Match widgets for matches that aren't in the manifest
-                for (let match of json_matches) {
-                    if (!data_matches.isMatchGenerated(match.id)) {
-                        data_matches.generateMatch(match);
+                    //Append new Match widgets for matches that aren't in the manifest
+                    for (let match of json_matches) {
+                        if (!data_matches.isMatchGenerated(match.id)) {
+                            data_matches.generateMatch(match);
+                        }
+                    }
+
+                    //Set displayMatchLoader if we got as many matches as we asked for
+                    if (json_matches.length >= self.internal.limit) {
+                        displayMatchLoader = true;
                     }
                 }
-
-                //Set displayMatchLoader if we got as many matches as we asked for
-                if (json_matches.length >= self.internal.limit) {
-                    displayMatchLoader = true;
+                else if (self.internal.offset === 0) {
+                    data_matches.generateNoMatchesMessage();
                 }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -321,6 +329,9 @@ PlayerLoader.ajax.matches = {
                 else {
                     data_matches.remove_matchLoader();
                 }
+
+                //Remove initial load
+                $('#pl-recentmatches-container').removeClass('initial-load');
 
                 self.internal.loading = false;
             });
@@ -391,10 +402,16 @@ PlayerLoader.data = {
             $('#player-leftpane-container').append(html);
         },
         generateTopHeroesTableData: function(hero) {
+            /*
+             * Hero
+             */
             let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="'+ hero.image_hero +'"></div>' +
                 '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("hero", {heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
 
 
+            /*
+             * KDA
+             */
             //Good kda
             let goodkda = 'rm-sw-sp-kda-num';
             if (hero.kda_raw >= 3) {
@@ -410,16 +427,43 @@ PlayerLoader.data = {
 
             let kdafield = '<div class="pl-th-kdapane">' +
                 //KDA actual
-                '<div class="pl-th-kda-kda">' +
+                '<div class="pl-th-kda-kda"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="(Kills + Assists) / Deaths">' +
                 kda +
-                '</div>' +
+                '</span></div>' +
                 //KDA indiv
-                '<div class="pl-th-kda-indiv">' +
+                '<div class="pl-th-kda-indiv"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Kills / Deaths / Assists">' +
                 kdaindiv +
-                '</div>' +
+                '</span></div>' +
                 '</div>';
 
-            let winratefield = hero.winrate;
+            /*
+             * Winrate / Played
+             */
+            //Good winrate
+            let goodwinrate = 'pl-th-wr-winrate';
+            if (hero.winrate_raw <= 49) {
+                goodwinrate = 'pl-th-wr-winrate-bad'
+            }
+            if (hero.winrate_raw <= 40) {
+                goodwinrate = 'pl-th-wr-winrate-terrible'
+            }
+            if (hero.winrate_raw >= 51) {
+                goodwinrate = 'pl-th-wr-winrate-good'
+            }
+            if (hero.winrate_raw >= 60) {
+                goodwinrate = 'pl-th-wr-winrate-great'
+            }
+
+            let winratefield = '<div class="pl-th-winratepane">' +
+                //Winrate
+                '<div class="'+ goodwinrate +'"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Winrate">' +
+                hero.winrate + '%' +
+                '</span></div>' +
+                //Played
+                '<div class="pl-th-wr-played">' +
+                hero.played + ' played' +
+                '</div>' +
+                '</div>';
 
             return [herofield, kdafield, winratefield];
         },
@@ -451,7 +495,7 @@ PlayerLoader.data = {
             datatable.responsive = false; //Controls whether or not the table collapses responsively as need
             datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
             datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
-            datatable.dom =  "<'row'<'col-sm-12'trp>>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-topheroes-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
             datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
             datatable.drawCallback = function() {
@@ -475,7 +519,7 @@ PlayerLoader.data = {
         empty: function() {
             let self = PlayerLoader.data.matches;
 
-            $('#pl-recentmatches-container').empty();
+            $('#pl-recentmatches-container').remove();
             self.internal.matchLoaderGenerated = false;
             self.internal.matchManifest = {};
         },
@@ -483,6 +527,12 @@ PlayerLoader.data = {
             let self = PlayerLoader.data.matches;
 
             return self.internal.matchManifest.hasOwnProperty(matchid + "");
+        },
+        generateRecentMatchesContainer: function() {
+            $('#player-rightpane-container').append('<div id="pl-recentmatches-container" class="pl-recentmatches-container initial-load hotstatus-subcontainer horizontal-scroller"></div>');
+        },
+        generateNoMatchesMessage: function() {
+            $('#pl-recentmatches-container').append('<div class="pl-norecentmatches">No Recent Matches Found...</div>');
         },
         generateMatch: function(match) {
             //Generates all subcomponents of a match display
