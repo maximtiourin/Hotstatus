@@ -595,6 +595,8 @@ class PlayerdataController extends Controller {
 
                 $pagedata['parties'] = $parties;
 
+                //Last Updated
+                $pagedata['last_updated'] = time();
 
                 //Close connection and set valid response
                 $db->close();

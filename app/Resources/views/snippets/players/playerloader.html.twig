@@ -12,15 +12,20 @@
     <div class="row">
         <div class="col">
             <div class="row">
-                <div class="col">
-                    {# Left Pane #}
-                    <div class="horizontal-scroller">
-                        <div id="player-leftpane-container" class="player-leftpane-container">
+                <div class="col text-left overflow-x-auto">
+                    {# Left Pane TOP #}
+                    <div class="player-leftpane-block">
+                        <div id="player-leftpane-container" class="player-leftpane player-leftpane-container">
                             {# Player Summary #}
-                            <div class="hotstatus-subcontainer">
+                            <div class="hotstatus-subcontainer margin-bottom-spacer-1">
                                 {% block player_summary %}{% endblock %}
                             </div>
                             {# Top Heroes PLAYERLOADER GENERATED #}
+                        </div>
+                    </div>
+                    {# Left Pane BOT #}
+                    <div class="player-leftpane-block">
+                        <div id="player-leftpane-bot-container" class="player-leftpane player-leftpane-bot-container">
                             {# Parties PLAYERLOADER GENERATED #}
                         </div>
                     </div>
@@ -32,8 +37,8 @@
                 <div class="col text-center">
                     {# Right Pane #}
                     <div id="player-rightpane-container" class="player-rightpane-container">
-                    <div id="pl-recentmatches-loader"></div>
-                    {# Recent Matches PLAYERLOADER GENERATED #}
+                        <div id="pl-recentmatches-loader"></div>
+                        {# Recent Matches PLAYERLOADER GENERATED #}
                     </div>
                 </div>
             </div>

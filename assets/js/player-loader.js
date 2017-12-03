@@ -284,7 +284,7 @@ PlayerLoader.ajax.parties = {
                  * Process Parties
                  */
                 if (json_parties.length > 0) {
-                    data_parties.generatePartiesContainer();
+                    data_parties.generatePartiesContainer(json.last_updated);
 
                     data_parties.generatePartiesTable();
 
@@ -577,7 +577,7 @@ PlayerLoader.data = {
             datatable.responsive = false; //Controls whether or not the table collapses responsively as need
             datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
             datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
-            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-topheroes-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-leftpane-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
             datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
             datatable.drawCallback = function() {
@@ -595,48 +595,61 @@ PlayerLoader.data = {
     },
     parties: {
         internal: {
-            partyLimit: 5, //How many parties should be displayed at a time
+            partyLimit: 4, //How many parties should be displayed at a time
         },
         empty: function() {
             $('#pl-parties-container').remove();
         },
-        generatePartiesContainer: function() {
+        generatePartiesContainer: function(last_updated_timestamp) {
+            let date = (new Date(last_updated_timestamp * 1000)).toLocaleString();
+
             let html = '<div id="pl-parties-container" class="pl-parties-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
+                '<div class="pl-parties-title"><span style="cursor:help;" class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Last Updated: '+ date +'">Parties</span></div>' +
                 '</div>';
 
-            $('#player-leftpane-container').append(html);
+            $('#player-leftpane-bot-container').append(html);
         },
-        generatePartiesTableData: function(hero) {
+        generatePartiesTableData: function(party) {
+            /*
+             * Party
+             */
+            let partyinner = '';
+            for (let player of party.players) {
+                partyinner += '<div class="pl-p-p-player pl-p-p-player-'+ party.players.length +'"><a class="pl-p-p-playername" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">'+ player.name +'</a></div>';
+            }
+
+            let partyfield = '<div class="pl-parties-partypane">'+ partyinner +'</div>';
+
             /*
              * Winrate / Played
              */
             //Good winrate
             let goodwinrate = 'pl-th-wr-winrate';
-            if (hero.winrate_raw <= 49) {
+            if (party.winrate_raw <= 49) {
                 goodwinrate = 'pl-th-wr-winrate-bad'
             }
-            if (hero.winrate_raw <= 40) {
+            if (party.winrate_raw <= 40) {
                 goodwinrate = 'pl-th-wr-winrate-terrible'
             }
-            if (hero.winrate_raw >= 51) {
+            if (party.winrate_raw >= 51) {
                 goodwinrate = 'pl-th-wr-winrate-good'
             }
-            if (hero.winrate_raw >= 60) {
+            if (party.winrate_raw >= 60) {
                 goodwinrate = 'pl-th-wr-winrate-great'
             }
 
             let winratefield = '<div class="pl-th-winratepane">' +
                 //Winrate
                 '<div class="'+ goodwinrate +'"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Winrate">' +
-                hero.winrate + '%' +
+                party.winrate + '%' +
                 '</span></div>' +
                 //Played
                 '<div class="pl-th-wr-played">' +
-                hero.played + ' played' +
+                party.played + ' played' +
                 '</div>' +
                 '</div>';
 
-            return [herofield, kdafield, winratefield];
+            return [partyfield, winratefield];
         },
         getPartiesTableConfig: function(rowLength) {
             let self = PlayerLoader.data.parties;
@@ -661,11 +674,12 @@ PlayerLoader.data = {
             datatable.deferRender = false;
             datatable.pageLength = self.internal.partyLimit; //Controls how many rows per page
             datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            //datatable.paging = false;
             datatable.pagingType = "simple";
             datatable.responsive = false; //Controls whether or not the table collapses responsively as need
             datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
             datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
-            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-topheroes-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-leftpane-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
             datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
 
             datatable.drawCallback = function() {

@@ -1,3 +1,7 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 .color-statslist-toolbar { color: #3d4b52 }
 
 /* Image downscaling settings - Made necessary when I realized Chrome had crappy downscaling of png images making them blurry */
@@ -2100,7 +2104,16 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     background-color: #00b8c3;
 }
 
-.player-leftpane-container {
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.player-leftpane-block {
+    display: inline-block;
+    overflow:hidden;
+}
+
+.player-leftpane {
     width: 320px;
 }
 
@@ -2153,15 +2166,16 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-topheroes-container {
+    position:relative;
     text-align: center;
     cursor: default;
     height:385px;
 }
 
-.pl-topheroes-pagination {
+.pl-leftpane-pagination {
     position: absolute;
-    left: 32px;
-    bottom: 7px;
+    left: 15px;
+    bottom: 4px;
 }
 
 .pl-th-heropane {
@@ -2260,4 +2274,81 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .pl-th-wr-played {
     font-size:11px;
     color: #ffffff;
+}
+
+.pl-parties-container {
+    position: relative;
+    text-align: center;
+    cursor: default;
+    height:385px;
+}
+
+.pl-parties-title {
+    height:24px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: left;
+    line-height: 24px;
+    padding-left: 15px;
+    color: #FFFFFF;
+}
+
+.pl-parties-partypane {
+    text-align: left;
+    width: 183px;
+    padding: 5px 0;
+    text-wrap: none;
+    white-space: nowrap;
+}
+
+.pl-p-p-player {
+    position:relative;
+    width:100%;
+    text-wrap: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.pl-p-p-player-4 {
+    height:15px;
+    font-size:10px;
+    font-weight:600;
+    line-height:15px;
+}
+
+.pl-p-p-player-3 {
+    height:20px;
+    font-size:15px;
+    font-weight:600;
+    line-height:20px;
+}
+
+.pl-p-p-player-2 {
+    height:30px;
+    font-size:20px;
+    font-weight:600;
+    line-height:30px;
+}
+
+.pl-p-p-player-1 {
+    height:60px;
+    font-size:25px;
+    font-weight:600;
+    line-height:60px;
+}
+
+.pl-p-p-playername {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.pl-p-p-playername:hover {
+    color: #8782ff;
+    text-decoration: none;
+}
+
+.margin-bottom-spacer-1 {
+    margin-bottom: 10px!important;
 }
