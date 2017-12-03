@@ -230,6 +230,83 @@ PlayerLoader.ajax.topheroes = {
     }
 };
 
+PlayerLoader.ajax.parties = {
+    internal: {
+        loading: false, //Whether or not currently loading a result
+        url: '', //url to get a response from
+        dataSrc: 'data', //The array of data is found in .data field
+    },
+    reset: function() {
+        let self = PlayerLoader.ajax.parties;
+
+        self.internal.loading = false;
+        self.internal.url = '';
+        PlayerLoader.data.parties.empty();
+    },
+    generateUrl: function() {
+        let self = PlayerLoader.ajax.parties;
+
+        let bUrl = Routing.generate("playerdata_pagedata_player_parties", {
+            player: player_id
+        });
+
+        return HotstatusFilter.generateUrl(bUrl, ["season", "gameType"]);
+    },
+    /*
+     * Loads Parties from current internal url, looking for data in the current internal dataSrc field.
+     * Returns the ajax object.
+     */
+    load: function() {
+        let ajax = PlayerLoader.ajax;
+        let self = ajax.parties;
+
+        let data = PlayerLoader.data;
+        let data_parties = data.parties;
+
+        //Generate url based on internal state
+        self.internal.url = self.generateUrl();
+
+        //Enable Processing Indicator
+        self.internal.loading = true;
+
+        //+= Parties Ajax Request
+        $.getJSON(self.internal.url)
+            .done(function(jsonResponse) {
+                let json = jsonResponse[self.internal.dataSrc];
+                let json_parties = json.parties;
+
+                /*
+                 * Process Parties
+                 */
+                if (json_parties.length > 0) {
+                    data_parties.generatePartiesContainer();
+
+                    data_parties.generatePartiesTable();
+
+                    let partiesTable = data_parties.getPartiesTableConfig(json_parties.length);
+
+                    partiesTable.data = [];
+                    for (let party of json_parties) {
+                        partiesTable.data.push(data_parties.generatePartiesTableData(party));
+                    }
+
+                    data_parties.initPartiesTable(partiesTable);
+                }
+
+                //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
+                $('[data-toggle="tooltip"]').tooltip();
+            })
+            .fail(function() {
+                //Failure to load Data
+            })
+            .always(function() {
+                self.internal.loading = false;
+            });
+
+        return self;
+    }
+};
+
 PlayerLoader.ajax.matches = {
     internal: {
         loading: false, //Whether or not currently loading a result
@@ -509,6 +586,94 @@ PlayerLoader.data = {
         },
         initTopHeroesTable: function(dataTableConfig) {
             $('#pl-topheroes-table').DataTable(dataTableConfig);
+        }
+    },
+    parties: {
+        internal: {
+            partyLimit: 5, //How many parties should be displayed at a time
+        },
+        empty: function() {
+            $('#pl-parties-container').remove();
+        },
+        generatePartiesContainer: function() {
+            let html = '<div id="pl-parties-container" class="pl-parties-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
+                '</div>';
+
+            $('#player-leftpane-container').append(html);
+        },
+        generatePartiesTableData: function(hero) {
+            /*
+             * Winrate / Played
+             */
+            //Good winrate
+            let goodwinrate = 'pl-th-wr-winrate';
+            if (hero.winrate_raw <= 49) {
+                goodwinrate = 'pl-th-wr-winrate-bad'
+            }
+            if (hero.winrate_raw <= 40) {
+                goodwinrate = 'pl-th-wr-winrate-terrible'
+            }
+            if (hero.winrate_raw >= 51) {
+                goodwinrate = 'pl-th-wr-winrate-good'
+            }
+            if (hero.winrate_raw >= 60) {
+                goodwinrate = 'pl-th-wr-winrate-great'
+            }
+
+            let winratefield = '<div class="pl-th-winratepane">' +
+                //Winrate
+                '<div class="'+ goodwinrate +'"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Winrate">' +
+                hero.winrate + '%' +
+                '</span></div>' +
+                //Played
+                '<div class="pl-th-wr-played">' +
+                hero.played + ' played' +
+                '</div>' +
+                '</div>';
+
+            return [herofield, kdafield, winratefield];
+        },
+        getPartiesTableConfig: function(rowLength) {
+            let self = PlayerLoader.data.parties;
+
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {},
+                {}
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.sorting = false;
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = self.internal.partyLimit; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            datatable.pagingType = "simple";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-topheroes-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            datatable.drawCallback = function() {
+                $('.paginated-tooltip[data-toggle="tooltip"]').tooltip();
+            };
+
+            return datatable;
+        },
+        generatePartiesTable: function() {
+            $('#pl-parties-container').append('<table id="pl-parties-table" class="pl-parties-table hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class="d-none"></thead></table>');
+        },
+        initPartiesTable: function(dataTableConfig) {
+            $('#pl-parties-table').DataTable(dataTableConfig);
         }
     },
     matches: {

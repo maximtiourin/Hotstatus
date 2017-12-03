@@ -168,7 +168,7 @@ class PlayerdataController extends Controller {
     }
 
     /**
-     * Returns top heroes for player based on offset and hero limit
+     * Returns top heroes for player
      *
      * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
      */
@@ -261,7 +261,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetTopHeroes",
-                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_matches_recent_granular` 
+                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `parties` FROM `players_matches_recent_granular` 
                     WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
                 $db->bind("GetTopHeroes", "iss", $r_player_id, $r_date_start, $r_date_end);
 
@@ -378,6 +378,223 @@ class PlayerdataController extends Controller {
                 });
 
                 $pagedata['heroes'] = $topheroes;
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+            }
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        /*$response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }*/ //TODO enable after testing
+
+        return $response;
+    }
+
+    /**
+     * Returns recent parties for player, as well as party statistics
+     *
+     * @Route("/playerdata/pagedata/{player}/parties", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_parties")
+     */
+    //condition="request.isXmlHttpRequest()", //TODO
+    public function getPageDataPlayerPartiesAction(Request $request, $player) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataPlayerPartiesAction";
+        $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::parties_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = "$_ID:$player:$queryCacheSql";
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
+
+                //Get season date range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
+                $date_start = $seasonobj['start'];
+                $date_end = $seasonobj['end'];
+
+                //Prepare Statements
+                $db->prepare("GetParties",
+                    "SELECT `parties` FROM `players_matches_recent_granular` 
+                    WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetParties", "iss", $r_player_id, $r_date_start, $r_date_end);
+
+                $db->prepare("GetPartyPlayers",
+                    "SELECT `players` FROM `players_parties` WHERE `id` = ? AND `party` = ? LIMIT 1");
+                $db->bind("GetPartyPlayers", "is", $r_player_id, $r_party);
+
+                $db->prepare("GetPlayerNameFromId",
+                    "SELECT `name` FROM `players` WHERE `id` = ? LIMIT 1");
+                $db->bind("GetPlayerNameFromId", "i", $r_other_player_id);
+
+                $r_player_id = $player;
+                $r_date_start = $date_start;
+                $r_date_end = $date_end;
+
+                /*
+                 * Aggregate Parties
+                 */
+                $a_parties = [];
+                $partiesResult = $db->execute("GetParties");
+                while ($row = $db->fetchArray($partiesResult)) {
+                    //Parties
+                    $row_parties = json_decode($row['parties'], true);
+                    AssocArray::aggregate($a_parties, $row_parties, $null = null, AssocArray::AGGREGATE_SUM);
+                }
+
+                /*
+                 * Party Statistics
+                 */
+                $parties = [];
+                foreach ($a_parties as $partykey => $party) {
+                    //Get party players and map their ids to names
+                    $r_party = $partykey;
+
+                    $party_played = $party['played'];
+                    $party_won = $party['won'];
+
+                    //Winrate
+                    $party_winrate = 0;
+                    if ($party_played > 0) {
+                        $party_winrate = round(($party_won / ($party_played * 1.00)) * 100.0, 1);
+                    }
+
+                    $partyobj = [
+                        "played" => $party_played,
+                        "won" => $party_won,
+                        "winrate" => sprintf("%03.1f", $party_winrate),
+                        "winrate_raw" => $party_winrate,
+                    ];
+
+                    $partyplayersresult = $db->execute("GetPartyPlayers");
+                    $partyplayersresultrows = $db->countResultRows($partyplayersresult);
+                    if ($partyplayersresultrows > 0) {
+                        $row = $db->fetchArray($partyplayersresult);
+
+                        $playersobj = [];
+
+                        $players = json_decode($row['players']);
+
+                        foreach ($players as $partyplayer) {
+                            $playerobj = [
+                                "id" => $partyplayer,
+                            ];
+
+                            $r_other_player_id = $partyplayer;
+
+                            $otherplayerresult = $db->execute("GetPlayerNameFromId");
+                            $otherplayerresultrows = $db->countResultRows($otherplayerresult);
+                            if ($otherplayerresultrows > 0) {
+                                $otherrow = $db->fetchArray($otherplayerresult);
+
+                                $playerobj["name"] = $otherrow['name'];
+                            }
+                            else {
+                                $playerobj["name"] = "Unknown";
+                            }
+
+                            $playersobj[] = $playerobj;
+                        }
+
+                        $partyobj["players"] = $playersobj;
+
+                        $parties[] = $partyobj;
+                    }
+                }
+
+                //Sort Parties in descending order
+                usort($parties, function($a, $b) {
+                    return (($b['played'] * 1000) + ($b['winrate_raw'])) - (($a['played'] * 1000) + ($a['winrate_raw'])); //Descending Order (First - Played, Second - Winrate Raw)
+                });
+
+                $pagedata['parties'] = $parties;
+
 
                 //Close connection and set valid response
                 $db->close();
@@ -1198,6 +1415,29 @@ class PlayerdataController extends Controller {
     }
 
     private static function topHeroes_initQueries() {
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    private static function parties_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
                 self::QUERY_IGNORE_AFTER_CACHE => true,
