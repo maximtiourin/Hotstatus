@@ -78,6 +78,9 @@ PlayerLoader.ajax.filter = {
     load: function() {
         let ajax = PlayerLoader.ajax;
         let self = PlayerLoader.ajax.filter;
+        let ajax_matches = ajax.matches;
+        let ajax_topheroes = ajax.topheroes;
+        let ajax_parties = ajax.parties;
 
         let data = PlayerLoader.data;
         let data_matches = data.matches;
@@ -98,8 +101,9 @@ PlayerLoader.ajax.filter = {
                 /*
                  * Empty dynamically filled containers, reset all subajax objects
                  */
-                ajax.matches.reset();
-                ajax.topheroes.reset();
+                ajax_matches.reset();
+                ajax_topheroes.reset();
+                ajax_parties.reset();
 
                 /*
                  * Heroloader Container
@@ -111,20 +115,21 @@ PlayerLoader.ajax.filter = {
                  */
                 data_matches.generateRecentMatchesContainer();
 
-                let ajaxMatches = ajax.matches;
-                ajaxMatches.internal.offset = 0;
-                ajaxMatches.internal.limit = json.limits.matches;
+                ajax_matches.internal.offset = 0;
+                ajax_matches.internal.limit = json.limits.matches;
 
                 //Load initial match set
-                ajaxMatches.load();
+                ajax_matches.load();
 
                 /*
                  * Initial Top Heroes
                  */
-                let ajaxTopHeroes = ajax.topheroes;
+                ajax_topheroes.load();
 
-                //Load initial top heroes
-                ajaxTopHeroes.load();
+                /*
+                 * Initial Parties
+                 */
+                ajax_parties.load();
 
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
