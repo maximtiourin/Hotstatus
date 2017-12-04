@@ -83,6 +83,7 @@ PlayerLoader.ajax.filter = {
         let ajax_parties = ajax.parties;
 
         let data = PlayerLoader.data;
+        let data_mmr = data.mmr;
         let data_matches = data.matches;
 
         //Enable Processing Indicator
@@ -97,10 +98,12 @@ PlayerLoader.ajax.filter = {
         $.getJSON(self.internal.url)
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
+                let json_mmr = json.mmr;
 
                 /*
                  * Empty dynamically filled containers, reset all subajax objects
                  */
+                data_mmr.empty();
                 ajax_matches.reset();
                 ajax_topheroes.reset();
                 ajax_parties.reset();
@@ -109,6 +112,12 @@ PlayerLoader.ajax.filter = {
                  * Heroloader Container
                  */
                 $('#playerloader-container').removeClass('initial-load');
+
+                /*
+                 * MMR
+                 */
+                data_mmr.generateMMRContainer();
+                data_mmr.generateMMRBadges(json_mmr);
 
                 /*
                  * Initial matches
@@ -190,6 +199,7 @@ PlayerLoader.ajax.topheroes = {
 
         let data = PlayerLoader.data;
         let data_topheroes = data.topheroes;
+        let data_topmaps = data.topmaps;
 
         //Generate url based on internal state
         self.internal.url = self.generateUrl();
@@ -202,6 +212,7 @@ PlayerLoader.ajax.topheroes = {
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_heroes = json.heroes;
+                let json_topmaps = json.topmaps;
 
                 /*
                  * Process Top Heroes
@@ -219,6 +230,24 @@ PlayerLoader.ajax.topheroes = {
                     }
 
                     data_topheroes.initTopHeroesTable(topHeroesTable);
+                }
+                
+                /*
+                 * Process Top Maps
+                 */
+                if (json_maps.length > 0) {
+                    data_topmaps.generateTopMapsContainer();
+
+                    data_topmaps.generateTopMapsTable();
+
+                    let topMapsTable = data_topmaps.getTopMapsTableConfig(json_maps.length);
+
+                    topMapsTable.data = [];
+                    for (let map of json_maps) {
+                        topMapsTable.data.push(data_topmaps.generateTopMapsTableData(map));
+                    }
+
+                    data_topmaps.initTopMapsTable(topMapsTable);
                 }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -470,6 +499,55 @@ PlayerLoader.ajax.matches = {
  * Handles binding data to the page
  */
 PlayerLoader.data = {
+    mmr: {
+        empty: function() {
+            $('#pl-mmr-container').remove();
+        },
+        generateMMRContainer: function() {
+            let html = '<div id="pl-mmr-container" class="pl-mmr-container hotstatus-subcontainer margin-bottom-spacer-1 padding-left-0 padding-right-0">' +
+                '</div>';
+
+            $('#player-leftpane-container').append(html);
+        },
+        generateMMRBadges: function(mmrs) {
+            self = PlayerLoader.data.mmr;
+
+            let container = $('#pl-mmr-container');
+
+            for (let mmr of mmrs) {
+                self.generateMMRBadge(container, mmr);
+            }
+        },
+        generateMMRBadge: function(container, mmr) {
+            let self = PlayerLoader.data.mmr;
+
+            let mmrGameTypeImage = '<img class="pl-mmr-badge-gameTypeImage" src="'+ image_bpath + 'ui/gameType_icon_' + mmr.gameType_image +'.png">';
+            let mmrimg = '<img class="pl-mmr-badge-image" src="'+ image_bpath + 'ui/ranked_player_icon_' + mmr.rank +'.png">';
+            let mmrtier = '<div class="pl-mmr-badge-tier">'+ mmr.tier +'</div>';
+
+            let html = '<div class="pl-mmr-badge">' +
+                //MMR GameType Image
+                '<div class="pl-mmr-badge-gameTypeImage-container">' +
+                mmrGameTypeImage +
+                '</div>' +
+                //MMR Image
+                '<div class="pl-mmr-badge-image-container">' +
+                mmrimg +
+                '</div>' +
+                //MMR Tier
+                '<div class="pl-mmr-badge-tier-container">' +
+                mmrtier +
+                '</div>' +
+                //MMR Tooltip Area
+                '<div class="pl-mmr-badge-tooltip-area" data-toggle="tooltip" data-html="true" title="'+ self.generateMMRTooltip(mmr) +'"></div>' +
+                '</div>';
+
+            container.append(html);
+        },
+        generateMMRTooltip: function(mmr) {
+            return '<div>'+ mmr.gameType +'</div><div>'+ mmr.rating +'</div><div>'+ mmr.rank +' '+ mmr.tier +'</div>';
+        }
+    },
     topheroes: {
         internal: {
             heroLimit: 5, //How many heroes should be displayed at a time
@@ -591,6 +669,105 @@ PlayerLoader.data = {
         },
         initTopHeroesTable: function(dataTableConfig) {
             $('#pl-topheroes-table').DataTable(dataTableConfig);
+        }
+    },
+    topmaps: {
+        internal: {
+            mapLimit: 6, //How many top maps should be displayed at a time
+        },
+        empty: function() {
+            $('#pl-topmaps-container').remove();
+        },
+        generatePartiesContainer: function() {
+            let html = '<div id="pl-topmaps-container" class="pl-topmaps-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
+                '<div class="pl-parties-title">Maps</div>' +
+                '</div>';
+
+            $('#player-leftpane-mid-container').append(html);
+        },
+        generateTopMapsTableData: function(map) {
+            /*
+             * Party
+             */
+            let mapimage = '<div class="pl-topmaps-mapbg" style="background-image: url('+ image_bpath +'ui/map_icon_'+ map.image +'.png);"></div>';
+
+            let mapname = '<div class="pl-topmaps-mapname">'+ map.name +'</div>';
+
+            let mapinner = '<div class="pl-topmaps-mappane">'+ mapimage + mapname + '</div>';
+
+            /*
+             * Winrate / Played
+             */
+            //Good winrate
+            let goodwinrate = 'pl-th-wr-winrate';
+            if (party.winrate_raw <= 49) {
+                goodwinrate = 'pl-th-wr-winrate-bad'
+            }
+            if (party.winrate_raw <= 40) {
+                goodwinrate = 'pl-th-wr-winrate-terrible'
+            }
+            if (party.winrate_raw >= 51) {
+                goodwinrate = 'pl-th-wr-winrate-good'
+            }
+            if (party.winrate_raw >= 60) {
+                goodwinrate = 'pl-th-wr-winrate-great'
+            }
+
+            let winratefield = '<div class="pl-th-winratepane">' +
+                //Winrate
+                '<div class="'+ goodwinrate +'"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Winrate">' +
+                party.winrate + '%' +
+                '</span></div>' +
+                //Played
+                '<div class="pl-th-wr-played">' +
+                party.played + ' played' +
+                '</div>' +
+                '</div>';
+
+            return [mapinner, winratefield];
+        },
+        getTopMapsTableConfig: function(rowLength) {
+            let self = PlayerLoader.data.topmaps;
+
+            let datatable = {};
+
+            //Columns definition
+            datatable.columns = [
+                {},
+                {}
+            ];
+
+            datatable.language = {
+                processing: '', //Change content of processing indicator
+                loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
+                zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
+                emptyTable: ' ' //Message when table is empty regardless of filtering
+            };
+
+            datatable.sorting = false;
+            datatable.searching = false;
+            datatable.deferRender = false;
+            datatable.pageLength = self.internal.mapLimit; //Controls how many rows per page
+            datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
+            //datatable.paging = false;
+            datatable.pagingType = "simple";
+            datatable.responsive = false; //Controls whether or not the table collapses responsively as need
+            datatable.scrollX = true; //Controls whether or not the table can create a horizontal scroll bar
+            datatable.scrollY = false; //Controls whether or not the table can create a vertical scroll bar
+            datatable.dom =  "<'row'<'col-sm-12'tr>><'pl-leftpane-pagination'p>"; //Remove the search bar from the dom by modifying bootstraps default datatable dom styling (so i can implement custom search bar later)
+            datatable.info = false; //Controls displaying table control information, such as if filtering displaying what results are viewed out of how many
+
+            datatable.drawCallback = function() {
+                $('.paginated-tooltip[data-toggle="tooltip"]').tooltip();
+            };
+
+            return datatable;
+        },
+        generateTopMapsTable: function() {
+            $('#pl-topmaps-container').append('<table id="pl-topmaps-table" class="pl-topmaps-table hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class="d-none"></thead></table>');
+        },
+        initTopMapsTable: function(dataTableConfig) {
+            $('#pl-topmaps-table').DataTable(dataTableConfig);
         }
     },
     parties: {

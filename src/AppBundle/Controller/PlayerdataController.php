@@ -68,7 +68,7 @@ class PlayerdataController extends Controller {
 
         //Build WhereAnd string from collected WhereOr strings
         $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
 
         /*
          * Begin building response
@@ -116,18 +116,75 @@ class PlayerdataController extends Controller {
                 $imgbasepath = $pkg->getUrl('');
 
                 //Get season date range
-                //TODO - make sure to use season queryValue rather than current baked in
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-                $seasonobj = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_CURRENT];
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
                 $date_start = $seasonobj['start'];
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $db->prepare("GetMMR",
+                    "SELECT `rating`, `gameType` FROM `players_mmr` WHERE `id` = ? AND `season` = ? $querySql");
+                $db->bind("GetMMR", "is", $r_player_id, $r_season);
 
+                $r_player_id = $player;
+                $r_season = $querySeason;
 
                 /*
                  * Collect playerdata
                  */
+
+                /*
+                 * MMR
+                 */
+                $mmrs = [];
+                $mmrresult = $db->execute("GetMMR");
+                $mmrrows = $db->countResultRows($mmrresult);
+                while ($row = $db->fetchArray($mmrresult)) {
+                    $mmr = [];
+
+                    $mmr['gameType'] = $row['gameType'];
+                    $mmr['gameType_image'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$mmr['gameType']]['name_sort'];
+
+                    $rating = $row['rating'];
+                    $rating = (is_numeric($rating)) ? ($rating) : (0);
+
+                    $mmr['rating'] = $rating;
+                    $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating);
+                    $mmr['tier'] = HotstatusPipeline::getRankTierForPlayerRating($rating);
+
+                    $mmrs[] = $mmr;
+                }
+
+                $db->freeResult($mmrresult);
+
+                //Sort mmr
+                usort($mmrs, function($a, $b) {
+                    $mmrSortValue = function($gameType) {
+                        if ($gameType === "Hero League") {
+                            return 1;
+                        }
+                        else if ($gameType === "Team League") {
+                            return 2;
+                        }
+                        else if ($gameType === "Unranked Draft") {
+                            return 3;
+                        }
+                        else if ($gameType === "Quick Match") {
+                            return 4;
+                        }
+                        else {
+                            return 5;
+                        }
+                    };
+
+                    $aval = $mmrSortValue($a['gameType']);
+                    $bval = $mmrSortValue($b['gameType']);
+
+                    return $aval - $bval;
+                });
+
+                $pagedata['mmr'] = $mmrs;
+
 
                 /*
                  * Set playerloader data
@@ -168,7 +225,7 @@ class PlayerdataController extends Controller {
     }
 
     /**
-     * Returns top heroes for player
+     * Returns top heroes (and top maps) for player
      *
      * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
      */
@@ -261,7 +318,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetTopHeroes",
-                    "SELECT `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `parties` FROM `players_matches_recent_granular` 
+                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_matches_recent_granular` 
                     WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
                 $db->bind("GetTopHeroes", "iss", $r_player_id, $r_date_start, $r_date_end);
 
@@ -270,13 +327,16 @@ class PlayerdataController extends Controller {
                 $r_date_end = $date_end;
 
                 /*
-                 * Get Heroes Stats
+                 * Get Heroes/Maps Stats
                  */
                 $heroes = [];
+                $maps = [];
                 $topHeroesResult = $db->execute("GetTopHeroes");
                 while ($row = $db->fetchArray($topHeroesResult)) {
                     $heroname = $row['hero'];
+                    $mapname = $row['map'];
 
+                    //Hero Exists
                     if (!key_exists($heroname, $heroes)) {
                         $heroes[$heroname] = [
                             "name" => $heroname,
@@ -295,6 +355,19 @@ class PlayerdataController extends Controller {
                         ];
                     }
 
+                    //Map Exists
+                    if (!key_exists($mapname, $maps)) {
+                        $maps[$mapname] = [
+                            "name" => $mapname,
+                            "image" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP][$mapname]['name_sort'],
+                            "played" => 0,
+                            "won" => 0,
+                            "winrate" => 0,
+                            "winrate_raw" => 0,
+                        ];
+                    }
+
+                    //Hero
                     $hero = &$heroes[$heroname];
 
                     $a_played = &$hero['played'];
@@ -308,7 +381,18 @@ class PlayerdataController extends Controller {
                     $a_kills += $row['stats_kills'];
                     $a_assists += $row['stats_assists'];
                     $a_deaths += $row['stats_deaths'];
+
+                    //Map
+                    $map = &$maps[$mapname];
+
+                    $a_m_played = &$map['played'];
+                    $a_m_won = &$map['won'];
+
+                    $a_m_played += $row['played'];
+                    $a_m_won += $row['won'];
                 }
+
+                $db->freeResult($topHeroesResult);
 
                 /*
                  * Get Top Heroes
@@ -378,6 +462,32 @@ class PlayerdataController extends Controller {
                 });
 
                 $pagedata['heroes'] = $topheroes;
+
+                /*
+                 * Get Top Maps
+                 */
+                $topmaps = [];
+                foreach ($maps as $mapname => &$map) {
+                    $a_m_played = &$map['played'];
+                    $a_m_won = &$map['won'];
+
+                    //Winrate
+                    $c_m_winrate = 0;
+                    if ($a_m_played > 0) {
+                        $c_m_winrate = round(($a_m_won / ($a_m_played * 1.00)) * 100.0, 1);
+                    }
+                    $map['winrate'] = sprintf("%03.1f", $c_m_winrate);
+                    $map['winrate_raw'] = $c_m_winrate;
+
+                    $topmaps[] = $map;
+                }
+
+                //Sort Map Objects in descending order
+                usort($topmaps, function($a, $b) {
+                    return (($b['played']) + ($b['winrate_raw']) * 10000) - (($a['played']) + ($a['winrate_raw']) * 10000); //Descending Order (First - Winrate Raw, Second - Played)
+                });
+
+                $pagedata['maps'] = $topmaps;
 
                 //Close connection and set valid response
                 $db->close();
@@ -528,6 +638,8 @@ class PlayerdataController extends Controller {
                     AssocArray::aggregate($a_parties, $row_parties, $null = null, AssocArray::AGGREGATE_SUM);
                 }
 
+                $db->freeResult($partiesResult);
+
                 /*
                  * Party Statistics
                  */
@@ -579,6 +691,8 @@ class PlayerdataController extends Controller {
                                 $playerobj["name"] = "Unknown";
                             }
 
+                            $db->freeResult($otherplayerresult);
+
                             $playersobj[] = $playerobj;
                         }
 
@@ -586,6 +700,8 @@ class PlayerdataController extends Controller {
 
                         $parties[] = $partyobj;
                     }
+
+                    $db->freeResult($partyplayersresult);
                 }
 
                 //Sort Parties in descending order
@@ -1003,6 +1119,8 @@ class PlayerdataController extends Controller {
 
                     $matches[] = $match;
                 }
+
+                $db->freeResult($matchesResult);
 
                 $pagedata['matches'] = $matches;
                 $pagedata['offsets']['matches'] = intval($offset);
