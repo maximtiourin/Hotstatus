@@ -558,6 +558,8 @@ PlayerLoader.data = {
             $('#pl-topheroes-container').remove();
         },
         generateTopHeroesContainer: function() {
+            //let lastupdated_badge = '<div class="fa pl-lastupdated-badge">&#xf05a</div>';
+
             let html = '<div id="pl-topheroes-container" class="pl-topheroes-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
                 '</div>';
 

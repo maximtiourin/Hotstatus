@@ -195,6 +195,9 @@ class PlayerdataController extends Controller {
 
                 $pagedata['limits'] = $limits;
 
+                //Last Updated
+                $pagedata['last_updated'] = time();
+
 
                 //Close connection and set valid response
                 $db->close();
@@ -488,6 +491,9 @@ class PlayerdataController extends Controller {
                 });
 
                 $pagedata['maps'] = $topmaps;
+
+                //Last Updated
+                $pagedata['last_updated'] = time();
 
                 //Close connection and set valid response
                 $db->close();
@@ -1126,6 +1132,9 @@ class PlayerdataController extends Controller {
                 $pagedata['offsets']['matches'] = intval($offset);
                 $pagedata['limits']['matches'] = intval($limit);
 
+                //Last Updated
+                $pagedata['last_updated'] = time();
+
                 //Close connection and set valid response
                 $db->close();
 
@@ -1476,6 +1485,9 @@ class PlayerdataController extends Controller {
                 }
 
                 $pagedata['match'] = $match;
+
+                //Last Updated
+                $pagedata['last_updated'] = time();
 
                 //Close connection and set valid response
                 $db->close();

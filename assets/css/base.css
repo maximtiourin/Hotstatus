@@ -2458,3 +2458,23 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color:#FFFFFF;
     text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }
+
+.pl-lastupdated-badge {
+    position: absolute;
+    font-family: FontAwesome;
+    width:16px;
+    height:16px;
+    line-height: 14px;
+    font-size:14px;
+    bottom:8px;
+    right:8px;
+    text-align: center;
+    color: #5f5f5f;
+}
+
+.player-tab-container {
+    background-color: #c9302c;
+    position:relative;
+    width:100%;
+    height:28px;
+}
