@@ -2419,6 +2419,13 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     cursor: help;
 }
 
+.pl-topmaps-container {
+    position: relative;
+    text-align: center;
+    cursor: default;
+    height:385px;
+}
+
 .pl-topmaps-mappane {
     position:relative;
     text-align: left;
@@ -2434,18 +2441,20 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     left:0;
     top:0;
     width:183px;
-    height:32px;
+    height:40px;
     background-repeat: no-repeat;
+    background-size: auto 100%;
 }
 
 .pl-topmaps-mapname {
     position:absolute;
-    left:0;
+    left:8px;
     top:0;
     width:183px;
-    height:32px;
-    line-height: 32px;
-    font-size: 14px;
+    height:40px;
+    line-height: 40px;
+    font-size: 16px;
     font-weight: 600;
     color:#FFFFFF;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
 }

@@ -84,6 +84,7 @@ PlayerLoader.ajax.filter = {
 
         let data = PlayerLoader.data;
         let data_mmr = data.mmr;
+        let data_topmaps = data.topmaps;
         let data_matches = data.matches;
 
         //Enable Processing Indicator
@@ -106,6 +107,7 @@ PlayerLoader.ajax.filter = {
                 data_mmr.empty();
                 ajax_matches.reset();
                 ajax_topheroes.reset();
+                data_topmaps.empty();
                 ajax_parties.reset();
 
                 /*
@@ -212,7 +214,7 @@ PlayerLoader.ajax.topheroes = {
             .done(function(jsonResponse) {
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_heroes = json.heroes;
-                let json_topmaps = json.topmaps;
+                let json_maps = json.maps;
 
                 /*
                  * Process Top Heroes
@@ -678,7 +680,7 @@ PlayerLoader.data = {
         empty: function() {
             $('#pl-topmaps-container').remove();
         },
-        generatePartiesContainer: function() {
+        generateTopMapsContainer: function() {
             let html = '<div id="pl-topmaps-container" class="pl-topmaps-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
                 '<div class="pl-parties-title">Maps</div>' +
                 '</div>';
@@ -700,27 +702,27 @@ PlayerLoader.data = {
              */
             //Good winrate
             let goodwinrate = 'pl-th-wr-winrate';
-            if (party.winrate_raw <= 49) {
+            if (map.winrate_raw <= 49) {
                 goodwinrate = 'pl-th-wr-winrate-bad'
             }
-            if (party.winrate_raw <= 40) {
+            if (map.winrate_raw <= 40) {
                 goodwinrate = 'pl-th-wr-winrate-terrible'
             }
-            if (party.winrate_raw >= 51) {
+            if (map.winrate_raw >= 51) {
                 goodwinrate = 'pl-th-wr-winrate-good'
             }
-            if (party.winrate_raw >= 60) {
+            if (map.winrate_raw >= 60) {
                 goodwinrate = 'pl-th-wr-winrate-great'
             }
 
             let winratefield = '<div class="pl-th-winratepane">' +
                 //Winrate
                 '<div class="'+ goodwinrate +'"><span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="Winrate">' +
-                party.winrate + '%' +
+                map.winrate + '%' +
                 '</span></div>' +
                 //Played
                 '<div class="pl-th-wr-played">' +
-                party.played + ' played' +
+                map.played + ' played' +
                 '</div>' +
                 '</div>';
 
