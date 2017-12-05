@@ -27,7 +27,7 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
 
-    const COUNT_DEFAULT_MATCHES = 6; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
+    const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
     /**
      * Returns the relevant player data for a player necessary to build a player page
@@ -745,7 +745,7 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent matches for player based on offset and match limit
      *
-     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 6}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
+     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
      */
     //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {

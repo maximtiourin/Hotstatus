@@ -351,7 +351,7 @@ PlayerLoader.ajax.matches = {
         matchurl: '', //url to get a fullmatch response from
         dataSrc: 'data', //The array of data is found in .data field
         offset: 0, //Matches offset
-        limit: 6, //Matches limit (Initial limit is set by initial loader)
+        limit: 10, //Matches limit (Initial limit is set by initial loader)
     },
     reset: function() {
         let self = PlayerLoader.ajax.matches;
