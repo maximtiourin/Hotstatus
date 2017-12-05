@@ -90,7 +90,7 @@ HeroLoader.ajax = {
                 /*
                  * Heroloader Container
                  */
-                $('#heroloader-container').removeClass('initial-load');
+                $('.initial-load').removeClass('initial-load');
 
                 /*
                  * Window
@@ -547,7 +547,7 @@ HeroLoader.data = {
                 emptyTable: 'Build Data is currently limited for this Hero. Increase date range or wait for more data.' //Message when table is empty regardless of filtering
             };
 
-            datatable.order = [[1, 'desc']];
+            datatable.order = [[1, 'desc'], [3, 'desc']];
 
             datatable.searching = false;
             datatable.deferRender = false;

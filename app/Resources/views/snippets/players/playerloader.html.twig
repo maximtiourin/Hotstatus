@@ -2,22 +2,20 @@
     <script src="{{ asset('build/player-loader.js') }}"></script>
 {% endblock %}
 
-<div class="player-tab-container">
-    test123
-</div>
-<div id="playerloader-container" class="initial-load container-fluid hotstatus-container">
+{% block player_tab_index %}{% endblock %}
+<div id="playerloader-container" class="container-fluid hotstatus-container padding-top-7">
     <div class="row">
         <div class="col">
             {# Top Row #}
             {% block filter %}{% endblock %}
         </div>
     </div>
-    <div class="row">
+    <div class="row initial-load">
         <div class="col">
             <div class="row">
                 <div class="col text-left overflow-x-auto">
                     {# Left Pane TOP #}
-                    <div class="player-leftpane-block">
+                    <div class="player-leftpane-block padding-top-5">
                         <div id="player-leftpane-container" class="player-leftpane player-leftpane-container">
                             {# Player Summary #}
                             <div class="hotstatus-subcontainer margin-bottom-spacer-1">

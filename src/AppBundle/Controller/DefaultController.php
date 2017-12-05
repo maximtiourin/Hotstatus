@@ -216,12 +216,12 @@ class DefaultController extends Controller
         }
     }
 
-    /**
-     * @Route("/players/{id}", options={"expose"=true}, requirements={"id": "\d+"}, name="player")
+    /*
+     * Handles retrieving the basic player information for the given id, if the player exists.
      */
-    public function playerAction($id) {
+    private function getPlayer($id) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
-        $_ID = "playerAction";
+        $_ID = "getPlayer";
         $_VERSION = 0;
 
         //Main Vars
@@ -306,10 +306,71 @@ class DefaultController extends Controller
         $redis->close();
 
         if ($validResult) {
+            return $pagedata;
+        }
+        else {
+            return FALSE;
+        }
+    }
+
+    /**
+     * @Route("/players/{id}/heroes", requirements={"id": "\d+"}, name="playerheroes")
+     */
+    public function playerHeroDefaultAction($id) {
+        return $this->redirectToRoute("playerhero", [
+            "id" => $id,
+            "heroProperName" => "Abathur"
+        ]);
+    }
+
+    /**
+     * @Route("/players/{id}/hero/{heroProperName}", options={"expose"=true}, requirements={"id": "\d+"}, name="playerhero")
+     */
+    public function playerHeroAction($id, $heroProperName) {
+        $playerresult = self::getPlayer($id);
+
+        if ($playerresult !== FALSE) {
+            if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
+                HotstatusPipeline::filter_generate_date();
+                HotstatusPipeline::filter_generate_season();
+
+                //Select correct hero in hero filter
+                $herofilter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
+                $herofilter[$heroProperName]["selected"] = true;
+
+                return $this->render('default/playerhero.html.twig', [
+                    "player" => $playerresult,
+                    "hero_name" => $heroProperName,
+                    "filter_heroes" => $herofilter,
+                    "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
+                    "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
+                    "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
+                    "average_stats" => HotstatusPipeline::$heropage[HotstatusPipeline::HEROPAGE_KEY_AVERAGE_STATS],
+                    "average_stats_tooltips" => HotstatusPipeline::$heropage_tooltips[HotstatusPipeline::HEROPAGE_KEY_AVERAGE_STATS]
+                ]);
+            }
+            else {
+                return $this->redirectToRoute("player", [
+                    "id" => $id,
+                ]);
+            }
+        }
+        else {
+            return $this->redirectToRoute("playerError");
+        }
+    }
+
+    /**
+     * @Route("/players/{id}", options={"expose"=true}, requirements={"id": "\d+"}, name="player")
+     */
+    public function playerAction($id) {
+        $playerresult = self::getPlayer($id);
+
+        if ($playerresult !== FALSE) {
             HotstatusPipeline::filter_generate_season();
 
             return $this->render(':default:player.html.twig', [
-                "player" => $pagedata,
+                "player" => $playerresult,
                 "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
                 "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
             ]);

@@ -29,10 +29,18 @@ class PlayerdataController extends Controller {
 
     const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
+    const TALENT_WINRATE_MIN_PLAYED = 1; //How many times a talent must have been played before allowing winrate calculation
+    const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
+    const TALENT_BUILD_MIN_TALENT_COUNT = 7; //How many talents the build must have in order to be valid for display
+    const TALENT_BUILD_MIN_POPULARITY = 0.5; //Minimum amount of popularity % required for build to be valid for display
+    const TALENT_BUILD_WINRATE_MIN_PLAYED = 1; //How many times a talent build have been played before allowing display
+    const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to determine percentOnRange calculations, used to normalize ranges.
+    const TALENT_BUILD_POPULARITY_MIN_OFFSET = .1; //How much to subtract from the min popularity for a talent build to determine percentOnRange calcs, used to normalize range
+
     /**
      * Returns the relevant player data for a player necessary to build a player page
      *
-     * @Route("/playerdata/pagedata/{player}", options={"expose"=true}, name="playerdata_pagedata_player")
+     * @Route("/playerdata/pagedata/{player}", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player")
      */
     //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerAction(Request $request, $player) {
@@ -1517,6 +1525,777 @@ class PlayerdataController extends Controller {
         return $response;
     }
 
+    /**
+     * Returns the relevant hero data for a hero necessary to build a hero page
+     *
+     * @Route("/playerdata/pagedata/{player}/hero", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_hero")
+     */
+    //condition="request.isXmlHttpRequest()", //TODO
+    public function getPageDataPlayerHeroAction(Request $request, $player) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataPlayerHeroAction";
+        $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::hero_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
+
+                //Get season date range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
+                $date_start = $seasonobj['start'];
+                $date_end = $seasonobj['end'];
+
+                //Prepare Statements
+                $db->prepare("GetHeroData",
+                    "SELECT `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero` 
+                    FROM herodata_heroes WHERE `name` = \"$queryHero\" LIMIT 1");
+
+                $db->prepare("GetHeroStats",
+                    "SELECT `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
+                    `stats_siege_damage`, `stats_hero_damage`, `stats_structure_damage`, `stats_healing`, `stats_damage_taken`, `stats_merc_camps`, `stats_exp_contrib`,
+                    `stats_best_killstreak`, `stats_time_spent_dead`, `medals`, `talents`, `builds` 
+                    FROM players_matches_recent_granular WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetHeroStats", "iss", $r_player_id, $r_date_start, $r_date_end);
+
+                $db->prepare("GetHeroAbilities",
+                    "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
+
+                $db->prepare("GetHeroTalents",
+                    "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
+
+                $db->prepare("GetHeroBuildTalents",
+                    "SELECT `talents` FROM `heroes_builds` WHERE `hero` = \"$queryHero\" AND `build` = ?");
+                $db->bind("GetHeroBuildTalents", "s", $r_build);
+
+
+                $r_player_id = $player;
+                $r_date_start = $date_start;
+                $r_date_end = $date_end;
+
+                /*
+                 * Collect Herodata
+                 */
+                $pagedata['herodata'] = [
+                    "name" => $queryHero,
+                    "image_hero" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$queryHero]['image_hero'],
+                ];
+
+                //Initialize aggregators
+                $a_played = 0;
+                $a_won = 0;
+                $a_time_played = 0;
+                $a_kills = 0;
+                $a_assists = 0;
+                $a_deaths = 0;
+                $a_siege_damage = 0;
+                $a_hero_damage = 0;
+                $a_structure_damage = 0;
+                $a_healing = 0;
+                $a_damage_taken = 0;
+                $a_merc_camps = 0;
+                $a_exp_contrib = 0;
+                $a_best_killstreak = 0;
+                $a_time_spent_dead = 0;
+                $a_medals = [];
+                $a_talents = [];
+                $a_builds = [];
+
+                /*
+                 * Collect Stats
+                 */
+                $heroStatsResult = $db->execute("GetHeroStats");
+                while ($heroStatsRow = $db->fetchArray($heroStatsResult)) {
+                    $row = $heroStatsRow;
+
+                    /*
+                     * Aggregate
+                     */
+                    $a_played += $row['played'];
+                    $a_won += $row['won'];
+                    $a_time_played += $row['time_played'];
+                    $a_kills += $row['stats_kills'];
+                    $a_assists += $row['stats_assists'];
+                    $a_deaths += $row['stats_deaths'];
+                    $a_siege_damage += $row['stats_siege_damage'];
+                    $a_hero_damage += $row['stats_hero_damage'];
+                    $a_structure_damage += $row['stats_structure_damage'];
+                    $a_healing += $row['stats_healing'];
+                    $a_damage_taken += $row['stats_damage_taken'];
+                    $a_merc_camps += $row['stats_merc_camps'];
+                    $a_exp_contrib += $row['stats_exp_contrib'];
+                    $a_best_killstreak = max($a_best_killstreak, $row['stats_best_killstreak']);
+                    $a_time_spent_dead += $row['stats_time_spent_dead'];
+
+                    $row_medals = json_decode($row['medals'], true);
+                    AssocArray::aggregate($a_medals, $row_medals, $null = null, AssocArray::AGGREGATE_SUM);
+
+                    $row_talents = json_decode($row['talents'], true);
+                    AssocArray::aggregate($a_talents, $row_talents, $null = null, AssocArray::AGGREGATE_SUM);
+
+                    $row_builds = json_decode($row['builds'], true);
+                    AssocArray::aggregate($a_builds, $row_builds, $null = null, AssocArray::AGGREGATE_SUM);
+                }
+                $db->freeResult($heroStatsResult);
+
+                /*
+                 * Calculate
+                 */
+                $stats = [];
+
+                //--Helpers
+                //Average Time Played in Minutes
+                $c_avg_minutesPlayed = 0;
+                if ($a_played > 0) {
+                    $c_avg_minutesPlayed = ($a_time_played / 60.0) / ($a_played * 1.00);
+                }
+
+                //Winrate
+                $c_winrate = 0;
+                if ($a_played > 0) {
+                    $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
+                }
+                $colorclass = "hl-number-winrate-red";
+                if ($c_winrate >= 50.0) $colorclass = "hl-number-winrate-green";
+                $stats['winrate'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $c_winrate) . '</span>';
+                $stats['winrate_raw'] = $c_winrate;
+
+                //Average Kills (+ Per Minute)
+                $c_avg_kills = 0;
+                $c_pmin_kills = 0;
+                $c_avg_kills_raw = 0;
+                $c_pmin_kills_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_kills_raw = $a_kills / ($a_played * 1.00);
+                    $c_avg_kills = round($c_avg_kills_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_kills_raw = $c_avg_kills_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_kills = round($c_pmin_kills_raw, 2);
+                }
+                $stats['kills'] = [
+                    "average" => self::formatNumber($c_avg_kills, 2),
+                    "per_minute" => self::formatNumber($c_pmin_kills, 2)
+                ];
+
+                //Average Assists (+ Per Minute)
+                $c_avg_assists = 0;
+                $c_pmin_assists = 0;
+                $c_avg_assists_raw = 0;
+                $c_pmin_assists_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_assists_raw = $a_assists / ($a_played * 1.00);
+                    $c_avg_assists = round($c_avg_assists_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_assists_raw = $c_avg_assists_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_assists = round($c_pmin_assists_raw, 2);
+                }
+                $stats['assists'] = [
+                    "average" => self::formatNumber($c_avg_assists, 2),
+                    "per_minute" => self::formatNumber($c_pmin_assists, 2)
+                ];
+
+                //Average Deaths (+ Per Minute)
+                $c_avg_deaths = 0;
+                $c_pmin_deaths = 0;
+                $c_avg_deaths_raw = 0;
+                $c_pmin_deaths_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_deaths_raw = $a_deaths / ($a_played * 1.00);
+                    $c_avg_deaths = round($c_avg_deaths_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_deaths_raw = $c_avg_deaths_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_deaths = round($c_pmin_deaths_raw, 2);
+                }
+                $stats['deaths'] = [
+                    "average" => self::formatNumber($c_avg_deaths, 2),
+                    "per_minute" => self::formatNumber($c_pmin_deaths, 2)
+                ];
+
+                //Average KDA
+                $c_avg_kda = $c_avg_kills_raw + $c_avg_assists_raw;
+                if ($c_avg_deaths_raw > 0) {
+                    $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths_raw * 1.00)), 2);
+                }
+                $stats['kda'] = [
+                    "average" => self::formatNumber($c_avg_kda, 2)
+                ];
+
+                //Average Siege Damage (+ Per Minute)
+                $c_avg_siege_damage = 0;
+                $c_pmin_siege_damage = 0;
+                $c_avg_siege_damage_raw = 0;
+                $c_pmin_siege_damage_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_siege_damage_raw = $a_siege_damage / ($a_played * 1.00);
+                    $c_avg_siege_damage = round($c_avg_siege_damage_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_siege_damage_raw = $c_avg_siege_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_siege_damage = round($c_pmin_siege_damage_raw, 2);
+                }
+                $stats['siege_damage'] = [
+                    "average" => self::formatNumber($c_avg_siege_damage),
+                    "per_minute" => self::formatNumber($c_pmin_siege_damage)
+                ];
+
+                //Average Hero Damage (+ Per Minute)
+                $c_avg_hero_damage = 0;
+                $c_pmin_hero_damage = 0;
+                $c_avg_hero_damage_raw = 0;
+                $c_pmin_hero_damage_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_hero_damage_raw = $a_hero_damage / ($a_played * 1.00);
+                    $c_avg_hero_damage = round($c_avg_hero_damage_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_hero_damage_raw = $c_avg_hero_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_hero_damage = round($c_pmin_hero_damage_raw, 2);
+                }
+                $stats['hero_damage'] = [
+                    "average" => self::formatNumber($c_avg_hero_damage),
+                    "per_minute" => self::formatNumber($c_pmin_hero_damage)
+                ];
+
+                //Average Structure Damage (+ Per Minute)
+                $c_avg_structure_damage = 0;
+                $c_pmin_structure_damage = 0;
+                $c_avg_structure_damage_raw = 0;
+                $c_pmin_structure_damage_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_structure_damage_raw = $a_structure_damage / ($a_played * 1.00);
+                    $c_avg_structure_damage = round($c_avg_structure_damage_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_structure_damage_raw = $c_avg_structure_damage_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_structure_damage = round($c_pmin_structure_damage_raw, 2);
+                }
+                $stats['structure_damage'] = [
+                    "average" => self::formatNumber($c_avg_structure_damage),
+                    "per_minute" => self::formatNumber($c_pmin_structure_damage)
+                ];
+
+                //Average Healing (+ Per Minute)
+                $c_avg_healing = 0;
+                $c_pmin_healing = 0;
+                $c_avg_healing_raw = 0;
+                $c_pmin_healing_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_healing_raw = $a_healing / ($a_played * 1.00);
+                    $c_avg_healing = round($c_avg_healing_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_healing_raw = $c_avg_healing_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_healing = round($c_pmin_healing_raw, 2);
+                }
+                $stats['healing'] = [
+                    "average" => self::formatNumber($c_avg_healing),
+                    "per_minute" => self::formatNumber($c_pmin_healing)
+                ];
+
+                //Average Damage Taken (+ Per Minute)
+                $c_avg_damage_taken = 0;
+                $c_pmin_damage_taken = 0;
+                $c_avg_damage_taken_raw = 0;
+                $c_pmin_damage_taken_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_damage_taken_raw = $a_damage_taken / ($a_played * 1.00);
+                    $c_avg_damage_taken = round($c_avg_damage_taken_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_damage_taken_raw = $c_avg_damage_taken_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_damage_taken = round($c_pmin_damage_taken_raw, 2);
+                }
+                $stats['damage_taken'] = [
+                    "average" => self::formatNumber($c_avg_damage_taken),
+                    "per_minute" => self::formatNumber($c_pmin_damage_taken)
+                ];
+
+                //Average Merc Camps (+ Per Minute)
+                $c_avg_merc_camps = 0;
+                $c_pmin_merc_camps = 0;
+                $c_avg_merc_camps_raw = 0;
+                $c_pmin_merc_camps_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_merc_camps_raw = $a_merc_camps / ($a_played * 1.00);
+                    $c_avg_merc_camps = round($c_avg_merc_camps_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_merc_camps_raw = $c_avg_merc_camps_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_merc_camps = round($c_pmin_merc_camps_raw, 2);
+                }
+                $stats['merc_camps'] = [
+                    "average" => self::formatNumber($c_avg_merc_camps, 2),
+                    "per_minute" => self::formatNumber($c_pmin_merc_camps, 2)
+                ];
+
+                //Average Exp Contrib (+ Per Minute)
+                $c_avg_exp_contrib = 0;
+                $c_pmin_exp_contrib = 0;
+                $c_avg_exp_contrib_raw = 0;
+                $c_pmin_exp_contrib_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_exp_contrib_raw = $a_exp_contrib / ($a_played * 1.00);
+                    $c_avg_exp_contrib = round($c_avg_exp_contrib_raw, 2);
+                }
+                if ($c_avg_minutesPlayed > 0) {
+                    $c_pmin_exp_contrib_raw = $c_avg_exp_contrib_raw / ($c_avg_minutesPlayed * 1.00);
+                    $c_pmin_exp_contrib = round($c_pmin_exp_contrib_raw, 2);
+                }
+                $stats['exp_contrib'] = [
+                    "average" => self::formatNumber($c_avg_exp_contrib),
+                    "per_minute" => self::formatNumber($c_pmin_exp_contrib)
+                ];
+
+                //Best Killstreak
+                $stats['best_killstreak'] = self::formatNumber($a_best_killstreak);
+
+                //Average Time Spent Dead (in Minutes)
+                $c_avg_time_spent_dead = 0;
+                $c_avg_time_spent_dead_raw = 0;
+                if ($a_played > 0) {
+                    $c_avg_time_spent_dead_raw = ($a_time_spent_dead / ($a_played * 1.00)) / 60.0;
+                    $c_avg_time_spent_dead = round($c_avg_time_spent_dead_raw, 1);
+                }
+                $stats['time_spent_dead'] = [
+                    "average" => self::formatNumber($c_avg_time_spent_dead, 1)
+                ];
+
+                //Set pagedata stats
+                $pagedata['stats'] = $stats;
+
+                /*
+                 * Collect Abilities
+                 */
+                $abilities = [];
+
+                $heroAbilitiesResult = $db->execute("GetHeroAbilities");
+                while ($heroAbilitiesRow = $db->fetchArray($heroAbilitiesResult)) {
+                    $row = $heroAbilitiesRow;
+
+                    if (!key_exists($row['type'], $abilities)) {
+                        $abilities[$row['type']] = [];
+                    }
+
+                    $abilities[$row['type']][] = [
+                        "name" => $row['name'],
+                        "desc_simple" => $row['desc_simple'], ENT_QUOTES,
+                        "image" => $imgbasepath . $row['image'] . ".png"
+                    ];
+                }
+                $db->freeResult($heroAbilitiesResult);
+
+                //Set pagedata abilities
+                $pagedata['abilities'] = $abilities;
+
+                /*
+                 * Collect Talents
+                 */
+                $talents = [
+                    "minRow" => PHP_INT_MAX,
+                    "maxRow" => PHP_INT_MIN
+                ];
+
+                $heroTalentsResult = $db->execute("GetHeroTalents");
+                while ($heroTalentsRow = $db->fetchArray($heroTalentsResult)) {
+                    $row = $heroTalentsRow;
+
+                    //Set string keys for row/col
+                    $trowkey = $row['tier_row'] . '';
+                    $tcolkey = $row['tier_column'] . '';
+
+                    //Calculate min/max rows
+                    $talents['minRow'] = min($row['tier_row'], $talents['minRow']);
+                    $talents['maxRow'] = max($row['tier_row'], $talents['maxRow']);
+
+                    //Calculate min/max cols
+                    if (!key_exists($trowkey, $talents)) {
+                        $talents[$trowkey] = [
+                            "tier" => HotstatusPipeline::$heropage_talent_tiers[$trowkey],
+                            "minCol" => PHP_INT_MAX,
+                            "maxCol" => PHP_INT_MIN,
+                            "totalPicked" => 0
+                        ];
+                    }
+
+                    $talents[$trowkey]['minCol'] = min($row['tier_column'], $talents[$trowkey]['minCol']);
+                    $talents[$trowkey]['maxCol'] = max($row['tier_column'], $talents[$trowkey]['maxCol']);
+
+                    //Set row/col talent
+                    $talents[$trowkey][$tcolkey] = [
+                        "name" => $row['name'],
+                        "name_internal" => $row['name_internal'],
+                        "desc_simple" => $row['desc_simple'],
+                        "image" => $imgbasepath . $row['image'] . ".png"
+                    ];
+                }
+                $db->freeResult($heroTalentsResult);
+
+                //Calculate total picked as well as winrates for Talents
+                for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
+                    $rowTotalPicked = 0;
+                    $rowMinWinrate = PHP_INT_MAX;
+                    $rowMaxWinrate = PHP_INT_MIN;
+
+                    for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
+                        $talent = &$talents[$r.''][$c.''];
+
+                        //Pickrate / Winrate
+                        $picked = 0;
+                        $won = 0;
+                        $winrate = 0;
+
+                        //Special winrate display value, to display nothing rather than 0 for winrates that don't have high enough pickrate
+                        $talent['winrate_display'] = '';
+
+                        if (key_exists($talent['name_internal'], $a_talents)) {
+                            $talentStats = $a_talents[$talent['name_internal']];
+
+                            $rowTotalPicked += $talentStats['played'];
+                            $picked += $talentStats['played'];
+                            $won += $talentStats['won'];
+
+                            //Make sure pickrate >= min pickrate in order to display valuable winrate
+                            if ($picked >= self::TALENT_WINRATE_MIN_PLAYED) {
+                                $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+
+                                $colorclass = "hsl-number-winrate-red";
+                                if ($winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+
+                                $talent['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
+                            }
+                        }
+
+                        //Min/Max
+                        $rowMinWinrate = min($winrate, $rowMinWinrate);
+                        $rowMaxWinrate = max($winrate, $rowMaxWinrate);
+
+                        $talent['pickrate'] = $picked;
+                        $talent['winrate'] = $winrate;
+                    }
+
+                    //Total talent picks for Row
+                    $talents[$r.'']['totalPicked'] = $rowTotalPicked;
+                    $talents[$r.'']['minWinrate'] = max(0, $rowMinWinrate - self::TALENT_WINRATE_MIN_OFFSET);
+                    $talents[$r.'']['maxWinrate'] = $rowMaxWinrate;
+                }
+
+                //Calculate popularity for Talents, as well as winratePercent
+                for ($r = $talents['minRow']; $r <= $talents['maxRow']; $r++) {
+                    $rowTotalPicked = $talents[$r.'']['totalPicked'];
+                    $rowMinWinrate = $talents[$r.'']['minWinrate'];
+                    $rowMaxWinrate = $talents[$r.'']['maxWinrate'];
+
+                    for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
+                        $talent = &$talents[$r.''][$c.''];
+
+                        //Winrate Percent On Range
+                        $percentOnRange = 0;
+                        if ($rowMaxWinrate - $rowMinWinrate > 0) {
+                            $percentOnRange = ((($talent['winrate'] - $rowMinWinrate) * 1.00) / (($rowMaxWinrate - $rowMinWinrate) * 1.00)) * 100.0;
+                        }
+
+                        $talent['winrate_percentOnRange'] = $percentOnRange;
+
+                        //Popularity
+                        $popularity = 0;
+                        if (key_exists($talent['name_internal'], $a_talents)) {
+                            $talentStats = $a_talents[$talent['name_internal']];
+
+                            $picked = $talentStats['played'];
+
+                            if ($rowTotalPicked > 0) {
+                                $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                            }
+                        }
+                        $talent['popularity'] = $popularity;
+                    }
+                }
+
+                $pagedata['talents'] = $talents;
+
+
+                /*
+                 * Collect Talent Builds
+                 */
+                $builds = [];
+
+                $bMinWinrate = PHP_INT_MAX;
+                $bMaxWinrate = PHP_INT_MIN;
+
+                $bMinPopularity = PHP_INT_MAX;
+                $bMaxPopularity = PHP_INT_MIN;
+
+                //Filter builds for only those with atleast min games played, collect build talents, and and calculate winrates/popularity/etc
+                foreach ($a_builds as $bkey => $bstats) {
+                    $bplayed = $bstats['played'];
+                    $bwon = $bstats['won'];
+
+                    if ($bplayed >= self::TALENT_BUILD_WINRATE_MIN_PLAYED) {
+                        //Collect talents
+                        $r_build = $bkey;
+
+                        $buildTalentsResult = $db->execute("GetHeroBuildTalents");
+                        $buildTalentsResultRows = $db->countResultRows($buildTalentsResult);
+                        if ($buildTalentsResultRows > 0) {
+                            $row = $db->fetchArray($buildTalentsResult);
+
+                            //Decode talents into array
+                            $btalents = json_decode($row['talents'], true);
+
+                            //Make sure valid amount of talents to display
+                            if (count($btalents) >= self::TALENT_BUILD_MIN_TALENT_COUNT) {
+                                $bpopularity = round((($bplayed * 1.00) / (($a_played) * 1.00)) * 100.0, 1);
+
+                                if ($bpopularity >= self::TALENT_BUILD_MIN_POPULARITY) {
+                                    $build = [];
+
+                                    //Set talents
+                                    $build['talents'] = $btalents;
+
+                                    //Set pickrate
+                                    $build['pickrate'] = $bplayed;
+
+                                    //Set winrate and winrate display
+                                    $bwinrate = round(($bwon / ($bplayed * 1.00)) * 100.0, 1);
+
+                                    $colorclass = "hsl-number-winrate-red";
+                                    if ($bwinrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+
+                                    $build['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $bwinrate) . '</span>';
+                                    $build['winrate'] = $bwinrate;
+
+                                    //Set popularity
+                                    $build['popularity'] = $bpopularity;
+
+                                    //Min/Max
+                                    $bMinWinrate = min($bwinrate, $bMinWinrate);
+                                    $bMaxWinrate = max($bwinrate, $bMaxWinrate);
+                                    $bMinPopularity = min($bpopularity, $bMinPopularity);
+                                    $bMaxPopularity = max($bpopularity, $bMaxPopularity);
+
+                                    $builds[$bkey] = $build;
+                                }
+                            }
+                        }
+                        $db->freeResult($buildTalentsResult);
+                    }
+                }
+
+                //Normalize minWinrate/minPopularity
+                $bMinWinrate = max(0, $bMinWinrate - self::TALENT_BUILD_WINRATE_MIN_OFFSET);
+                $bMinPopularity = max(0, $bMinPopularity - self::TALENT_BUILD_POPULARITY_MIN_OFFSET);
+
+                //Calculate winrate/popularity percent on range for valid builds
+                foreach ($builds as $bkey => &$bobj) {
+                    //Winrate Percent On Range
+                    $percentOnRange = 0;
+                    if ($bMaxWinrate - $bMinWinrate > 0) {
+                        $percentOnRange = ((($bobj['winrate'] - $bMinWinrate) * 1.00) / (($bMaxWinrate - $bMinWinrate) * 1.00)) * 100.0;
+                    }
+
+                    $bobj['winrate_percentOnRange'] = $percentOnRange;
+
+                    //Popularity Percent On Range
+                    $percentOnRange = 0;
+                    if ($bMaxPopularity - $bMinPopularity > 0) {
+                        $percentOnRange = ((($bobj['popularity'] - $bMinPopularity) * 1.00) / (($bMaxPopularity - $bMinPopularity) * 1.00)) * 100.0;
+                    }
+
+                    $bobj['popularity_percentOnRange'] = $percentOnRange;
+                }
+
+                $pagedata['builds'] = $builds;
+
+                /*
+                 * Collect medals
+                 */
+                //Delete MVP
+                if (key_exists("MVP", $a_medals)) {
+                    unset($a_medals['MVP']);
+                }
+
+                //Delete map specific medals
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_MAPSPECIFIC] as $medalid) {
+                    if (key_exists($medalid, $a_medals)) {
+                        unset($a_medals[$medalid]);
+                    }
+                }
+
+                //Delete invalid medals
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_OUTDATED] as $medalid) {
+                    if (key_exists($medalid, $a_medals)) {
+                        unset($a_medals[$medalid]);
+                    }
+                }
+
+                //Remap any necessary medal ids
+                foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_REMAPPING] as $mold => $mnew) {
+                    if (key_exists($mold, $a_medals)) {
+                        $a_medals[$mnew] = $a_medals[$mold];
+                        unset($a_medals[$mold]);
+                    }
+                }
+
+                //Get total medal counts
+                $totalMedals = 0;
+                foreach ($a_medals as $mkey => $medal) {
+                    $totalMedals += $medal['count'];
+                }
+
+                //Set medal rate of occurence
+                $sortedMedals = [];
+                if ($totalMedals > 0) {
+                    foreach ($a_medals as $mkey => $medal) {
+                        $sortedMedals[] = [
+                            "key" => $mkey,
+                            "value" => $medal['count'] / $totalMedals,
+                            "name" => "UNKNOWN",
+                            "desc_simple" => "NONE",
+                            "image_blue" => "NONE",
+                            "image_red" => "NONE"
+                        ];
+                    }
+                }
+                usort($sortedMedals, function($a, $b) {
+                    $aval = $a['value'];
+                    $bval = $b['value'];
+
+                    //Sort by key's value in descending order
+                    if ($aval < $bval) {
+                        return 1;
+                    }
+                    else if ($bval < $aval) {
+                        return -1;
+                    }
+                    else {
+                        return 0;
+                    }
+                });
+
+                $smcount = count($sortedMedals);
+
+                for ($i = 0; $i < $smcount; $i++) {
+                    $medal = &$sortedMedals[$i];
+
+                    if (key_exists($medal['key'], HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA])) {
+                        $medalobj = HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_DATA][$medal['key']];
+
+                        $medal['name'] = $medalobj['name'];
+                        $medal['desc_simple'] = $medalobj['desc_simple'];
+                        $medal['image_blue'] = $imgbasepath . $medalobj['image'] . "_blue.png";
+                        $medal['image_red'] = $imgbasepath . $medalobj['image'] . "_red.png";
+                    }
+                }
+
+                //Splice sortedMedals to top 3
+                $sortedMedalsSlice = array_splice($sortedMedals, 0, 3);
+
+                //Set medals
+                $pagedata['medals'] = $sortedMedalsSlice;
+
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            /*if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+            }*/ //TODO
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        /*$response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+        }*/ //TODO enable after testing
+
+        return $response;
+    }
 
     /*
      * Initializes the queries object for the hero pagedata
@@ -1608,6 +2387,50 @@ class PlayerdataController extends Controller {
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
                 self::QUERY_SQLCOLUMN => "type",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    /*
+     * Initializes the queries object for the hero pagedata
+     */
+    private static function hero_initQueries() {
+        HotstatusPipeline::filter_generate_date();
+
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => true,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_HERO => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "hero",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "gameType",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "map",
                 self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
         ];

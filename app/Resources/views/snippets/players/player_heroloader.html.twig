@@ -1,5 +1,5 @@
 {% block javascripts %}
-    <script src="{{ asset('build/hero-loader.js') }}"></script>
+    <script src="{{ asset('build/player-hero-loader.js') }}"></script>
 {% endblock %}
 
 <div id="heroloader-container" class="container-fluid hotstatus-container">
@@ -34,27 +34,6 @@
                                     <div class="">
                                         {% block group_average_stats %}{% endblock %}
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            {% block advertising_horizontal_responsive_02 %}{% endblock %}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="hotstatus-subcontainer">
-                                <div class="">
-                                    <a
-                                            data-toggle="collapse"
-                                            data-target="#hl-graphs-collapse"
-                                            class="heroloader-toggle d-lg-none collapsed"></a>
-                                    <span class="hl-stats-title">Graphs</span>
-                                </div>
-                                <div id="hl-graphs-collapse" class="collapse">
-                                    <div id="hl-graphs">{# HEROLOADER GENERATED #}</div>
                                 </div>
                             </div>
                         </div>
@@ -102,7 +81,6 @@
                     </div>
                 </div>
             </div>
-            <div id="hl-matchups-container">{# HEROLOADER GENERATED #}</div>
         </div>
     </div>
 </div>

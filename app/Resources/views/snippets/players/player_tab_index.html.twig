@@ -1,0 +1,10 @@
+{# Desktop Tab Index #}
+<div class="player-tab-container d-none d-sm-block">
+    <div class="player-tab {{ route == 'player' ? 'tabselected' }}"><a href="{{ path('player', {'id': player.id}) }}">Summary</a></div>
+    <div class="player-tab {{ route == 'playerhero' ? 'tabselected' }}"><a href="{{ path('playerheroes', {'id': player.id}) }}">Heroes</a></div>
+</div>
+{# Mobile List Index #}
+<div class="player-tablist-container d-block d-sm-none">
+    <div class="player-tablist-item {{ route == 'player' ? 'tabselected' }}"><a href="{{ path('player', {'id': player.id}) }}">Summary</a></div>
+    <div class="player-tablist-item {{ route == 'playerhero' ? 'tabselected' }}"><a href="{{ path('playerheroes', {'id': player.id}) }}">Heroes</a></div>
+</div>

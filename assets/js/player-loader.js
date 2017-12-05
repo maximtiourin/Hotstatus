@@ -113,7 +113,7 @@ PlayerLoader.ajax.filter = {
                 /*
                  * Heroloader Container
                  */
-                $('#playerloader-container').removeClass('initial-load');
+                $('.initial-load').removeClass('initial-load');
 
                 /*
                  * MMR

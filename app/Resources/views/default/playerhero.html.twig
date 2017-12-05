@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{# Include snippets and then alias their blocks so as to order them as needed #}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+{% use ':snippets:players/player_heroloader.html.twig' with javascripts as heroloaderjavascripts %}
+
+{% set route = app.request.attributes.get('_route') %}
+
+{# Append to title #}
+{% block title %}
+: {{ hero_name }}
+{% endblock %}
+
+{# Inject dynamic content variables #}
+{% block dynamicVariables %}
+    let player_id = {{ player.id }};
+    let average_stats = {{ average_stats | json_encode | raw}};
+    let image_base_path = "{{ asset('', 'images') | raw }}";
+{% endblock %}
+
+{# Custom styling that require the use of path generation #}
+{% block style %}
+{% endblock %}
+
+{% block body %}
+    {# Begin HTML #}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xl-2"></div>
+            <div class="col-sm-12 col-md-12 col-xl-8">
+                {% embed ':snippets:heroes/heroloader.html.twig' %}
+                    {% block javascripts %}{% endblock %}
+                    {% block filter %}
+                        <div>
+                            {% include ':snippets:heroes/filter/dropdown/select/seasons.html.twig' %}
+                            {% include ':snippets:heroes/filter/dropdown/multiselect/gameTypes.html.twig' %}
+                            {% include ':snippets:heroes/filter/dropdown/multiselect/maps.html.twig' %}
+                            {% include ':snippets:heroes/filter/dropdown/select/heroes.html.twig' %}
+                        </div>
+                    {% endblock %}
+                    {% block group_average_stats %}
+                        {% for key, stat in average_stats %}
+                            <div class="row">
+                                <div class="col">
+                                    <div class="">
+                                        <div class="d-inline-block heroloader-stats-key">
+                                            <span class="hl-stats-label">{{ stat.name }}:</span>
+                                        </div>
+                                        <div class="d-inline-block heroloader-stats-value">
+                                            {% if stat.type == 'avg-pmin' %}
+                                                <span id="hl-stats-{{ key }}-avg"
+                                                      data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['avg'] }}" class="hl-stats-val"></span>
+                                                 <span data-toggle="tooltip"
+                                                       title="{{ stat.name ~ average_stats_tooltips['avg-pmin']['pmin'] }}"><span class="hl-stats-paren">(</span><span id="hl-stats-{{ key }}-pmin" class="hl-stats-pval"></span><span class="hl-stats-paren">)</span></span>
+                                            {% elseif stat.type == 'percentage' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['percentage'] }}"><span id="hl-stats-{{ key }}-percentage" class="hl-stats-val"></span></span>
+                                            {% elseif stat.type == 'kda' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ average_stats_tooltips['kda'] }}"><span id="hl-stats-{{ key }}-kda" class="hl-stats-val"></span></span>
+                                            {% elseif stat.type == 'raw' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name }}"><span id="hl-stats-{{ key }}-raw" class="hl-stats-val"></span></span>
+                                            {% elseif stat.type == 'time-spent-dead' %}
+                                                <span data-toggle="tooltip"
+                                                      title="{{ stat.name ~ average_stats_tooltips['time-spent-dead'] }}"><span id="hl-stats-{{ key }}-time-spent-dead" class="hl-stats-val"></span></span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endblock %}
+                    {% block advertising_horizontal_responsive_01 %}
+                        {% include ':snippets:advertising/responsive_horizontal_inner.html.twig' %}
+                    {% endblock %}
+                    {% block advertising_horizontal_responsive_02 %}
+                        {% include ':snippets:advertising/responsive_horizontal_inner_flex.html.twig' %}
+                    {% endblock %}
+                {% endembed %}
+            </div>
+            <div class="col-xl-2">
+                {% include ':snippets:advertising/responsive_vertical.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{# Stylesheets #}
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{# Javascript #}
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+    {{ block('heroloaderjavascripts') }}
+{% endblock %}
+
+{# Tail Javascript #}
+{% block tailJavascript %}
+    Hotstatus.advertising.internal.generateByDefault = false;
+{% endblock %}
+
