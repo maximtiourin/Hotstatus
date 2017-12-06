@@ -941,10 +941,7 @@ class HerodataController extends Controller {
                 /*
                  * Matchups
                  */
-                $matchups = [
-                    "foes_count" => count($a_matchup_foes),
-                    "friends_count" => count($a_matchup_friends),
-                ];
+                $matchups = [];
                 //Foes
                 $matchup_foes = [];
                 foreach ($a_matchup_foes as $mhero => $mstats) {
@@ -984,6 +981,7 @@ class HerodataController extends Controller {
                     }
                 }
                 $matchups['foes'] = $matchup_foes;
+                $matchups['foes_count'] = count($matchup_foes);
 
                 //Friends
                 $matchup_friends = [];
@@ -1024,6 +1022,7 @@ class HerodataController extends Controller {
                     }
                 }
                 $matchups['friends'] = $matchup_friends;
+                $matchups['friends_count'] = count($matchup_friends);
 
                 //Set matchups
                 $pagedata['matchups'] = $matchups;

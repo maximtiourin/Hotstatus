@@ -33,7 +33,7 @@ class PlayerdataController extends Controller {
     const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
     const TALENT_BUILD_MIN_TALENT_COUNT = 7; //How many talents the build must have in order to be valid for display
     const TALENT_BUILD_MIN_POPULARITY = 0.5; //Minimum amount of popularity % required for build to be valid for display
-    const TALENT_BUILD_WINRATE_MIN_PLAYED = 1; //How many times a talent build have been played before allowing display
+    const TALENT_BUILD_WINRATE_MIN_PLAYED = 2; //How many times a talent build have been played before allowing display
     const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to determine percentOnRange calculations, used to normalize ranges.
     const TALENT_BUILD_POPULARITY_MIN_OFFSET = .1; //How much to subtract from the min popularity for a talent build to determine percentOnRange calcs, used to normalize range
 
@@ -1630,9 +1630,6 @@ class PlayerdataController extends Controller {
                     FROM players_matches_recent_granular WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
                 $db->bind("GetHeroStats", "iss", $r_player_id, $r_date_start, $r_date_end);
 
-                $db->prepare("GetHeroAbilities",
-                    "SELECT `name`, `desc_simple`, `image`, `type` FROM herodata_abilities WHERE `hero` = \"$queryHero\"");
-
                 $db->prepare("GetHeroTalents",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
 
@@ -1721,6 +1718,9 @@ class PlayerdataController extends Controller {
                 if ($a_played > 0) {
                     $c_avg_minutesPlayed = ($a_time_played / 60.0) / ($a_played * 1.00);
                 }
+
+                //Played
+                $stats['played'] = $a_played;
 
                 //Winrate
                 $c_winrate = 0;
@@ -1937,30 +1937,6 @@ class PlayerdataController extends Controller {
 
                 //Set pagedata stats
                 $pagedata['stats'] = $stats;
-
-                /*
-                 * Collect Abilities
-                 */
-                $abilities = [];
-
-                $heroAbilitiesResult = $db->execute("GetHeroAbilities");
-                while ($heroAbilitiesRow = $db->fetchArray($heroAbilitiesResult)) {
-                    $row = $heroAbilitiesRow;
-
-                    if (!key_exists($row['type'], $abilities)) {
-                        $abilities[$row['type']] = [];
-                    }
-
-                    $abilities[$row['type']][] = [
-                        "name" => $row['name'],
-                        "desc_simple" => $row['desc_simple'], ENT_QUOTES,
-                        "image" => $imgbasepath . $row['image'] . ".png"
-                    ];
-                }
-                $db->freeResult($heroAbilitiesResult);
-
-                //Set pagedata abilities
-                $pagedata['abilities'] = $abilities;
 
                 /*
                  * Collect Talents
@@ -2185,9 +2161,9 @@ class PlayerdataController extends Controller {
                  * Collect medals
                  */
                 //Delete MVP
-                if (key_exists("MVP", $a_medals)) {
+                /*if (key_exists("MVP", $a_medals)) {
                     unset($a_medals['MVP']);
-                }
+                }*/
 
                 //Delete map specific medals
                 foreach (HotstatusPipeline::$medals[HotstatusPipeline::MEDALS_KEY_MAPSPECIFIC] as $medalid) {

@@ -8,12 +8,14 @@
 
 {# Append to title #}
 {% block title %}
-: {{ hero_name }}
+: {{ hero_name }} ({{ player.name }}#{{ player.tag }})
 {% endblock %}
 
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
     let player_id = {{ player.id }};
+    let player_name = "{{ player.name }}";
+    let player_tag = {{ player.tag }};
     let average_stats = {{ average_stats | json_encode | raw}};
     let image_base_path = "{{ asset('', 'images') | raw }}";
 {% endblock %}
@@ -35,8 +37,11 @@
         <div class="row">
             <div class="col-xl-2"></div>
             <div class="col-sm-12 col-md-12 col-xl-8">
-                {% embed ':snippets:heroes/heroloader.html.twig' %}
+                {% embed ':snippets:players/player_heroloader.html.twig' %}
                     {% block javascripts %}{% endblock %}
+                    {% block player_tab_index %}
+                        {% include ':snippets:players/player_tab_index.html.twig' %}
+                    {% endblock %}
                     {% block filter %}
                         <div>
                             {% include ':snippets:heroes/filter/dropdown/select/seasons.html.twig' %}
@@ -46,6 +51,20 @@
                         </div>
                     {% endblock %}
                     {% block group_average_stats %}
+                        {# Player Hero Loader - Special Stat - Played #}
+                        <div class="row">
+                            <div class="col">
+                                <div class="">
+                                    <div class="d-inline-block heroloader-stats-key">
+                                        <span class="hl-stats-label">Played:</span>
+                                    </div>
+                                    <div class="d-inline-block heroloader-stats-value">
+                                        <span data-toggle="tooltip" title="Matches Played"><span id="p-hl-stats-played" class="hl-stats-val"></span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {# Rest of Stats #}
                         {% for key, stat in average_stats %}
                             <div class="row">
                                 <div class="col">

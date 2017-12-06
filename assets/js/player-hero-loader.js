@@ -51,7 +51,6 @@ HeroLoader.ajax = {
         let data = HeroLoader.data;
         let data_herodata = data.herodata;
         let data_stats = data.stats;
-        let data_abilities = data.abilities;
         let data_talents = data.talents;
         let data_builds = data.builds;
         let data_medals = data.medals;
@@ -67,7 +66,6 @@ HeroLoader.ajax = {
                 let json = jsonResponse[self.internal.dataSrc];
                 let json_herodata = json['herodata'];
                 let json_stats = json['stats'];
-                let json_abilities = json['abilities'];
                 let json_talents = json['talents'];
                 let json_builds = json['builds'];
                 let json_medals = json['medals'];
@@ -76,7 +74,6 @@ HeroLoader.ajax = {
                  * Empty dynamically filled containers
                  */
                 data_herodata.empty();
-                data_abilities.empty();
                 data_talents.empty();
                 data_builds.empty();
                 data_medals.empty();
@@ -105,6 +102,10 @@ HeroLoader.ajax = {
                 /*
                  * Stats
                  */
+                //Player Hero Loader - Special Stat - Played
+                data_stats.played(json_stats.played);
+
+                //Other stats
                 for (let statkey in average_stats) {
                     if (average_stats.hasOwnProperty(statkey)) {
                         let stat = average_stats[statkey];
@@ -124,17 +125,6 @@ HeroLoader.ajax = {
                         else if (stat.type === 'time-spent-dead') {
                             data_stats.time_spent_dead(statkey, json_stats[statkey]['average']);
                         }
-                    }
-                }
-
-                /*
-                 * Abilities
-                 */
-                let abilityOrder = ["Normal", "Heroic", "Trait"];
-                for (let type of abilityOrder) {
-                    data_abilities.beginInner(type);
-                    for (let ability of json_abilities[type]) {
-                        data_abilities.generate(type, ability['name'], ability['desc_simple'], ability['image']);
                     }
                 }
 
@@ -238,7 +228,7 @@ HeroLoader.ajax = {
 HeroLoader.data = {
     window: {
         title: function(str) {
-            document.title = "Hotstat.us: " + str;
+            document.title = "Hotstat.us: " + str + " (" + player_name +"#"+ player_tag + ")";
         },
         url: function(hero) {
             let url = Routing.generate("playerhero", {id: player_id, heroProperName: hero});
@@ -264,6 +254,9 @@ HeroLoader.data = {
         }
     },
     stats: {
+        played: function(rawval) {
+            $('#p-hl-stats-played').text(rawval);
+        },
         avg_pmin: function(key, avg, pmin) {
             $('#hl-stats-' + key + '-avg').text(avg);
             $('#hl-stats-' + key + '-pmin').text(pmin);
@@ -280,28 +273,6 @@ HeroLoader.data = {
         time_spent_dead: function(key, time_spent_dead) {
             $('#hl-stats-' + key + '-time-spent-dead').text(time_spent_dead);
         },
-    },
-    abilities: {
-        beginInner: function(type) {
-          $('#hl-abilities-container').append('<div id="hl-abilities-inner-' + type + '" class="hl-abilities-inner"></div>');
-        },
-        generate: function(type, name, desc, imagepath) {
-            let self = HeroLoader.data.abilities;
-            $('#hl-abilities-inner-' + type).append('<div class="hl-abilities-ability"><span data-toggle="tooltip" data-html="true" title="' + self.tooltip(type, name, desc) + '">' +
-                '<img class="hl-abilities-ability-image" src="' + imagepath + '"><img class="hl-abilities-ability-image-frame" src="' + image_base_path + 'ui/ability_icon_frame.png">' +
-                '</span></div>');
-        },
-        empty: function() {
-            $('#hl-abilities-container').empty();
-        },
-        tooltip: function(type, name, desc) {
-            if (type === "Heroic" || type === "Trait") {
-                return '<span class=\'hl-abilities-tooltip-' + type + '\'>[' + type + ']</span><br><span class=\'hl-abilities-tooltip-name\'>' + name + '</span><br>' + desc;
-            }
-            else {
-                return '<span class=\'hl-abilities-tooltip-name\'>' + name + '</span><br>' + desc;
-            }
-        }
     },
     talents: {
         generateTable: function(rowId) {

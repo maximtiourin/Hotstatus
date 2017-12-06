@@ -2,7 +2,8 @@
     <script src="{{ asset('build/player-hero-loader.js') }}"></script>
 {% endblock %}
 
-<div id="heroloader-container" class="container-fluid hotstatus-container">
+{% block player_tab_index %}{% endblock %}
+<div id="heroloader-container" class="container-fluid hotstatus-container padding-top-7">
     <div class="row">
         <div class="col">
             {% block filter %}{% endblock %}
@@ -44,13 +45,6 @@
         <div class="col-sm-12 col-md-12 col-lg-9 col-xl-9 padding-sm-left-0 heroloader-container-talents">
             <div class="row">
                 <div class="col">
-                    <div class="row">
-                        <div class="col">
-                            <div class="hotstatus-subcontainer">
-                                <div id="hl-abilities-container" class="text-center">{# HEROLOADER GENERATED #}</div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="hotstatus-subcontainer">
                         <div class="row">
                             <div class="col">
