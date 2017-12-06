@@ -404,14 +404,6 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/rankings", name="rankings")
-     */
-    public function rankingsAction() {
-        return $this->render('default/index.html.twig', [
-        ]);
-    }
-
-    /**
      * @Route("/upload", name="upload")
      */
     public function uploadAction() {
