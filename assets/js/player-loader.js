@@ -570,7 +570,7 @@ PlayerLoader.data = {
              * Hero
              */
             let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="'+ hero.image_hero +'"></div>' +
-                '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("hero", {heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
+                '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
 
 
             /*
@@ -1043,7 +1043,7 @@ PlayerLoader.data = {
                 '</div>' +
                 '<div class="recentmatch-simplewidget-heropane">' +
                 '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
-                '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("hero", {heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
+                '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane"><div class="rm-sw-sp-inner">' +
                 nomedalhtml +
