@@ -29,8 +29,6 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE_INDEX = "index"; //Value at "index" key inside of the obj should be used as the value
 
     const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
-    const COUNT_RANKING_MATCHES = 100; //How many matches must have been played in order to qualify for rankings
-    const COUNT_RANKING_LIMIT = 100; //How many rankings to keep track off per granularity
 
     const TALENT_WINRATE_MIN_PLAYED = 1; //How many times a talent must have been played before allowing winrate calculation
     const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
@@ -2369,10 +2367,12 @@ class PlayerdataController extends Controller {
                 $date_start = $seasonobj['start'];
                 $date_end = $seasonobj['end'];
 
-                //Prepare Statements
-                $matchLimit = self::COUNT_RANKING_MATCHES;
-                $rankLimit = self::COUNT_RANKING_LIMIT;
+                //Get gameType rank and match limits
+                $gameTypeobj = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$queryGameType];
+                $matchLimit = $queryGameType['ranking']['matchLimit'];
+                $rankLimit = $queryGameType['ranking']['rankLimit'];
 
+                //Prepare Statements
                 $db->prepare("GetTopRanks",
                     "SELECT mmr.`id` AS `playerid`, `name` AS `playername`, `rating`, `region`, (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') AS `played` FROM `players_mmr` mmr INNER JOIN `players` p ON mmr.`id` = p.`id` WHERE (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') >= $matchLimit $querySql ORDER BY `rating` DESC LIMIT $rankLimit");
 
