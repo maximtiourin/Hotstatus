@@ -1911,8 +1911,8 @@ class HerodataController extends Controller {
         foreach ($values as $value) {
             if ($mappingType === self::QUERY_TYPE_RAW) {
                 $val = $value;
-                if (!is_numeric($value)) {
-                    $val = '"' . $value . '"';
+                if (!is_numeric($val)) {
+                    $val = '"' . $val . '"';
                 }
 
                 $ret .= "`$field` = $val";

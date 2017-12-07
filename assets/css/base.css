@@ -2533,3 +2533,43 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .player-tablist-item.tabselected {
     background-color: rgba(82, 93, 95, 0.81);
 }
+
+.rankings-container {
+    width: 100%;
+}
+
+.rankings-header {
+    position: relative;
+    width:100%;
+    text-align: justify;
+    color: #FFFFFF;
+}
+
+.rankings-header-left {
+    width:50%;
+    display: inline-block;
+    text-align: left;
+    vertical-align: text-top;
+}
+
+.rankings-header-right {
+    width:50%;
+    display: inline-block;
+    text-align: right;
+    vertical-align: text-top;
+    color: #878787;
+}
+
+.rankings-playername {
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.rankings-playername:hover {
+    font-size: 16px;
+    font-weight: 600;
+    color: #8782ff;
+    text-decoration: none;
+}

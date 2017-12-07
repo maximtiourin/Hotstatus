@@ -26,8 +26,11 @@ class PlayerdataController extends Controller {
     const QUERY_TYPE = "mappingType";
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
+    const QUERY_TYPE_INDEX = "index"; //Value at "index" key inside of the obj should be used as the value
 
     const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
+    const COUNT_RANKING_MATCHES = 100; //How many matches must have been played in order to qualify for rankings
+    const COUNT_RANKING_LIMIT = 100; //How many rankings to keep track off per granularity
 
     const TALENT_WINRATE_MIN_PLAYED = 1; //How many times a talent must have been played before allowing winrate calculation
     const TALENT_WINRATE_MIN_OFFSET = 5.0; //How much to subtract from the min win rate for a talent to determine percentOnRange calculations, used to better normalize ranges.
@@ -2273,6 +2276,167 @@ class PlayerdataController extends Controller {
         return $response;
     }
 
+    /**
+     * Returns the top 500 rankings result for the given region/season/gameType
+     *
+     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, name="playerdata_pagedata_rankings")
+     */
+    //condition="request.isXmlHttpRequest()", //TODO
+    public function getPageDataRankingsAction(Request $request) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
+        $_ID = "getPageDataRankingsAction";
+        $_VERSION = 0;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::rankings_initQueries();
+        $queryCacheSqlValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[self::QUERY_ISSET] = true;
+                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
+                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][self::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = "$_ID:rankings".((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get image path from packages
+                /** @var Asset\Packages $pkgs */
+                $pkgs = $this->get("assets.packages");
+                $pkg = $pkgs->getPackage("images");
+                $imgbasepath = $pkg->getUrl('');
+
+                //Get season date range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
+                $date_start = $seasonobj['start'];
+                $date_end = $seasonobj['end'];
+
+                //Prepare Statements
+                $matchLimit = self::COUNT_RANKING_MATCHES;
+                $rankLimit = self::COUNT_RANKING_LIMIT;
+
+                $db->prepare("GetTopRanks",
+                    "SELECT mmr.`id` AS `playerid`, `name` AS `playername`, `rating`, `region`, (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') AS `played` FROM `players_mmr` mmr INNER JOIN `players` p ON mmr.`id` = p.`id` WHERE (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') >= $matchLimit $querySql ORDER BY `rating` DESC LIMIT $rankLimit");
+
+                /*
+                 * Collect rankings data
+                 */
+                $ranks = [];
+                $rankplace = 1;
+                $rankresult = $db->execute("GetTopRanks");
+                while ($row = $db->fetchArray($rankresult)) {
+                    $rank = [];
+
+                    $rank["rank"] = $rankplace++;
+                    $rank['player_id'] = $row['playerid'];
+                    $rank['player_name'] = $row['playername'];
+                    $rank['rating'] = $row['rating'];
+                    $rank['played'] = $row['played'];
+
+
+                    $ranks[] = $rank;
+                }
+
+                $db->freeResult($rankresult);
+
+                $pagedata['ranks'] = $ranks;
+
+                //Limits
+                $pagedata['limits'] = [
+                    "matchLimit" => $matchLimit,
+                    "rankLimit" => $rankLimit,
+                ];
+
+                //Last Updated
+                $pagedata['last_updated'] = time();
+
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+            }
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        /*$response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }*/ //TODO enable after testing
+
+        return $response;
+    }
+
     /*
      * Initializes the queries object for the hero pagedata
      */
@@ -2374,8 +2538,6 @@ class PlayerdataController extends Controller {
      * Initializes the queries object for the hero pagedata
      */
     private static function hero_initQueries() {
-        HotstatusPipeline::filter_generate_date();
-
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
                 self::QUERY_IGNORE_AFTER_CACHE => true,
@@ -2407,6 +2569,42 @@ class PlayerdataController extends Controller {
                 self::QUERY_RAWVALUE => null,
                 self::QUERY_SQLVALUE => null,
                 self::QUERY_SQLCOLUMN => "map",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    /*
+     * Initializes the queries object for the hero pagedata
+     */
+    private static function rankings_initQueries() {
+        HotstatusPipeline::filter_generate_date();
+
+        $q = [
+            HotstatusPipeline::FILTER_KEY_REGION => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "region",
+                self::QUERY_TYPE => self::QUERY_TYPE_INDEX
+            ],
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "season",
+                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                self::QUERY_IGNORE_AFTER_CACHE => false,
+                self::QUERY_ISSET => false,
+                self::QUERY_RAWVALUE => null,
+                self::QUERY_SQLVALUE => null,
+                self::QUERY_SQLCOLUMN => "gameType",
                 self::QUERY_TYPE => self::QUERY_TYPE_RAW
             ],
         ];
@@ -2462,8 +2660,8 @@ class PlayerdataController extends Controller {
         foreach ($values as $value) {
             if ($mappingType === self::QUERY_TYPE_RAW) {
                 $val = $value;
-                if (!is_numeric($value)) {
-                    $val = '"' . $value . '"';
+                if (!is_numeric($val)) {
+                    $val = '"' . $val . '"';
                 }
 
                 $ret .= "`$field` = $val";
@@ -2485,6 +2683,14 @@ class PlayerdataController extends Controller {
                 $ret .= "`$field` >= $min AND `$field` <= $max";
 
                 if ($count > 1) $ret .= ")";
+            }
+            else if ($mappingType === self::QUERY_TYPE_INDEX) {
+                $val = HotstatusPipeline::$filter[$key][$value]['index'];
+                if (!is_numeric($val)) {
+                    $val = '"' . $val . '"';
+                }
+
+                $ret .= "`$field` = $val";
             }
 
             if ($i < $count - 1) {
