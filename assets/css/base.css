@@ -2611,3 +2611,35 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #8782ff;
     text-decoration: none;
 }
+
+.contact-container {
+    text-align: left;
+    font-size: 15px;
+    color: #FFFFFF;
+}
+
+.email {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffc82e;
+    text-decoration: none;
+}
+
+.email:hover {
+    font-size: 18px;
+    font-weight: 800;
+    color: #8782ff;
+    text-decoration: none;
+}
+
+.link {
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.link:hover {
+    font-weight: 600;
+    color: #8782ff;
+    text-decoration: none;
+}

@@ -420,7 +420,7 @@ class DefaultController extends Controller
      * @Route("/upload", name="upload")
      */
     public function uploadAction() {
-        return $this->render('default/index.html.twig', [
+        return $this->render('default/upload.html.twig', [
         ]);
     }
 
@@ -436,7 +436,7 @@ class DefaultController extends Controller
      * @Route("/faq", name="faq")
      */
     public function faqAction() {
-        return $this->render('default/index.html.twig', [
+        return $this->render('default/faq.html.twig', [
         ]);
     }
 }

@@ -5,7 +5,7 @@
 
 {# Append to title #}
 {% block title %}
-: Contact
+: Upload
 {% endblock %}
 
 {# Inject dynamic content variables #}
@@ -32,19 +32,15 @@
                 <div class="hotstatus-container">
                     <div class="contact-container hotstatus-subcontainer">
                         <div>
-                            Email: <a class="email" href="mailto:contact@hotstat.us">contact@hotstat.us</a>!
-                        </div>
-                        <br>
-                        <div>
-                            For general questions, please prefix the subject line with "<b>Question:</b>", if your questions are well formed and aren't answered in the <a class="link" href="{{ path("faq") }}">F.A.Q.</a> then they will be added! I will try to answer questions frequently.
-                        </div>
-                        <br>
-                        <div>
-                            For bug reports, please prefix the subject line with "<b>Bug Report:</b>", any amount of details are appreciated!
-                        </div>
-                        <br>
-                        <div>
-                            For non-obvious feature requests, please prefix the subject line with "<b>Feature Request:</b>".
+                            Hotstat.us uses the wonderful HotsApi service for its replay dataset.
+                            <br><br>
+                            HotsApi is an open Heroes of the Storm replay database where <b>anyone</b> can download replays uploaded by the community.
+                            <br><br>
+                            If you upload your replays through HotsApi, they become publically available to anyone who wants to use them, so that sites like Hotstat.us can analyze them at will!
+                            <br><br>
+                            Want to upload your replays to the private Hotslogs replay set? Then you should <b>still</b> upload your replays to HotsApi and they will be uploaded to Hotslogs as well!
+                            <br><br>
+                            Sound good? Head over to <a class="email" href="http://hotsapi.net/upload" target="_blank">hotsapi.net/upload</a> to upload your replays using either the uploader app, or the web uploader!
                         </div>
                     </div>
                 </div>
