@@ -157,7 +157,7 @@ PlayerLoader.ajax.filter = {
             .always(function() {
                 //Disable processing indicator
                 setTimeout(function() {
-                    $('.playerloader-processing').fadeIn().delay(750).queue(function(){
+                    $('.playerloader-processing').fadeIn().delay(250).queue(function(){
                         $(this).remove();
                     });
                 });
