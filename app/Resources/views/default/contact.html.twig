@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{# Include snippets and then alias their blocks so as to order them as needed #}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+
+{# Append to title #}
+{% block title %}
+: Contact
+{% endblock %}
+
+{# Inject dynamic content variables #}
+{% block dynamicVariables %}
+{% endblock %}
+
+{# Custom styling that require the use of path generation #}
+{% block style %}
+{% endblock %}
+
+{% block body %}
+    {# Begin HTML #}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xl-2"></div>
+            <div class="col-sm-12 col-md-12 col-xl-8">
+                <div class="hotstatus-container">
+                    <div class="contact-container">
+                        Contact the creator of hotstat.us at ' contact@hotstat.us '!
+
+                        For general questions, please prefix the subject line with "Question:", if your questions are well formed and aren't answered in the F.A.Q. then they will be added to the F.A.Q! I will try to answer questions frequently.
+
+                        For bug reports, please prefix the subject line with "Bug Report:", any amount of details are appreciated!
+
+                        For non-obvious feature requests, please prefix the subject line with "Feature Request:".
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2">
+                {% include ':snippets:advertising/responsive_vertical.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{# Stylesheets #}
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{# Javascript #}
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+{% endblock %}
+
+{# Tail Javascript #}
+{% block tailJavascript %}
+{% endblock %}
+
