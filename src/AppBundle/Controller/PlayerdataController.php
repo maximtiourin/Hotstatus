@@ -229,7 +229,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL);
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL);
         }
 
         return $response;
@@ -546,7 +546,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
         }
 
         return $response;
@@ -770,7 +770,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL); //UPDATE_LONG_TTL on player's local cache
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL); //UPDATE_LONG_TTL on player's local cache
         }
 
         return $response;
@@ -1184,7 +1184,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //Cache offset for UPDATE_TTL on player's local cache
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //Cache offset for UPDATE_TTL on player's local cache
         }
 
         return $response;
@@ -1537,7 +1537,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_DEFAULT_TTL); //Never expires in player local cache
+            $response->setMaxAge(HotstatusCache::CACHE_DEFAULT_TTL); //Never expires in player local cache
         }
 
         return $response;
@@ -2284,7 +2284,7 @@ class PlayerdataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
         }
 
         return $response;
