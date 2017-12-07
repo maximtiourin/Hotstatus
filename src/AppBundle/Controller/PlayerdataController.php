@@ -2369,8 +2369,8 @@ class PlayerdataController extends Controller {
 
                 //Get gameType rank and match limits
                 $gameTypeobj = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$queryGameType];
-                $matchLimit = $queryGameType['ranking']['matchLimit'];
-                $rankLimit = $queryGameType['ranking']['rankLimit'];
+                $matchLimit = $gameTypeobj['ranking']['matchLimit'];
+                $rankLimit = $gameTypeobj['ranking']['rankLimit'];
 
                 //Prepare Statements
                 $db->prepare("GetTopRanks",
