@@ -220,7 +220,7 @@ PlayerLoader.ajax.topheroes = {
                  * Process Top Heroes
                  */
                 if (json_heroes.length > 0) {
-                    data_topheroes.generateTopHeroesContainer();
+                    data_topheroes.generateTopHeroesContainer(json.matches_played, json.mvp_medals_percentage);
 
                     data_topheroes.generateTopHeroesTable();
 
@@ -557,10 +557,14 @@ PlayerLoader.data = {
         empty: function() {
             $('#pl-topheroes-container').remove();
         },
-        generateTopHeroesContainer: function() {
-            //let lastupdated_badge = '<div class="fa pl-lastupdated-badge">&#xf05a</div>';
+        generateTopHeroesContainer: function(matchesplayed, mvppercent) {
+            let matchesplayedcontainer = '<div class="pl-topheroes-matchesplayed-container">Total Played: '+ matchesplayed +'</div>';
+
+            let mvppercentcontainer = '<div class="pl-topheroes-mvppercent-container"><img class="pl-topheroes-mvppercent-image" src="'+ image_bpath +'storm_ui_scorescreen_mvp_mvp_blue.png">MVP: '+ mvppercent +'%</div>';
 
             let html = '<div id="pl-topheroes-container" class="pl-topheroes-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
+                matchesplayedcontainer +
+                mvppercentcontainer +
                 '</div>';
 
             $('#player-leftpane-container').append(html);

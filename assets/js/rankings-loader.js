@@ -107,7 +107,7 @@ RankingsLoader.ajax.filter = {
                  * Get Rankings
                  */
                 if (json_ranks.length > 0) {
-                    data_ranks.generateContainer(json.limits.matchLimit, json.last_updated);
+                    data_ranks.generateContainer(json.limits.rankLimit, json.limits.matchLimit, json.last_updated);
 
                     data_ranks.generateTable();
 
@@ -151,12 +151,12 @@ RankingsLoader.data = {
         empty: function() {
             $('#rankings-container').remove();
         },
-        generateContainer: function(matchLimit, last_updated_timestamp) {
+        generateContainer: function(rankLimit, matchLimit, last_updated_timestamp) {
             let date = (new Date(last_updated_timestamp * 1000)).toLocaleString();
 
             let html = '<div id="rankings-container" class="rankings-container hotstatus-subcontainer">' +
                 '<div class="rankings-header">' +
-                '<div class="rankings-header-left">Players require '+ matchLimit +' matches played in order to qualify for rankings.</div>' +
+                '<div class="rankings-header-left">Players require '+ matchLimit +' matches played in order to qualify for Top '+ rankLimit +' rankings.</div>' +
                 '<div class="rankings-header-right">Last Updated: '+ date +'.</div>' +
                 '</div>' +
                 '</div>';
@@ -210,7 +210,12 @@ RankingsLoader.data = {
             $('#rankings-container').append('<table id="rankings-table" class="rankings-table hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead></thead></table>');
         },
         initTable: function(dataTableConfig) {
-            $('#rankings-table').DataTable(dataTableConfig);
+            let table = $('#rankings-table').DataTable(dataTableConfig);
+
+            //Search the table for the new value typed in by user
+            $('#rankings-search').on("propertychange change click keyup input paste", function() {
+                table.search($(this).val()).draw();
+            });
         }
     }
 };
@@ -237,10 +242,5 @@ $(document).ready(function() {
     //Load new data on a select dropdown being closed (Have to use '*' selector workaround due to a 'Bootstrap + Chrome-only' bug)
     $('*').on('hidden.bs.dropdown', function(e) {
         filterAjax.validateLoad(baseUrl, filterTypes);
-    });
-
-    //Search the table for the new value typed in by user
-    $('#rankings-search').on("propertychange change click keyup input paste", function() {
-        $('#rankings-table').search($(this).val()).draw();
     });
 });

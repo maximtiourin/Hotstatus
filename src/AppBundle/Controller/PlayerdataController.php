@@ -237,7 +237,7 @@ class PlayerdataController extends Controller {
     }
 
     /**
-     * Returns top heroes (and top maps) for player
+     * Returns top heroes (and top maps) for player, as well as MVP percent and matches played
      *
      * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
      */
@@ -330,7 +330,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetTopHeroes",
-                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths` FROM `players_matches_recent_granular` 
+                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `medals` FROM `players_matches_recent_granular` 
                     WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
                 $db->bind("GetTopHeroes", "iss", $r_player_id, $r_date_start, $r_date_end);
 
@@ -343,6 +343,7 @@ class PlayerdataController extends Controller {
                  */
                 $heroes = [];
                 $maps = [];
+                $a_mvp_medals = 0;
                 $topHeroesResult = $db->execute("GetTopHeroes");
                 while ($row = $db->fetchArray($topHeroesResult)) {
                     $heroname = $row['hero'];
@@ -402,6 +403,12 @@ class PlayerdataController extends Controller {
 
                     $a_m_played += $row['played'];
                     $a_m_won += $row['won'];
+
+                    //MVP Medals
+                    $row_medals = json_decode($row['medals'], true);
+                    if (key_exists('MVP', $row_medals)) {
+                        $a_mvp_medals += $row_medals['MVP']['count'];
+                    }
                 }
 
                 $db->freeResult($topHeroesResult);
@@ -409,6 +416,7 @@ class PlayerdataController extends Controller {
                 /*
                  * Get Top Heroes
                  */
+                $a_matches_played = 0;
                 $topheroes = [];
                 foreach ($heroes as $heroname => &$hero) {
                     $a_played = &$hero['played'];
@@ -416,6 +424,9 @@ class PlayerdataController extends Controller {
                     $a_kills = &$hero['kills'];
                     $a_assists = &$hero['assists'];
                     $a_deaths = &$hero['deaths'];
+
+                    //Matches played
+                    $a_matches_played += $a_played;
 
                     //Winrate
                     $c_winrate = 0;
@@ -500,6 +511,17 @@ class PlayerdataController extends Controller {
                 });
 
                 $pagedata['maps'] = $topmaps;
+
+                //Special Data
+                $pagedata['matches_played'] = $a_matches_played;
+                $pagedata['mvp_medals'] = $a_mvp_medals;
+
+                $c_mvp_percentage = 0;
+                if ($a_matches_played > 0) {
+                    $c_mvp_percentage = round(($a_mvp_medals / ($a_matches_played * 1.00)) * 100.0, 1);
+                }
+
+                $pagedata['mvp_medals_percentage'] = $a_mvp_medals;
 
                 //Last Updated
                 $pagedata['last_updated'] = time();
@@ -2418,7 +2440,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
             }
         }
 
@@ -2427,12 +2449,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+        }
 
         return $response;
     }

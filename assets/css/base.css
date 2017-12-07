@@ -2172,6 +2172,44 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     height:385px;
 }
 
+.pl-topheroes-matchesplayed-container {
+    position:absolute;
+    width: 130px;
+    height:24px;
+    text-align: right;
+    overflow: hidden;
+    text-wrap: none;
+    white-space: nowrap;
+    bottom:24px;
+    right:16px;
+    font-size:14px;
+    color: #FFFFFF;
+    cursor:default;
+}
+
+.pl-topheroes-mvppercent-container {
+    position:absolute;
+    width: 130px;
+    height:28px;
+    margin: 4px 0;
+    text-align: right;
+    overflow: hidden;
+    text-wrap: none;
+    white-space: nowrap;
+    bottom:0px;
+    right:16px;
+    font-size:14px;
+    color: #FFFFFF;
+    cursor:default;
+    line-height: 28px;
+}
+
+.pl-topheroes-mvppercent-image {
+    width:28px;
+    height:28px;
+    margin: -14px 0px;
+}
+
 .pl-leftpane-pagination {
     position: absolute;
     left: 15px;
