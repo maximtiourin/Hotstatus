@@ -50,6 +50,25 @@
                             {% include ':snippets:heroes/filter/dropdown/select/heroes.html.twig' %}
                         </div>
                     {% endblock %}
+                    {% block player_summary %}
+                        <div class="playersummary-container">
+                            <div class="playersummary-player">
+                                <div class="playersummary-player-region">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Region">
+                                        {{  player.region }}
+                                    </span>
+                                </div>
+                                <div class="playersummary-player-battletag">
+                                    {{ player.name }}
+                                </div>
+                                <div class="playersummary-player-level">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Battletag">
+                                        #{{ player.tag }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endblock %}
                     {% block group_average_stats %}
                         {# Player Hero Loader - Special Stat - Played #}
                         <div class="row">

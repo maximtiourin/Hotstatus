@@ -240,7 +240,7 @@ $(document).ready(function() {
     });
 
     //Search the table for the new value typed in by user
-    /*$('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
-        table.search($(this).val()).draw();
-    });*/
+    $('#rankings-search').on("propertychange change click keyup input paste", function() {
+        $('#rankings-table').search($(this).val()).draw();
+    });
 });

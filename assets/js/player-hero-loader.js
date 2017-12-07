@@ -412,7 +412,7 @@ HeroLoader.data = {
                 processing: '', //Change content of processing indicator
                 loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
                 zeroRecords: ' ', //Message displayed when a table has no rows left after filtering (same while loading initial ajax)
-                emptyTable: 'Build Data is currently limited for this Hero. Increase date range or wait for more data.' //Message when table is empty regardless of filtering
+                emptyTable: 'Your build data is currently limited for this hero. Play a complete build more than once to see its statistics.' //Message when table is empty regardless of filtering
             };
 
             datatable.order = [[1, 'desc'],[3, 'desc']];
