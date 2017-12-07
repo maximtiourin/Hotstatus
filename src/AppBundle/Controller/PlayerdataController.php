@@ -41,9 +41,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns the relevant player data for a player necessary to build a player page
      *
-     * @Route("/playerdata/pagedata/{player}", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player")
+     * @Route("/playerdata/pagedata/{player}", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerAction";
@@ -217,7 +216,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL);
             }
         }
 
@@ -226,12 +225,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL);
+        }
 
         return $response;
     }
@@ -239,9 +238,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns top heroes (and top maps) for player, as well as MVP percent and matches played
      *
-     * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_topheroes")
+     * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_topheroes")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerTopHeroesAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerTopHeroesAction";
@@ -535,7 +533,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
             }
         }
 
@@ -544,12 +542,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
             $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+        }
 
         return $response;
     }
@@ -557,9 +555,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent parties for player, as well as party statistics
      *
-     * @Route("/playerdata/pagedata/{player}/parties", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_parties")
+     * @Route("/playerdata/pagedata/{player}/parties", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_parties")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerPartiesAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerPartiesAction";
@@ -760,7 +757,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //UPDATE_TTL on redis
             }
         }
 
@@ -769,12 +766,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_LONG_TTL); //UPDATE_LONG_TTL on player's local cache
+        }
 
         return $response;
     }
@@ -782,9 +779,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent matches for player based on offset and match limit
      *
-     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_recentmatches")
+     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_recentmatches")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerRecentMatchesAction";
@@ -1175,7 +1171,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO enable after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //Cache offset for UPDATE_TTL on redis
             }
         }
 
@@ -1184,12 +1180,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //Cache offset for UPDATE_TTL on player's local cache
+        }
 
         return $response;
     }
@@ -1197,9 +1193,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns match data for a match
      *
-     * @Route("/playerdata/pagedata/match/{matchid}", requirements={"matchid": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_match")
+     * @Route("/playerdata/pagedata/match/{matchid}", requirements={"matchid": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_match")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataMatchAction(Request $request, $matchid) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataMatchAction";
@@ -1529,7 +1524,7 @@ class PlayerdataController extends Controller {
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                //HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //TODO after testing
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL); //Expires UPDATE_TTL on redis
             }
         }
 
@@ -1538,12 +1533,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::CACHE_DEFAULT_TTL); //Never expires in player local cache
+        }
 
         return $response;
     }
@@ -1551,9 +1546,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
      *
-     * @Route("/playerdata/pagedata/{player}/hero", requirements={"player": "\d+"}, options={"expose"=true}, name="playerdata_pagedata_player_hero")
+     * @Route("/playerdata/pagedata/{player}/hero", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_hero")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataPlayerHeroAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerHeroAction";
@@ -2275,10 +2269,10 @@ class PlayerdataController extends Controller {
             }
 
             //Store mysql value in cache
-            /*if ($validResponse && $connected_redis) {
+            if ($validResponse && $connected_redis) {
                 $encoded = json_encode($pagedata);
-                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
-            }*/ //TODO
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+            }
         }
 
         $redis->close();
@@ -2286,12 +2280,12 @@ class PlayerdataController extends Controller {
         $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
-        /*$response->setPublic();
+        $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
-        }*/ //TODO enable after testing
+            $response->setExpires(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }
 
         return $response;
     }
@@ -2299,9 +2293,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns the top 500 rankings result for the given region/season/gameType
      *
-     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, name="playerdata_pagedata_rankings")
+     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_rankings")
      */
-    //condition="request.isXmlHttpRequest()", //TODO
     public function getPageDataRankingsAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataRankingsAction";
