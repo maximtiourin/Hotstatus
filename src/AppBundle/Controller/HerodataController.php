@@ -1129,7 +1129,7 @@ class HerodataController extends Controller {
                 "querySql" => $querySql,
             ];
 
-            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, /*$datatable['data']['max_age']*/60, $datatable['data']['last_updated'], $payload);
+            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, $datatable['data']['max_age'], $datatable['data']['last_updated'], $payload);
 
             $validResponse = TRUE;
         }
@@ -1145,12 +1145,6 @@ class HerodataController extends Controller {
                 //Use mysql value
 
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
-
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
 
                 //Determine time range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
