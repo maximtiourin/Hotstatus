@@ -1066,6 +1066,8 @@ class HerodataController extends Controller {
         $_ID = "getDataTableHeroesStatsListAction";
         $_VERSION = 0;
 
+        $_AGE_CACHE_UPDATE = 15; //How old in seconds the cached value must be before it is flagged for update
+
         /*
          * Process Query Parameters
          */
@@ -1122,6 +1124,14 @@ class HerodataController extends Controller {
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
             //Use cached value
             $datatable = json_decode($cacheval, true);
+
+            //Queue Update for Cached Value if necessary
+            $payload = [
+                "queryDateKey" => $queryDateKey,
+                "querySql" => $querySql,
+            ];
+
+            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, $_AGE_CACHE_UPDATE, $datatable['data']['last_updated'], $payload);
 
             $validResponse = TRUE;
         }
