@@ -63,3 +63,8 @@
     {{ block('hsljavascripts') }}
 {% endblock %}
 
+{# Tail Javascript #}
+{% block tailJavascript %}
+    Hotstatus.advertising.internal.generateByDefault = false;
+{% endblock %}
+

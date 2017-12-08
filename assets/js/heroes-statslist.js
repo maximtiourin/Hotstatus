@@ -1,3 +1,7 @@
+let StatslistLoader = {};
+
+StatslistLoader.ajax = {};
+
 /*
  * The ajax handler for handling filters
  */
@@ -111,7 +115,7 @@ StatslistLoader.ajax.filter = {
 /*
  * Handles binding data to the page
  */
-StatlistLoader.data = {
+StatslistLoader.data = {
     statslist: {
         empty: function() {
             $('#heroes-statslist').remove();
