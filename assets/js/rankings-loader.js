@@ -222,7 +222,7 @@ RankingsLoader.data = {
 
 
 $(document).ready(function() {
-    //$.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
+    $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
 
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('playerdata_pagedata_rankings');

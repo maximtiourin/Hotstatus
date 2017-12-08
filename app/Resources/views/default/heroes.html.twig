@@ -11,36 +11,16 @@
 
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
-    {# Inject herodata array and make available to all javascript #}
-    {# var herodata_imagepath = "{{ asset('', 'images')|raw }}"; #}
-    {# var herodata_heroes = {{ herodata_heroes|json_encode|raw }}; #}
-    {#var herodata_heroes_path = "{{ path('herodata_datatable_heroes_statslist')|raw }}";#}
+    let image_bpath = "{{ asset('', 'images')|raw }}";
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}
 {% block style %}
-    {#.div,
-    #heroes-statslist-toolbar {
-        background-image: url('{{ asset("storm_temp_btn-upgrade-terran-neosteelframe.png", 'images') }}');
-    }#}
 {% endblock %}
 
 {% block body %}
     {# Begin HTML #}
     <div class="container-fluid">
-        {# Old top-tables, but the game doesnt have good roles like league does to make these viable
-        <div class="row">
-                <div class="col">
-                    {% include ':snippets:heroes/top_role_winrates/table.html.twig' %}
-                </div>
-                <div class="col">
-                    {% include ':snippets:heroes/top_role_playrates/table.html.twig' %}
-                </div>
-                <div class="col">
-                    {% include ':snippets:heroes/top_role_banrates/table.html.twig' %}
-                </div>
-        </div>
-        #}
         <div class="row">
             <div class="col">
                 <div class="text-center">

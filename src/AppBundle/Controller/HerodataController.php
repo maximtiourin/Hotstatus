@@ -1131,6 +1131,7 @@ class HerodataController extends Controller {
 
             $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 
+            $pagedata = [];
             $data = [];
             if ($connected_mysql !== FALSE) {
                 //Use mysql value
@@ -1294,29 +1295,29 @@ class HerodataController extends Controller {
                     $dtrow = [];
 
                     //Hero Portrait
-                    $dtrow[] = '<img src="' . $imgbasepath . $hero['image_hero'] . '.png" class="rounded-circle hsl-portrait">';
+                    $dtrow['image_hero'] = $hero['image_hero'];
 
                     //Hero proper name
-                    $dtrow[] = '<a class="hsl-link" href="'. $this->generateUrl("hero", ["heroProperName" => $hero['name']]) .'">' . $hero['name'] . '</a>';
+                    $dtrow['name'] = $hero['name'];
 
                     //Hero name sort helper
-                    $dtrow[] = $hero['name_sort'];
+                    $dtrow['name_sort'] = $hero['name_sort'];
 
                     //Hero Blizzard role
-                    $dtrow[] = $hero['role_blizzard'];
+                    $dtrow['role_blizzard'] = $hero['role_blizzard'];
 
                     //Hero Specific role
-                    $dtrow[] = $hero['role_specific'];
+                    $dtrow['role_specific'] = $hero['role_specific'];
 
                     //Playrate
-                    $dtrow[] = $hero['dt_playrate'];
+                    $dtrow['played'] = $hero['dt_playrate'];
 
                     //Banrate
                     if ($hero['dt_banrate'] > 0) {
-                        $dtrow[] = $hero['dt_banrate'];
+                        $dtrow['banned'] = $hero['dt_banrate'];
                     }
                     else {
-                        $dtrow[] = '';
+                        $dtrow['banned'] = '';
                     }
 
                     //Popularity
@@ -1324,48 +1325,55 @@ class HerodataController extends Controller {
                     if ($maxPopularity - $minPopularity > 0) {
                         $percentOnRange = ((($hero['dt_popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
                     }
-                    $dtrow[] = '<span class="hsl-number-popularity">' . sprintf("%03.1f %%", $hero['dt_popularity'])
-                        . '</span><div class="hsl-percentbar hsl-percentbar-popularity" style="width:'.$percentOnRange.'%;"></div>';
+                    $dtrow['popularity'] = sprintf("%03.1f %%", $hero['dt_popularity']);
+                    $dtrow['popularity_percent'] = $percentOnRange;
 
                     //Winrate
                     if ($hero['dt_playrate'] > 0) {
-                        $colorclass = "hsl-number-winrate-red";
-                        if ($hero['dt_winrate'] >= 50.0) $colorclass = "hsl-number-winrate-green";
                         $percentOnRange = 0;
                         if ($maxWinrate - $minWinrate > 0) {
                             $percentOnRange = ((($hero['dt_winrate'] - $minWinrate) * 1.00) / (($maxWinrate - $minWinrate) * 1.00)) * 100.0;
                         }
-                        $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $hero['dt_winrate'])
-                            . '</span><div class="hsl-percentbar hsl-percentbar-winrate" style="width:' . $percentOnRange . '%;"></div>';
+                        $dtrow['winrate'] = sprintf("%03.1f %%", $hero['dt_winrate']);
+                        $dtrow['winrate_raw'] = $hero['dt_winrate'];
+                        $dtrow['winrate_percent'] = $percentOnRange;
+                        $dtrow['winrate_exists'] = true;
                     }
                     else {
-                        $dtrow[] = '';
+                        $dtrow['winrate'] = '';
+                        $dtrow['winrate_exists'] = false;
                     }
 
                     //Win Delta (This is the % change in winrate from this last granularity and the older next recent granularity)
                     if ($hero['dt_windelta'] > 0 || $hero['dt_windelta'] < 0) {
-                        $colorclass = "hsl-number-delta-red";
-                        if ($hero['dt_windelta'] >= 0) $colorclass = "hsl-number-delta-green";
-                        $dtrow[] = '<span class="' . $colorclass . '">' . sprintf("%+-03.1f %%", $hero['dt_windelta']) . '</span>';
+                        $dtrow['windelta'] = sprintf("%+-03.1f %%", $hero['dt_windelta']);
+                        $dtrow['windelta_raw'] = $hero['dt_windelta'];
+                        $dtrow['windelta_exists'] = true;
                     }
                     else {
-                        $dtrow[] = '';
+                        $dtrow['windelta'] = '';
+                        $dtrow['windelta_exists'] = false;
                     }
 
                     $data[] = $dtrow;
                 }
+
+                $pagedata['heroes'] = $data;
+
+                //Last Updated
+                $pagedata['last_updated'] = time();
 
                 $db->close();
 
                 $validResponse = TRUE;
             }
 
-            $datatable['data'] = $data;
+            $datatable['data'] = $pagedata;
 
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
                 $encoded = json_encode($datatable);
-                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
             }
         }
 
@@ -1379,7 +1387,7 @@ class HerodataController extends Controller {
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $jsonResponse->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+            $jsonResponse->setMaxAge(HotstatusCache::CACHE_60_MINUTES);
         }
 
         return $jsonResponse;

@@ -4,7 +4,7 @@
 
 <div id="heroes-statslist-container" style="border-radius: 4px !important;">
     {% block filter %}{% endblock %}
-    <div id="heroes-statslist-toolbar" class="clearfix text-left">
+    <div id="heroes-statslist-toolbar" class="clearfix text-left initial-load">
         <div id="" class="d-inline-block float-right">
             <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Utility">Utility</button>
             <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Tank">Tank</button>
@@ -23,9 +23,5 @@
             <input id="heroes-statslist-toolbar-search" class="hotstatus-search-textbox" placeholder="Search by Hero/Role...">
         </div>
     </div>
-    <div id="heroes-statslist">
-        <table id="hsl-table" class="hsl-table hotstatus-datatable display table table-sm dt-responsive" width="100%">
-            <thead class=""></thead>
-        </table>
-    </div>
+    {# Heroes Statslist Generated #}
 </div>
