@@ -1066,8 +1066,6 @@ class HerodataController extends Controller {
         $_ID = "getDataTableHeroesStatsListAction";
         $_VERSION = 0;
 
-        $_AGE_CACHE_UPDATE = 15; //How old in seconds the cached value must be before it is flagged for update
-
         /*
          * Process Query Parameters
          */
@@ -1131,7 +1129,7 @@ class HerodataController extends Controller {
                 "querySql" => $querySql,
             ];
 
-            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, $_AGE_CACHE_UPDATE, $datatable['data']['last_updated'], $payload);
+            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, /*$datatable['data']['max_age']*/60, $datatable['data']['last_updated'], $payload);
 
             $validResponse = TRUE;
         }
@@ -1372,6 +1370,9 @@ class HerodataController extends Controller {
 
                 //Last Updated
                 $pagedata['last_updated'] = time();
+
+                //Max Age
+                $pagedata['max_age'] = HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday();
 
                 $db->close();
 

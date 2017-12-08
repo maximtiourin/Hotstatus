@@ -127,6 +127,9 @@ StatslistLoader.data = {
                 '</div>';
 
             $('#heroes-statslist-container').append(html);
+
+            //Update last updated
+            $('#statslist-lastupdated').html('<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="Last Updated: '+ date +'"><i class="fa fa-info-circle lastupdated-info" aria-hidden="true"></i></span>');
         },
         generateTableData: function(hero) {
             let heroPortrait = '<img src="'+ image_bpath + hero.image_hero +'.png" class="rounded-circle hsl-portrait">';
