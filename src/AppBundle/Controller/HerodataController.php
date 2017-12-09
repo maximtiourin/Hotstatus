@@ -45,7 +45,7 @@ class HerodataController extends Controller {
     public function getPageDataHeroAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataHeroAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters

@@ -46,7 +46,7 @@ class PlayerdataController extends Controller {
     public function getPageDataPlayerAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters
@@ -243,7 +243,7 @@ class PlayerdataController extends Controller {
     public function getPageDataPlayerTopHeroesAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerTopHeroesAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters
@@ -560,7 +560,7 @@ class PlayerdataController extends Controller {
     public function getPageDataPlayerPartiesAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerPartiesAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters
@@ -784,7 +784,7 @@ class PlayerdataController extends Controller {
     public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerRecentMatchesAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters
@@ -1198,7 +1198,7 @@ class PlayerdataController extends Controller {
     public function getPageDataMatchAction(Request $request, $matchid) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataMatchAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Begin building response
@@ -1551,7 +1551,7 @@ class PlayerdataController extends Controller {
     public function getPageDataPlayerHeroAction(Request $request, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerHeroAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters
@@ -2298,7 +2298,7 @@ class PlayerdataController extends Controller {
     public function getPageDataRankingsAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataRankingsAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         /*
          * Process Query Parameters

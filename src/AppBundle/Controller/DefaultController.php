@@ -78,7 +78,7 @@ class DefaultController extends Controller
     public function playerSearchAction(Request $request) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "playerSearchAction";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         $_RATE_LIMIT = 5; //Activities
         $_RATE_TIMERANGE = 60; //Seconds
@@ -222,7 +222,7 @@ class DefaultController extends Controller
     private function getPlayer($id) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPlayer";
-        $_VERSION = 0;
+        $_VERSION = 1;
 
         //Main Vars
         $pagedata = [];
