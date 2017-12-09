@@ -1066,6 +1066,8 @@ class HerodataController extends Controller {
         $_ID = GetDataTableHeroesStatsListAction::_ID();
         $_VERSION = GetDataTableHeroesStatsListAction::_VERSION();
 
+        GetDataTableHeroesStatsListAction::generateFilters();
+
         /*
          * Process Query Parameters
          */
