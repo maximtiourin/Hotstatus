@@ -981,7 +981,7 @@ PlayerLoader.data = {
             if (medal.exists) {
                 medalhtml = '<div class="rm-sw-sp-medal-container"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div class=\'hl-talents-tooltip-name\'>'
                     + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-sw-sp-medal" src="'
-                    + medal.image + '_blue.png"></span></div>';
+                    + image_bpath + medal.image + '_blue.png"></span></div>';
             }
             else {
                 nomedalhtml = "<div class='rm-sw-sp-offset'></div>";
@@ -995,7 +995,7 @@ PlayerLoader.data = {
                 if (match.player.talents.length > i) {
                     let talent = match.player.talents[i];
 
-                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-sw-tp-talent" src="' + talent.image + '"></span>';
+                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-sw-tp-talent" src="' + image_bpath + talent.image +'.png"></span>';
                 }
 
                 talentshtml += "</div>";
