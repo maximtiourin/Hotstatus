@@ -1570,14 +1570,14 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+        $CACHE_ID = $_ID . ":" . $player . ":" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
         //Get redis cache
         $redis = new RedisDatabase();
-        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
 
         //Try to get cached value
         $cacheval = NULL;
