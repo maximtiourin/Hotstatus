@@ -93,7 +93,7 @@ HeroLoader.ajax = {
                  * Herodata
                  */
                 //Create image composite container
-                data_herodata.generateImageCompositeContainer();
+                data_herodata.generateImageCompositeContainer(json.last_updated);
                 //image_hero
                 data_herodata.image_hero(json_herodata['image_hero']);
                 //name
@@ -239,9 +239,11 @@ HeroLoader.data = {
         }
     },
     herodata: {
-        generateImageCompositeContainer: function() {
-            $('#hl-herodata-image-hero-composite-container').append('<div id="hl-herodata-image-hero-container"></div>' +
-                '<span id="hl-herodata-name"></span>');
+        generateImageCompositeContainer: function(last_updated_timestamp) {
+            let date = (new Date(last_updated_timestamp * 1000)).toLocaleString();
+
+            $('#hl-herodata-image-hero-composite-container').append('<span data-toggle="tooltip" data-html="true" title="<div class=\'lastupdated-text\'>Last Updated: '+ date +'.</div>"><div id="hl-herodata-image-hero-container"></div>' +
+                '<span id="hl-herodata-name"></span></span>');
         },
         name: function(val) {
             $('#hl-herodata-name').text(val);
@@ -282,7 +284,7 @@ HeroLoader.data = {
             let self = HeroLoader.data.talents;
 
             let talentField = '<span data-toggle="tooltip" data-html="true" title="' + self.tooltip(name, desc) + '">' +
-            '<span class="hl-no-wrap hl-row-height"><img class="hl-talents-talent-image" src="' + image + '">' +
+            '<span class="hl-no-wrap hl-row-height"><img class="hl-talents-talent-image" src="' + image_base_path + image + '.png">' +
             ' <span class="hl-talents-talent-name">' + name + '</span></span></span>';
 
             let pickrateField = '<span class="hl-row-height">' + pickrate + '</span>';
@@ -391,7 +393,7 @@ HeroLoader.data = {
             let that = HeroLoader.data.talents;
 
             return '<span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="' + that.tooltip(name, desc) + '">' +
-                '<span class="hl-no-wrap hl-row-height"><img class="hl-builds-talent-image" src="' + image + '">' +
+                '<span class="hl-no-wrap hl-row-height"><img class="hl-builds-talent-image" src="' + image_base_path + image + '.png">' +
                 '</span></span>';
         },
         initTable: function(dataTableConfig) {
@@ -465,7 +467,7 @@ HeroLoader.data = {
                 '</div></div></span>';
         },
         generateMedalImage: function(medal) {
-            return '<div class="hl-medals-line"><img class="hl-medals-image" src="' + medal.image_blue + '"></div>';
+            return '<div class="hl-medals-line"><img class="hl-medals-image" src="' + image_base_path + medal.image_blue + '.png"></div>';
         },
         generateMedalEntry: function(medal) {
             return '<div class="hl-medals-line"><span class="hl-medals-name">' + medal.name + '</span></div>';

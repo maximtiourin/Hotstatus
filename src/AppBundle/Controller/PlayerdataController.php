@@ -2231,6 +2231,8 @@ class PlayerdataController extends Controller {
                 //Set medals
                 $pagedata['medals'] = $sortedMedalsSlice;
 
+                //Last Updated
+                $pagedata['last_updated'] = time();
 
                 //Close connection and set valid response
                 $db->close();
