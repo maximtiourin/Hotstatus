@@ -119,9 +119,9 @@ class PlayerdataController extends Controller {
 
                 //Get image path from packages
                 /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
+                /*$pkgs = $this->get("assets.packages");
                 $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
+                $imgbasepath = $pkg->getUrl('');*/
 
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -314,12 +314,6 @@ class PlayerdataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
-
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
@@ -351,7 +345,7 @@ class PlayerdataController extends Controller {
                     if (!key_exists($heroname, $heroes)) {
                         $heroes[$heroname] = [
                             "name" => $heroname,
-                            "image_hero" => $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['image_hero'] . ".png",
+                            "image_hero" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['image_hero'],
                             "played" => 0,
                             "won" => 0,
                             "kills" => 0,
@@ -631,12 +625,6 @@ class PlayerdataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
-
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
@@ -855,12 +843,6 @@ class PlayerdataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
-
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
                 $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
@@ -885,7 +867,7 @@ class PlayerdataController extends Controller {
                 /*
                  * Functions
                  */
-                $processMedal = function($medals, $img_bpath) {
+                $processMedal = function($medals) {
                     //Convert regular arr to assoc for filtering
                     $mp_medals = [];
                     foreach ($medals as $mval) {
@@ -925,7 +907,7 @@ class PlayerdataController extends Controller {
                             $mp_medal['exists'] = TRUE;
                             $mp_medal['name'] = $medalobj['name'];
                             $mp_medal['desc_simple'] = $medalobj['desc_simple'];
-                            $mp_medal['image'] = $img_bpath . $medalobj['image'];
+                            $mp_medal['image'] = $medalobj['image'];
                         }
                     }
 
@@ -957,7 +939,7 @@ class PlayerdataController extends Controller {
                     $match['id'] = $row['id'];
                     $match['gameType'] = $row['type'];
                     $match['map'] = $row['map'];
-                    $match['map_image'] = $imgbasepath . 'ui/map_match_leftpane_' . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP][$match['map']]['name_sort'] . '.png';
+                    $match['map_image'] = 'ui/map_match_leftpane_' . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP][$match['map']]['name_sort'];
                     $match['date'] = (new \DateTime($row['date']))->getTimestamp();
                     $match['match_length'] = $row['match_length'];
                     $match['winner'] = $row['winner'];
@@ -1005,7 +987,7 @@ class PlayerdataController extends Controller {
 
                                 //Set relevant player info
                                 $p['id'] = $mplayer['id'];
-                                $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+                                $p['image_hero'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'];
                                 $p['name'] = $mplayer['name'];
                                 $p['hero'] = $mplayer['hero'];
                                 $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
@@ -1100,7 +1082,7 @@ class PlayerdataController extends Controller {
                                     $mainplayer['kda_raw'] = $mp_kda_raw;
 
                                     //Medal
-                                    $mainplayer['medal'] = $processMedal($mstats['medals'], $imgbasepath);
+                                    $mainplayer['medal'] = $processMedal($mstats['medals']);
 
                                     //Talents
                                     $r_hero = $mplayer['hero'];
@@ -1110,7 +1092,7 @@ class PlayerdataController extends Controller {
                                         $talentMap[$t_name_internal] = [
                                             "name" => $t_name_internal,
                                             "desc_simple" => "Talent no longer exists...",
-                                            "image" => $imgbasepath . 'storm_ui_icon_monk_trait1.png',
+                                            "image" => 'storm_ui_icon_monk_trait1.png',
                                         ];
                                     }
 
@@ -1120,7 +1102,7 @@ class PlayerdataController extends Controller {
                                             $talentMap[$trow['name_internal']] = [
                                                 "name" => $trow['name'],
                                                 "desc_simple" => $trow['desc_simple'],
-                                                "image" => $imgbasepath . $trow['image'] . '.png',
+                                                "image" => $trow['image'],
                                             ];
                                         }
                                     }
@@ -1239,12 +1221,6 @@ class PlayerdataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
-
                 //Prepare Statements
                 $db->prepare("GetMatch",
                     "SELECT `type`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
@@ -1259,7 +1235,7 @@ class PlayerdataController extends Controller {
                 /*
                  * Functions
                  */
-                $processMedal = function($medals, $img_bpath) {
+                $processMedal = function($medals) {
                     //Convert regular arr to assoc for filtering
                     $mp_medals = [];
                     foreach ($medals as $mval) {
@@ -1299,7 +1275,7 @@ class PlayerdataController extends Controller {
                             $mp_medal['exists'] = TRUE;
                             $mp_medal['name'] = $medalobj['name'];
                             $mp_medal['desc_simple'] = $medalobj['desc_simple'];
-                            $mp_medal['image'] = $img_bpath . $medalobj['image'];
+                            $mp_medal['image'] = $medalobj['image'];
                         }
                     }
 
@@ -1370,7 +1346,7 @@ class PlayerdataController extends Controller {
                             if ($ban !== HotstatusPipeline::UNKNOWN) {
                                 $team['bans'][] = [
                                     "name" => $ban,
-                                    "image" => $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$ban]['image_hero'] . '.png',
+                                    "image" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$ban]['image_hero'],
                                 ];
                             }
                         }
@@ -1393,7 +1369,7 @@ class PlayerdataController extends Controller {
 
                                 //Set relevant player info
                                 $p['id'] = $mplayer['id'];
-                                $p['image_hero'] = $imgbasepath . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'] . ".png";
+                                $p['image_hero'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'];
                                 $p['name'] = $mplayer['name'];
                                 $p['hero'] = $mplayer['hero'];
                                 $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
@@ -1460,7 +1436,7 @@ class PlayerdataController extends Controller {
                                 ];
 
                                 //Medal
-                                $p['medal'] = $processMedal($mstats['medals'], $imgbasepath);
+                                $p['medal'] = $processMedal($mstats['medals']);
 
                                 //Talents
                                 $r_hero = $mplayer['hero'];
@@ -1470,7 +1446,7 @@ class PlayerdataController extends Controller {
                                     $talentMap[$t_name_internal] = [
                                         "name" => $t_name_internal,
                                         "desc_simple" => "Talent no longer exists...",
-                                        "image" => $imgbasepath . 'storm_ui_icon_monk_trait1.png',
+                                        "image" => 'storm_ui_icon_monk_trait1.png',
                                     ];
                                 }
 
@@ -1480,7 +1456,7 @@ class PlayerdataController extends Controller {
                                         $talentMap[$trow['name_internal']] = [
                                             "name" => $trow['name'],
                                             "desc_simple" => $trow['desc_simple'],
-                                            "image" => $imgbasepath . $trow['image'] . '.png',
+                                            "image" => $trow['image'],
                                         ];
                                     }
                                 }
@@ -1622,12 +1598,6 @@ class PlayerdataController extends Controller {
 
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
-
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
 
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -1993,7 +1963,7 @@ class PlayerdataController extends Controller {
                         "name" => $row['name'],
                         "name_internal" => $row['name_internal'],
                         "desc_simple" => $row['desc_simple'],
-                        "image" => $imgbasepath . $row['image'] . ".png"
+                        "image" => $row['image']
                     ];
                 }
                 $db->freeResult($heroTalentsResult);
@@ -2250,8 +2220,8 @@ class PlayerdataController extends Controller {
 
                         $medal['name'] = $medalobj['name'];
                         $medal['desc_simple'] = $medalobj['desc_simple'];
-                        $medal['image_blue'] = $imgbasepath . $medalobj['image'] . "_blue.png";
-                        $medal['image_red'] = $imgbasepath . $medalobj['image'] . "_red.png";
+                        $medal['image_blue'] = $medalobj['image'] . "_blue";
+                        $medal['image_red'] = $medalobj['image'] . "_red";
                     }
                 }
 
@@ -2369,12 +2339,6 @@ class PlayerdataController extends Controller {
 
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
-
-                //Get image path from packages
-                /** @var Asset\Packages $pkgs */
-                $pkgs = $this->get("assets.packages");
-                $pkg = $pkgs->getPackage("images");
-                $imgbasepath = $pkg->getUrl('');
 
                 //Get season date range
                 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);

@@ -573,7 +573,7 @@ PlayerLoader.data = {
             /*
              * Hero
              */
-            let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="'+ hero.image_hero +'"></div>' +
+            let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="' + image_bpath + hero.image_hero +'.png"></div>' +
                 '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
 
 
@@ -1030,7 +1030,7 @@ PlayerLoader.data = {
                     }
 
                     playershtml += '<div class="rm-sw-pp-player"><span data-toggle="tooltip" data-html="true" title="' + player.hero + '"><img class="rm-sw-pp-player-image" src="'
-                        + player.image_hero + '"></span>' + party + silence_image(player.silenced, 12) + special + player.name + '</a></div>';
+                        + image_bpath + player.image_hero +'.png"></span>' + party + silence_image(player.silenced, 12) + special + player.name + '</a></div>';
                 }
 
                 playershtml += '</div>';
@@ -1039,14 +1039,14 @@ PlayerLoader.data = {
             }
 
             let html = '<div id="recentmatch-container-'+ match.id +'"><div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
-                '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + match.map_image + ');">' +
+                '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + image_bpath + match.map_image +'.png);">' +
                 '<div class="rm-sw-lp-gameType"><span class="rm-sw-lp-gameType-text" data-toggle="tooltip" data-html="true" title="' + match.map + '">' + match.gameType + '</span></div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
                 '<div class="rm-sw-lp-victory">' + victoryText + '</div>' +
                 '<div class="rm-sw-lp-matchlength">' + match_time + '</div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-heropane">' +
-                '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + match.player.image_hero + '"></div>' +
+                '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + image_bpath + match.player.image_hero +'.png"></div>' +
                 '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane"><div class="rm-sw-sp-inner">' +
@@ -1153,7 +1153,7 @@ PlayerLoader.data = {
             if (hasBans) {
                 bans += 'Bans: ';
                 for (let ban of team.bans) {
-                    bans += '<span data-toggle="tooltip" data-html="true" title="' + ban.name + '"><img class="rm-fm-rh-ban" src="'+ ban.image +'"></span>';
+                    bans += '<span data-toggle="tooltip" data-html="true" title="' + ban.name + '"><img class="rm-fm-rh-ban" src="' + image_bpath + ban.image +'.png"></span>';
                 }
             }
 
@@ -1232,7 +1232,7 @@ PlayerLoader.data = {
             if (medal.exists) {
                 medalhtml = '<div class="rm-fm-r-medal-inner"><span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<div class=\'hl-talents-tooltip-name\'>'
                     + medal.name + '</div><div>' + medal.desc_simple + '</div>"><img class="rm-fm-r-medal" src="'
-                    + medal.image + '_'+ teamColor +'.png"></span></div>';
+                    + image_bpath + medal.image + '_'+ teamColor +'.png"></span></div>';
             }
 
             //Talents
@@ -1243,7 +1243,7 @@ PlayerLoader.data = {
                 if (player.talents.length > i) {
                     let talent = player.talents[i];
 
-                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-fm-r-talent" src="' + talent.image + '"></span>';
+                    talentshtml += '<span data-toggle="tooltip" data-html="true" title="' + self.talenttooltip(talent.name, talent.desc_simple) + '"><img class="rm-fm-r-talent" src="' + image_bpath + talent.image +'.png"></span>';
                 }
 
                 talentshtml += "</div>";
@@ -1323,7 +1323,7 @@ PlayerLoader.data = {
             party +
             //Hero Image Container (With Hero Level)
             '<div class="rm-fm-r-heroimage-container">' +
-            '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="'+ player.image_hero +'"></span>' +
+            '<span style="cursor:help;" data-toggle="tooltip" data-html="true" title="' + player.hero + '"><div class="rm-fm-r-herolevel">'+ player.hero_level +'</div><img class="rm-fm-r-heroimage" src="' + image_bpath + player.image_hero +'.png"></span>' +
             '</div>' +
             //Player Name Container
             '<div class="rm-fm-r-playername-container">' +
