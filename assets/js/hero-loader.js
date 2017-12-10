@@ -104,7 +104,7 @@ HeroLoader.ajax = {
                 //Create image composite container
                 data_herodata.generateImageCompositeContainer(json_herodata['universe'], json_herodata['difficulty'],
                     json_herodata['role_blizzard'], json_herodata['role_specific'],
-                    json_herodata['desc_tagline'], json_herodata['desc_bio']);
+                    json_herodata['desc_tagline'], json_herodata['desc_bio'], json.last_updated);
                 //image_hero
                 data_herodata.image_hero(json_herodata['image_hero'], json_herodata['rarity']);
                 //name
@@ -337,14 +337,14 @@ HeroLoader.data = {
         }
     },
     herodata: {
-        generateImageCompositeContainer: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) {
+        generateImageCompositeContainer: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio, last_updated_timestamp) {
             let self = HeroLoader.data.herodata;
 
             let tooltipTemplate = '<div class=\'tooltip\' role=\'tooltip\'><div class=\'arrow\'></div>' +
                 '<div class=\'herodata-bio tooltip-inner\'></div></div>';
 
             $('#hl-herodata-image-hero-composite-container').append('<span data-toggle="tooltip" data-template="' + tooltipTemplate + '" ' +
-                'data-html="true" title="' + self.image_hero_tooltip(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) + '"><div id="hl-herodata-image-hero-container"></div>' +
+                'data-html="true" title="' + self.image_hero_tooltip(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio, last_updated_timestamp) + '"><div id="hl-herodata-image-hero-container"></div>' +
                 '<span id="hl-herodata-name"></span><span id="hl-herodata-title"></span></span>');
         },
         name: function(val) {
@@ -356,11 +356,14 @@ HeroLoader.data = {
         image_hero: function(image, rarity) {
             $('#hl-herodata-image-hero-container').append('<img class="hl-herodata-image-hero hl-herodata-rarity-' + rarity + '" src="' + image_base_path + image + '.png">');
         },
-        image_hero_tooltip: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) {
+        image_hero_tooltip: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio, last_updated_timestamp) {
+            let date = (new Date(last_updated_timestamp * 1000)).toLocaleString();
+
             return '<span class=\'hl-herodata-tooltip-universe\'>[' + universe + ']</span><br>' +
                 '<span class=\'hl-herodata-tooltip-role\'>' + roleBlizzard + ' - ' + roleSpecific + '</span><br>' +
                 '<span class=\'hl-herodata-tooltip-difficulty\'>(Difficulty: ' + difficulty + ')</span><br>' +
-                '<span class=\'hl-talents-tooltip-name\'>' + tagline + '</span><br>' + bio;
+                '<span class=\'hl-talents-tooltip-name\'>' + tagline + '</span><br>' + bio + '<br>' +
+                '<div class=\'lastupdated-text\'>Last Updated: '+ date +'.</div>';
         },
         empty: function() {
             $('#hl-herodata-image-hero-composite-container').empty();
