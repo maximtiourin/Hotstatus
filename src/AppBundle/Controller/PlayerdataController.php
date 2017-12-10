@@ -1092,7 +1092,7 @@ class PlayerdataController extends Controller {
                                         $talentMap[$t_name_internal] = [
                                             "name" => $t_name_internal,
                                             "desc_simple" => "Talent no longer exists...",
-                                            "image" => 'storm_ui_icon_monk_trait1.png',
+                                            "image" => 'storm_ui_icon_monk_trait1',
                                         ];
                                     }
 
@@ -1446,7 +1446,7 @@ class PlayerdataController extends Controller {
                                     $talentMap[$t_name_internal] = [
                                         "name" => $t_name_internal,
                                         "desc_simple" => "Talent no longer exists...",
-                                        "image" => 'storm_ui_icon_monk_trait1.png',
+                                        "image" => 'storm_ui_icon_monk_trait1',
                                     ];
                                 }
 
