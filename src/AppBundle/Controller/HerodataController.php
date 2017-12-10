@@ -46,8 +46,9 @@ class HerodataController extends Controller {
          * Process Query Parameters
          */
         $query = self::hero_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
+        $querySecondaryCacheValues = [];
         $querySecondarySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -56,7 +57,11 @@ class HerodataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+
+                if ($qkey !== HotstatusPipeline::FILTER_KEY_HERO) {
+                    $querySecondaryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                }
             }
         }
 
@@ -77,8 +82,9 @@ class HerodataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, false);
+        $querySecondaryCache = self::buildCacheKey($querySecondaryCacheValues);
         $querySecondarySql = self::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
 
         /*
@@ -90,20 +96,14 @@ class HerodataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Define Payload
-        //Get image path from packages
-        /** @var Asset\Packages $pkgs */
-        $pkgs = $this->get("assets.packages");
-        $pkg = $pkgs->getPackage("images");
-        $imgbasepath = $pkg->getUrl('');
-
         $payload = [
             "queryHero" => $queryHero,
             "querySql" => $querySql,
+            "querySecondaryCache" => $querySecondaryCache,
             "querySecondarySql" => $querySecondarySql,
-            "imgbasepath" => $imgbasepath,
         ];
 
         //Get credentials
@@ -184,7 +184,7 @@ class HerodataController extends Controller {
          * Process Query Parameters
          */
         $query = self::heroesStatsList_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -193,7 +193,7 @@ class HerodataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -207,11 +207,11 @@ class HerodataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
 
         //Determine cache id from query parameters
-        $CACHE_ID = $_ID . ((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Define payload
         $payload = [
@@ -387,6 +387,16 @@ class HerodataController extends Controller {
         ];
 
         return $q;
+    }
+
+    private static function buildCacheKey($queryRawVals) {
+        $str = '';
+
+        foreach ($queryRawVals as $val) {
+            $str .= $val;
+        }
+
+        return $str;
     }
 
     /*

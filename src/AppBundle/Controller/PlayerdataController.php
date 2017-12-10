@@ -52,7 +52,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::player_initDefaultQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -61,7 +61,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -75,7 +75,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
 
         /*
@@ -87,7 +87,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player".((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -249,7 +249,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::topHeroes_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -258,7 +258,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -272,7 +272,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
@@ -284,7 +284,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player:$queryCacheSql";
+        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -566,7 +566,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::parties_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -575,7 +575,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -589,7 +589,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
@@ -601,7 +601,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player:$queryCacheSql";
+        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -790,7 +790,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::recentMatches_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -799,7 +799,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -813,7 +813,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
@@ -825,7 +825,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player:$queryCacheSql:$offset:$limit";
+        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : ("")).":$limit:$offset";
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -1557,7 +1557,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::hero_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -1566,7 +1566,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -1581,7 +1581,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
@@ -1593,7 +1593,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = $_ID . ":" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -2304,7 +2304,7 @@ class PlayerdataController extends Controller {
          * Process Query Parameters
          */
         $query = self::rankings_initQueries();
-        $queryCacheSqlValues = [];
+        $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
@@ -2313,7 +2313,7 @@ class PlayerdataController extends Controller {
                 $qobj[self::QUERY_ISSET] = true;
                 $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
                 $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheSqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
             }
         }
 
@@ -2328,7 +2328,7 @@ class PlayerdataController extends Controller {
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCacheSql = self::buildQuery_WhereAnd_String($queryCacheSqlValues, false);
+        $queryCache = self::buildCacheKey($queryCacheValues);
         $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
 
         /*
@@ -2340,7 +2340,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:rankings".((strlen($queryCacheSql) > 0) ? (":" . md5($queryCacheSql)) : (""));
+        $CACHE_ID = "$_ID:rankings".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -2625,6 +2625,16 @@ class PlayerdataController extends Controller {
         ];
 
         return $q;
+    }
+
+    private static function buildCacheKey($queryRawVals) {
+        $str = '';
+
+        foreach ($queryRawVals as $val) {
+            $str .= $val;
+        }
+
+        return $str;
     }
 
     /*

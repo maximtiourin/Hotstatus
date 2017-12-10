@@ -354,7 +354,7 @@ HeroLoader.data = {
             $('#hl-herodata-title').text(val);
         },
         image_hero: function(image, rarity) {
-            $('#hl-herodata-image-hero-container').append('<img class="hl-herodata-image-hero hl-herodata-rarity-' + rarity + '" src="' + image + '">');
+            $('#hl-herodata-image-hero-container').append('<img class="hl-herodata-image-hero hl-herodata-rarity-' + rarity + '" src="' + image_base_path + image + '.png">');
         },
         image_hero_tooltip: function(universe, difficulty, roleBlizzard, roleSpecific, tagline, bio) {
             return '<span class=\'hl-herodata-tooltip-universe\'>[' + universe + ']</span><br>' +
@@ -391,7 +391,7 @@ HeroLoader.data = {
         generate: function(type, name, desc, imagepath) {
             let self = HeroLoader.data.abilities;
             $('#hl-abilities-inner-' + type).append('<div class="hl-abilities-ability"><span data-toggle="tooltip" data-html="true" title="' + self.tooltip(type, name, desc) + '">' +
-                '<img class="hl-abilities-ability-image" src="' + imagepath + '"><img class="hl-abilities-ability-image-frame" src="' + image_base_path + 'ui/ability_icon_frame.png">' +
+                '<img class="hl-abilities-ability-image" src="' + image_base_path + imagepath + '.png"><img class="hl-abilities-ability-image-frame" src="' + image_base_path + 'ui/ability_icon_frame.png">' +
                 '</span></div>');
         },
         empty: function() {
@@ -414,7 +414,7 @@ HeroLoader.data = {
             let self = HeroLoader.data.talents;
 
             let talentField = '<span data-toggle="tooltip" data-html="true" title="' + self.tooltip(name, desc) + '">' +
-            '<span class="hl-no-wrap hl-row-height"><img class="hl-talents-talent-image" src="' + image + '">' +
+            '<span class="hl-no-wrap hl-row-height"><img class="hl-talents-talent-image" src="' + image_base_path + image + '.png">' +
             ' <span class="hl-talents-talent-name">' + name + '</span></span></span>';
 
             let pickrateField = '<span class="hl-row-height">' + pickrate + '</span>';
@@ -523,7 +523,7 @@ HeroLoader.data = {
             let that = HeroLoader.data.talents;
 
             return '<span class="paginated-tooltip" data-toggle="tooltip" data-html="true" title="' + that.tooltip(name, desc) + '">' +
-                '<span class="hl-no-wrap hl-row-height"><img class="hl-builds-talent-image" src="' + image + '">' +
+                '<span class="hl-no-wrap hl-row-height"><img class="hl-builds-talent-image" src="' + image_base_path + image + '.png">' +
                 '</span></span>';
         },
         initTable: function(dataTableConfig) {
@@ -597,7 +597,7 @@ HeroLoader.data = {
                 '</div></div></span>';
         },
         generateMedalImage: function(medal) {
-            return '<div class="hl-medals-line"><img class="hl-medals-image" src="' + medal.image_blue + '"></div>';
+            return '<div class="hl-medals-line"><img class="hl-medals-image" src="' + image_base_path + medal.image_blue + '.png"></div>';
         },
         generateMedalEntry: function(medal) {
             return '<div class="hl-medals-line"><span class="hl-medals-name">' + medal.name + '</span></div>';
@@ -930,7 +930,7 @@ HeroLoader.data = {
         generateTableData: function(hero, matchupData) {
             let self = HeroLoader.data.matchups;
 
-            let imageField = '<img class="hl-matchups-image" src="' + matchupData.image + '">';
+            let imageField = '<img class="hl-matchups-image" src="' + image_base_path + matchupData.image + '.png">';
 
             let heroField = '<span class="hl-row-height">' + hero + '</span>';
 
