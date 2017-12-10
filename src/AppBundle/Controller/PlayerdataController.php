@@ -2,6 +2,7 @@
 
 namespace AppBundle\Controller;
 
+use Fizzik\GetPageDataRankingsAction;
 use Fizzik\HotstatusPipeline;
 use Fizzik\Utility\AssocArray;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -2268,9 +2269,11 @@ class PlayerdataController extends Controller {
      * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_rankings")
      */
     public function getPageDataRankingsAction(Request $request) {
-        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
-        $_ID = "getPageDataRankingsAction";
-        $_VERSION = 1;
+        $_TYPE = GetPageDataRankingsAction::_TYPE();
+        $_ID = GetPageDataRankingsAction::_ID();
+        $_VERSION = GetPageDataRankingsAction::_VERSION();
+
+        GetPageDataRankingsAction::generateFilters();
 
         /*
          * Process Query Parameters
@@ -2314,6 +2317,13 @@ class PlayerdataController extends Controller {
         //Determine Cache Id
         $CACHE_ID = "$_ID:rankings".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
+        //Define Payload
+        $payload = [
+            "querySeason" => $querySeason,
+            "queryGameType" => $queryGameType,
+            "querySql" => $querySql,
+        ];
+
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
 
@@ -2329,7 +2339,10 @@ class PlayerdataController extends Controller {
 
         if ($connected_redis !== FALSE && $cacheval !== NULL) {
             //Use cached value
-            $pagedata = json_decode($cacheval, true);
+            $responsedata = json_decode($cacheval, true);
+
+            //Queue Update for Cached Value if necessary
+            HotstatusCache::QueueCacheRequestForUpdateOnOldAge($_ID, $CACHE_ID, $creds, $responsedata['data']['max_age'], $responsedata['data']['last_updated'], $payload);
 
             $validResponse = TRUE;
         }
@@ -2342,53 +2355,8 @@ class PlayerdataController extends Controller {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                //Get season date range
-                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
-                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
-                $date_start = $seasonobj['start'];
-                $date_end = $seasonobj['end'];
-
-                //Get gameType rank and match limits
-                $gameTypeobj = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$queryGameType];
-                $matchLimit = $gameTypeobj['ranking']['matchLimit'];
-                $rankLimit = $gameTypeobj['ranking']['rankLimit'];
-
-                //Prepare Statements
-                $db->prepare("GetTopRanks",
-                    "SELECT mmr.`id` AS `playerid`, `name` AS `playername`, `rating`, `region`, (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') AS `played` FROM `players_mmr` mmr INNER JOIN `players` p ON mmr.`id` = p.`id` WHERE (SELECT COUNT(`type`) FROM `players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end') >= $matchLimit $querySql ORDER BY `rating` DESC LIMIT $rankLimit");
-
-                /*
-                 * Collect rankings data
-                 */
-                $ranks = [];
-                $rankplace = 1;
-                $rankresult = $db->execute("GetTopRanks");
-                while ($row = $db->fetchArray($rankresult)) {
-                    $rank = [];
-
-                    $rank["rank"] = $rankplace++;
-                    $rank['player_id'] = $row['playerid'];
-                    $rank['player_name'] = $row['playername'];
-                    $rank['rating'] = $row['rating'];
-                    $rank['played'] = $row['played'];
-
-
-                    $ranks[] = $rank;
-                }
-
-                $db->freeResult($rankresult);
-
-                $pagedata['ranks'] = $ranks;
-
-                //Limits
-                $pagedata['limits'] = [
-                    "matchLimit" => $matchLimit,
-                    "rankLimit" => $rankLimit,
-                ];
-
-                //Last Updated
-                $pagedata['last_updated'] = time();
-
+                //Build Response
+                GetPageDataRankingsAction::execute($payload, $db, $pagedata);
 
                 //Close connection and set valid response
                 $db->close();
@@ -2396,23 +2364,23 @@ class PlayerdataController extends Controller {
                 $validResponse = TRUE;
             }
 
+            $responsedata['data'] = $pagedata;
+
             //Store mysql value in cache
             if ($validResponse && $connected_redis) {
-                $encoded = json_encode($pagedata);
-                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+                $encoded = json_encode($responsedata);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
             }
         }
 
         $redis->close();
-
-        $responsedata['data'] = $pagedata;
 
         $response = $this->json($responsedata);
         $response->setPublic();
 
         //Determine expire date on valid response
         if ($validResponse) {
-            $response->setExpires(HotstatusCache::getHTTPCacheDefaultExpirationDateForToday());
+            $response->setMaxAge(HotstatusCache::CACHE_60_MINUTES);
         }
 
         return $response;
@@ -2561,8 +2529,6 @@ class PlayerdataController extends Controller {
      * Initializes the queries object for the hero pagedata
      */
     private static function rankings_initQueries() {
-        HotstatusPipeline::filter_generate_date();
-
         $q = [
             HotstatusPipeline::FILTER_KEY_REGION => [
                 self::QUERY_IGNORE_AFTER_CACHE => false,
