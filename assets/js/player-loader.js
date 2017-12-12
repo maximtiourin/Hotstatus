@@ -118,8 +118,10 @@ PlayerLoader.ajax.filter = {
                 /*
                  * MMR
                  */
-                data_mmr.generateMMRContainer();
-                data_mmr.generateMMRBadges(json_mmr);
+                if (json_mmr.length > 0) {
+                    data_mmr.generateMMRContainer();
+                    data_mmr.generateMMRBadges(json_mmr);
+                }
 
                 /*
                  * Initial matches
