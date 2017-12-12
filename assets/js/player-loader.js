@@ -220,7 +220,7 @@ PlayerLoader.ajax.topheroes = {
                  * Process Top Heroes
                  */
                 if (json_heroes.length > 0) {
-                    data_topheroes.generateTopHeroesContainer(json.matches_played, json.mvp_medals_percentage);
+                    data_topheroes.generateTopHeroesContainer(json.matches_winrate, json.matches_winrate_raw, json.matches_played, json.mvp_medals_percentage);
 
                     data_topheroes.generateTopHeroesTable();
 
@@ -557,10 +557,29 @@ PlayerLoader.data = {
         empty: function() {
             $('#pl-topheroes-container').remove();
         },
-        generateTopHeroesContainer: function(matchesplayed, mvppercent) {
-            let matchesplayedcontainer = '<div class="pl-topheroes-matchesplayed-container">Total Played: '+ matchesplayed +'</div>';
+        generateTopHeroesContainer: function(winrate, winrate_raw, matchesplayed, mvppercent) {
+            //Good winrate
+            let goodwinrate = 'pl-th-wr-winrate';
+            if (winrate_raw <= 49) {
+                goodwinrate = 'pl-th-wr-winrate-bad';
+            }
+            if (winrate_raw <= 40) {
+                goodwinrate = 'pl-th-wr-winrate-terrible';
+            }
+            if (winrate_raw >= 51) {
+                goodwinrate = 'pl-th-wr-winrate-good';
+            }
+            if (winrate_raw >= 60) {
+                goodwinrate = 'pl-th-wr-winrate-great';
+            }
 
-            let mvppercentcontainer = '<div class="pl-topheroes-mvppercent-container"><img class="pl-topheroes-mvppercent-image" src="'+ image_bpath +'storm_ui_scorescreen_mvp_mvp_blue.png">MVP: '+ mvppercent +'%</div>';
+            let winrateText = '<span data-toggle="tooltip" data-html="true" title="Winrate"><div class="d-inline-block topheroes-inline-winrate '+ goodwinrate +'">' +
+                winrate + '%' +
+                '</div></span>';
+
+            let matchesplayedcontainer = '<div class="pl-topheroes-matchesplayed-container topheroes-special-data"><span class="topheroes-special-data-label">Played:</span> '+ matchesplayed +' ('+ winrateText +')</div>';
+
+            let mvppercentcontainer = '<div class="pl-topheroes-mvppercent-container topheroes-special-data"><img class="pl-topheroes-mvppercent-image" src="'+ image_bpath +'storm_ui_scorescreen_mvp_mvp_blue.png"><span class="topheroes-special-data-label">MVP:</span> '+ mvppercent +'%</div>';
 
             let html = '<div id="pl-topheroes-container" class="pl-topheroes-container hotstatus-subcontainer padding-left-0 padding-right-0">' +
                 matchesplayedcontainer +

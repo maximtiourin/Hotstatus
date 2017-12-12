@@ -2651,3 +2651,16 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .lastupdated-text {
     color: #5f5f5f;
 }
+
+.topheroes-special-data {
+    font-size:13px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif !important;
+}
+
+.topheroes-special-data-label {
+    font-size:12px;
+}
+
+.topheroes-inline-winrate {
+    margin: 0 4px;
+}

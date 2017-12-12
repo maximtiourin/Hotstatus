@@ -1,10 +1,10 @@
 {
-  "build/base.css": "/hots_webapp/web/build/base.350b546142425e92ebcbc8569cdf11de.css",
+  "build/base.css": "/hots_webapp/web/build/base.b555e52e84627f93986a5e36bc8fc601.css",
   "build/hero-loader.js": "/hots_webapp/web/build/hero-loader.876841ed3424d3beb2ac.js",
   "build/heroes-statslist.js": "/hots_webapp/web/build/heroes-statslist.2c05715cee2e1ca1a0b0.js",
   "build/hotstatus-bootstrap-select.js": "/hots_webapp/web/build/hotstatus-bootstrap-select.b9f9eff3748877da545b.js",
   "build/hotstatus.js": "/hots_webapp/web/build/hotstatus.1907359def58dee5597e.js",
   "build/player-hero-loader.js": "/hots_webapp/web/build/player-hero-loader.b5bc471164e27695b1ef.js",
-  "build/player-loader.js": "/hots_webapp/web/build/player-loader.5ecb5295517136b22363.js",
+  "build/player-loader.js": "/hots_webapp/web/build/player-loader.6bbc7c84814d7eeb730d.js",
   "build/rankings-loader.js": "/hots_webapp/web/build/rankings-loader.bb0b171be300717b2e01.js"
 }

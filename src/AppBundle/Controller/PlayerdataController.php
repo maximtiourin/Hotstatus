@@ -410,6 +410,7 @@ class PlayerdataController extends Controller {
                  * Get Top Heroes
                  */
                 $a_matches_played = 0;
+                $a_matches_won = 0;
                 $topheroes = [];
                 foreach ($heroes as $heroname => &$hero) {
                     $a_played = &$hero['played'];
@@ -420,6 +421,7 @@ class PlayerdataController extends Controller {
 
                     //Matches played
                     $a_matches_played += $a_played;
+                    $a_matches_won += $a_won;
 
                     //Winrate
                     $c_winrate = 0;
@@ -507,6 +509,15 @@ class PlayerdataController extends Controller {
 
                 //Special Data
                 $pagedata['matches_played'] = $a_matches_played;
+
+                $c_matches_winrate = 0;
+                if ($a_matches_played > 0) {
+                    $c_matches_winrate = round(($a_matches_won / ($a_matches_played * 1.00)) * 100.0, 1);
+                }
+                $pagedata['matches_winrate'] = sprintf("%03.1f", $c_matches_winrate);
+                $pagedata['matches_winrate_raw'] = $c_matches_winrate;
+
+
                 $pagedata['mvp_medals'] = $a_mvp_medals;
 
                 $c_mvp_percentage = 0;
