@@ -1,7 +1,8 @@
+{% set selectOnce = true %}
 <select class="selectpicker filter-selector filter-selector-gameType" data-width="210px" title="No Game Type"
         data-max-options="1" data-max-options-text="Max 1 Game Type" multiple>
     {% for key, gameType in filter_gameTypes %}
-        <option {% if gameType.selected == true %}selected="selected"{% endif %}
+        <option {% if gameType.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
                 title="<img class='filter-dropdown-image-gameType' src='{{ asset('ui/gameType_icon_'~gameType.name_sort~'.png', 'images') }}'>"
                 data-content="<img class='filter-dropdown-image-gameType filter-dropdown-image-margin-right-8' src='{{ asset('ui/gameType_icon_'~gameType.name_sort~'.png', 'images') }}'>{{ key }}"
                 value="{{ key }}">{{ key }}</option>

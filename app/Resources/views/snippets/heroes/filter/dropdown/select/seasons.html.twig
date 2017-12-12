@@ -1,7 +1,8 @@
+{% set selectOnce = true %}
 <select class="selectpicker filter-selector filter-selector-season" data-width="180px" title="No Season"
         data-max-options="1" data-max-options-text="Max 1 Season" multiple>
     {% for key, date in filter_seasons %}
-        <option {% if date.selected == true %}selected="selected"{% endif %}
+        <option {% if date.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
                 data-content="{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}

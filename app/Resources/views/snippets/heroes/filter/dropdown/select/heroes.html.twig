@@ -1,7 +1,8 @@
+{% set selectOnce = true %}
 <select class="selectpicker filter-selector filter-selector-hero" data-width="220px" title="No Hero"
         data-max-options="1" data-max-options-text="Max 1 Hero" multiple>
     {% for key, hero in filter_heroes %}
-        <option {% if hero.selected == true %}selected="selected"{% endif %}
+        <option {% if hero.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
                 data-content="<img class='filter-dropdown-image-hero filter-dropdown-image-margin-right-8' src='{{ asset(hero.image_minimap~'.png', 'images') }}'>{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}

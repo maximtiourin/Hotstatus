@@ -1,7 +1,8 @@
+{% set selectOnce = true %}
 <select class="selectpicker filter-selector filter-selector-region" data-width="80px" title="No Region"
         data-max-options="1" data-max-options-text="Max 1 Region" multiple>
     {% for key, region in filter_regions %}
-        <option {% if region.selected == true %}selected="selected"{% endif %}
+        <option {% if region.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
                 data-content="{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}
