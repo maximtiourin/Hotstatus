@@ -940,7 +940,8 @@ PlayerLoader.data = {
                 fullGenerated: false, //Whether or not the full match data has been loaded for the first time
                 fullDisplay: false, //Whether or not the full match data is currently toggled to display
                 matchPlayer: match.player.id, //Id of the match's player for whom the match is being displayed, for use with highlighting inside of fullmatch (while decoupling mainplayer)
-                partiesColors: partiesColors //Colors to use for the party indexes
+                partiesColors: partiesColors, //Colors to use for the party indexes
+                shown: true, //Whether or not the matchsimplewidget is expected to be shown inside viewport
             };
 
             //Subcomponents
@@ -1058,6 +1059,7 @@ PlayerLoader.data = {
             }
 
             let html = '<div id="recentmatch-container-'+ match.id +'"><div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
+                '<div id="recentmatch-simplewidget-outline-container-' + match.id + '" class="recentmatch-simplewidget-outline-container">' + //Hide inner contents container
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + image_bpath + match.map_image +'.png);">' +
                 '<div class="rm-sw-lp-gameType"><span class="rm-sw-lp-gameType-text" data-toggle="tooltip" data-html="true" title="' + match.map + '">' + match.gameType + '</span></div>' +
                 '<div class="rm-sw-lp-date"><span data-toggle="tooltip" data-html="true" title="' + date + '"><span class="rm-sw-lp-date-text">' + relative_date + '</span></span></div>' +
@@ -1084,7 +1086,7 @@ PlayerLoader.data = {
                 '<div id="recentmatch-simplewidget-inspect-' + match.id + '" class="recentmatch-simplewidget-inspect">' +
                 '<i class="fa fa-chevron-down" aria-hidden="true"></i>' +
                 '</div>' +
-                '</div></div>';
+                '</div></div></div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
 
@@ -1093,6 +1095,28 @@ PlayerLoader.data = {
                 let t = $(this);
 
                 self.generateFullMatchPane(match.id);
+            });
+
+            //Create scroll listener for hiding outside of viewport
+            $(window).on("resize scroll hotstatus.matchtoggle", function(e) {
+                let manifest = PlayerLoader.data.matches.internal.matchManifest;
+
+                if ($('#recentmatch-simplewidget-' + match.id).isOnScreen()) {
+                    let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
+
+                    if (!manifest[match.id + ""].shown) {
+                        sel.show();
+                        manifest[match.id + ""].shown = true;
+                    }
+                }
+                else {
+                    let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
+
+                    if (manifest[match.id + ""].shown) {
+                        sel.hide();
+                        manifest[match.id + ""].shown = false;
+                    }
+                }
             });
         },
         generateFullMatchPane: function(matchid) {
@@ -1108,9 +1132,11 @@ PlayerLoader.data = {
 
                 if (matchman.fullDisplay) {
                     selector.slideDown(250);
+                    $(window).trigger("hotstatus.matchtoggle");
                 }
                 else {
                     selector.slideUp(250);
+                    $(window).trigger("hotstatus.matchtoggle");
                 }
             }
             else {
@@ -1429,6 +1455,29 @@ PlayerLoader.data = {
 
 $(document).ready(function() {
     $.fn.dataTableExt.sErrMode = 'none'; //Disable datatables error reporting, if something breaks behind the scenes the user shouldn't know about it
+
+    //Jquery isOnScreen (Returns whether or not the calling selector is inside the viewport + padded zone for scroll smoothness)
+    $.fn.isOnScreen = function(){
+        let win = $(window);
+
+        let padSize = 600;
+
+        let viewport = {
+            top : win.scrollTop() - padSize,
+            left : win.scrollLeft() - padSize
+        };
+        viewport.right = viewport.left + win.width() + (2 * padSize);
+        viewport.bottom = viewport.top + win.height() + (2 * padSize);
+
+        let bounds = this.offset();
+
+        if (!bounds) return false; //Catch undefined bounds caused by jquery animations of objects outside of the viewport
+
+        bounds.right = bounds.left + this.outerWidth();
+        bounds.bottom = bounds.top + this.outerHeight();
+
+        return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
+    };
 
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('playerdata_pagedata_player', {player: player_id});

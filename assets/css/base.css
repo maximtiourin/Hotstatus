@@ -1244,6 +1244,12 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border-color: #1c2223;
 }
 
+.recentmatch-simplewidget-outline-container {
+    position: relative;
+    width:100%;
+    height:100%;
+}
+
 .recentmatch-simplewidget-leftpane {
     /*background-color: #162C7E*/;
     background-repeat: no-repeat;
