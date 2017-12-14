@@ -11,7 +11,7 @@
 
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
-    let image_bpath = "{{ asset('', 'images')|raw }}";
+    let image_bpath = "{{ asset('/', 'images')|raw }}";
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}

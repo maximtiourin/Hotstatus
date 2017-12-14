@@ -17,7 +17,7 @@
     let player_name = "{{ player.name }}";
     let player_tag = {{ player.tag }};
     let average_stats = {{ average_stats | json_encode | raw}};
-    let image_base_path = "{{ asset('', 'images') | raw }}";
+    let image_base_path = "{{ asset('/', 'images') | raw }}";
 {% endblock %}
 
 {# Custom styling that require the use of path generation #}

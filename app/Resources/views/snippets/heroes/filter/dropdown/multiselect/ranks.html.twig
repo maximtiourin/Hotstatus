@@ -3,8 +3,8 @@
         data-select-all-text="<i class='fa fa-check-square-o fa-2x' style='' aria-hidden='true'></i>" multiple>
     {% for key, rank in filter_ranks %}
         <option {% if rank.selected == true %}selected="selected"{% endif %}
-                title="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('ui/ranked_icon_'~key~'.png', 'images') }}'>"
-                data-content="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('ui/ranked_icon_'~key~'.png', 'images') }}'>{{ key }}"
+                title="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('/ui/ranked_icon_'~key~'.png', 'images') }}'>"
+                data-content="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('/ui/ranked_icon_'~key~'.png', 'images') }}'>{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}
 </select>
