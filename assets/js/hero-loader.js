@@ -935,7 +935,7 @@ HeroLoader.data = {
 
             let imageField = '<img class="hl-matchups-image" src="' + image_base_path + matchupData.image + '.png">';
 
-            let heroField = '<span class="hl-row-height">' + hero + '</span>';
+            let heroField = '<span class="hl-row-height"><a class="hsl-link" href="'+ Routing.generate('hero', {heroProperName: hero}) +'" target="_blank">' + hero + '</a></span>';
 
             let heroSortField = matchupData.name_sort;
             let roleField = matchupData.role_blizzard;
