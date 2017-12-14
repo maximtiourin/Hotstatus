@@ -26,7 +26,7 @@ class DefaultController extends Controller
      * @Route("/news", name="news")
      */
     public function newsAction() {
-        return $this->render('default/index.html.twig', [
+        return $this->render('default/news.html.twig', [
         ]);
     }
 
