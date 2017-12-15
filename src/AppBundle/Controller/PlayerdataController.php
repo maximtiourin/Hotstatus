@@ -4,6 +4,7 @@ namespace AppBundle\Controller;
 
 use Fizzik\GetPageDataRankingsAction;
 use Fizzik\HotstatusPipeline;
+use Fizzik\HotstatusResponse;
 use Fizzik\Utility\AssocArray;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -18,17 +19,6 @@ use Symfony\Component\HttpFoundation\Request;
  * In charge of fetching player data from database and returning it as requested
  */
 class PlayerdataController extends Controller {
-    const QUERY_IGNORE_AFTER_CACHE = "ignoreAfterCache";
-    const QUERY_USE_FOR_SECONDARY = "useForSecondary";
-    const QUERY_ISSET = "isSet";
-    const QUERY_RAWVALUE = "rawValue";
-    const QUERY_SQLVALUE = "sqlValue";
-    const QUERY_SQLCOLUMN = "sqlColumn";
-    const QUERY_TYPE = "mappingType";
-    const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
-    const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
-    const QUERY_TYPE_INDEX = "index"; //Value at "index" key inside of the obj should be used as the value
-
     const COUNT_DEFAULT_MATCHES = 10; //How many matches to initially load for a player page (getPageDataPlayerRecentMatches should have this baked into route default)
 
     const TALENT_WINRATE_MIN_PLAYED = 1; //How many times a talent must have been played before allowing winrate calculation
@@ -59,25 +49,25 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
 
         /*
          * Begin building response
@@ -256,25 +246,25 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -438,7 +428,7 @@ class PlayerdataController extends Controller {
                         $c_avg_kills_raw = $a_kills / ($a_played * 1.00);
                         $c_avg_kills = round($c_avg_kills_raw, 1);
                     }
-                    $hero['kills_avg'] = self::formatNumber($c_avg_kills, 1);
+                    $hero['kills_avg'] = HotstatusResponse::formatNumber($c_avg_kills, 1);
 
                     //Assists
                     $c_avg_assists = 0;
@@ -447,7 +437,7 @@ class PlayerdataController extends Controller {
                         $c_avg_assists_raw = $a_assists / ($a_played * 1.00);
                         $c_avg_assists = round($c_avg_assists_raw, 1);
                     }
-                    $hero['assists_avg'] = self::formatNumber($c_avg_assists, 1);
+                    $hero['assists_avg'] = HotstatusResponse::formatNumber($c_avg_assists, 1);
 
                     //Deaths
                     $c_avg_deaths = 0;
@@ -456,14 +446,14 @@ class PlayerdataController extends Controller {
                         $c_avg_deaths_raw = $a_deaths / ($a_played * 1.00);
                         $c_avg_deaths = round($c_avg_deaths_raw, 1);
                     }
-                    $hero['deaths_avg'] = self::formatNumber($c_avg_deaths, 1);
+                    $hero['deaths_avg'] = HotstatusResponse::formatNumber($c_avg_deaths, 1);
                     
                     //KDA
                     $c_avg_kda = $c_avg_kills_raw + $c_avg_assists_raw;
                     if ($c_avg_deaths_raw > 0) {
                         $c_avg_kda_raw = ($c_avg_kda / ($c_avg_deaths_raw * 1.00));
                         $c_avg_kda = round($c_avg_kda_raw, 2);
-                        $hero['kda_avg'] = self::formatNumber($c_avg_kda, 2);
+                        $hero['kda_avg'] = HotstatusResponse::formatNumber($c_avg_kda, 2);
                     }
                     else {
                         $hero['kda_avg'] = "Perfect";
@@ -578,25 +568,25 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -796,25 +786,25 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -1080,7 +1070,7 @@ class PlayerdataController extends Controller {
                                     if ($mp_deaths > 0) {
                                         $mp_kda = round(($mp_kda / ($mp_deaths * 1.00)), 2);
                                         $mp_kda_raw = $mp_kda;
-                                        $mp_kda = self::formatNumber($mp_kda, 2);
+                                        $mp_kda = HotstatusResponse::formatNumber($mp_kda, 2);
                                     }
                                     else {
                                         $mp_kda = "Perfect";
@@ -1400,7 +1390,7 @@ class PlayerdataController extends Controller {
                                 if ($mstats['deaths'] > 0) {
                                     $mp_kda = round(($mp_kda / ($mstats['deaths'] * 1.00)), 2);
                                     $mp_kda_raw = $mp_kda;
-                                    $mp_kda = self::formatNumber($mp_kda, 2);
+                                    $mp_kda = HotstatusResponse::formatNumber($mp_kda, 2);
                                 }
                                 else {
                                     $mp_kda = "Perfect";
@@ -1414,17 +1404,17 @@ class PlayerdataController extends Controller {
                                     "kda_raw" => $mp_kda_raw,
                                     "kda" => $mp_kda,
                                     "healing_raw" => $mstats['healing'],
-                                    "healing" => self::formatNumber($mstats['healing']),
+                                    "healing" => HotstatusResponse::formatNumber($mstats['healing']),
                                     "damage_taken_raw" => $mstats['damage_taken'],
-                                    "damage_taken" => self::formatNumber($mstats['damage_taken']),
+                                    "damage_taken" => HotstatusResponse::formatNumber($mstats['damage_taken']),
                                     "merc_camps_raw" => $mstats['merc_camps'],
-                                    "merc_camps" => self::formatNumber($mstats['merc_camps']),
+                                    "merc_camps" => HotstatusResponse::formatNumber($mstats['merc_camps']),
                                     "exp_contrib_raw" => $mstats['exp_contrib'],
-                                    "exp_contrib" => self::formatNumber($mstats['exp_contrib']),
+                                    "exp_contrib" => HotstatusResponse::formatNumber($mstats['exp_contrib']),
                                     "hero_damage_raw" => $mstats['hero_damage'],
-                                    "hero_damage" => self::formatNumber($mstats['hero_damage']),
+                                    "hero_damage" => HotstatusResponse::formatNumber($mstats['hero_damage']),
                                     "siege_damage_raw" => $mstats['siege_damage'],
-                                    "siege_damage" => self::formatNumber($mstats['siege_damage']),
+                                    "siege_damage" => HotstatusResponse::formatNumber($mstats['siege_damage']),
                                 ];
 
                                 //Maintain min/max stats
@@ -1551,26 +1541,26 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
-        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
+        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, true);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -1745,8 +1735,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_kills = round($c_pmin_kills_raw, 2);
                 }
                 $stats['kills'] = [
-                    "average" => self::formatNumber($c_avg_kills, 2),
-                    "per_minute" => self::formatNumber($c_pmin_kills, 2)
+                    "average" => HotstatusResponse::formatNumber($c_avg_kills, 2),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_kills, 2)
                 ];
 
                 //Average Assists (+ Per Minute)
@@ -1763,8 +1753,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_assists = round($c_pmin_assists_raw, 2);
                 }
                 $stats['assists'] = [
-                    "average" => self::formatNumber($c_avg_assists, 2),
-                    "per_minute" => self::formatNumber($c_pmin_assists, 2)
+                    "average" => HotstatusResponse::formatNumber($c_avg_assists, 2),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_assists, 2)
                 ];
 
                 //Average Deaths (+ Per Minute)
@@ -1781,8 +1771,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_deaths = round($c_pmin_deaths_raw, 2);
                 }
                 $stats['deaths'] = [
-                    "average" => self::formatNumber($c_avg_deaths, 2),
-                    "per_minute" => self::formatNumber($c_pmin_deaths, 2)
+                    "average" => HotstatusResponse::formatNumber($c_avg_deaths, 2),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_deaths, 2)
                 ];
 
                 //Average KDA
@@ -1791,7 +1781,7 @@ class PlayerdataController extends Controller {
                     $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths_raw * 1.00)), 2);
                 }
                 $stats['kda'] = [
-                    "average" => self::formatNumber($c_avg_kda, 2)
+                    "average" => HotstatusResponse::formatNumber($c_avg_kda, 2)
                 ];
 
                 //Average Siege Damage (+ Per Minute)
@@ -1808,8 +1798,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_siege_damage = round($c_pmin_siege_damage_raw, 2);
                 }
                 $stats['siege_damage'] = [
-                    "average" => self::formatNumber($c_avg_siege_damage),
-                    "per_minute" => self::formatNumber($c_pmin_siege_damage)
+                    "average" => HotstatusResponse::formatNumber($c_avg_siege_damage),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_siege_damage)
                 ];
 
                 //Average Hero Damage (+ Per Minute)
@@ -1826,8 +1816,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_hero_damage = round($c_pmin_hero_damage_raw, 2);
                 }
                 $stats['hero_damage'] = [
-                    "average" => self::formatNumber($c_avg_hero_damage),
-                    "per_minute" => self::formatNumber($c_pmin_hero_damage)
+                    "average" => HotstatusResponse::formatNumber($c_avg_hero_damage),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_hero_damage)
                 ];
 
                 //Average Structure Damage (+ Per Minute)
@@ -1844,8 +1834,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_structure_damage = round($c_pmin_structure_damage_raw, 2);
                 }
                 $stats['structure_damage'] = [
-                    "average" => self::formatNumber($c_avg_structure_damage),
-                    "per_minute" => self::formatNumber($c_pmin_structure_damage)
+                    "average" => HotstatusResponse::formatNumber($c_avg_structure_damage),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_structure_damage)
                 ];
 
                 //Average Healing (+ Per Minute)
@@ -1862,8 +1852,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_healing = round($c_pmin_healing_raw, 2);
                 }
                 $stats['healing'] = [
-                    "average" => self::formatNumber($c_avg_healing),
-                    "per_minute" => self::formatNumber($c_pmin_healing)
+                    "average" => HotstatusResponse::formatNumber($c_avg_healing),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_healing)
                 ];
 
                 //Average Damage Taken (+ Per Minute)
@@ -1880,8 +1870,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_damage_taken = round($c_pmin_damage_taken_raw, 2);
                 }
                 $stats['damage_taken'] = [
-                    "average" => self::formatNumber($c_avg_damage_taken),
-                    "per_minute" => self::formatNumber($c_pmin_damage_taken)
+                    "average" => HotstatusResponse::formatNumber($c_avg_damage_taken),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_damage_taken)
                 ];
 
                 //Average Merc Camps (+ Per Minute)
@@ -1898,8 +1888,8 @@ class PlayerdataController extends Controller {
                     $c_pmin_merc_camps = round($c_pmin_merc_camps_raw, 2);
                 }
                 $stats['merc_camps'] = [
-                    "average" => self::formatNumber($c_avg_merc_camps, 2),
-                    "per_minute" => self::formatNumber($c_pmin_merc_camps, 2)
+                    "average" => HotstatusResponse::formatNumber($c_avg_merc_camps, 2),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_merc_camps, 2)
                 ];
 
                 //Average Exp Contrib (+ Per Minute)
@@ -1916,12 +1906,12 @@ class PlayerdataController extends Controller {
                     $c_pmin_exp_contrib = round($c_pmin_exp_contrib_raw, 2);
                 }
                 $stats['exp_contrib'] = [
-                    "average" => self::formatNumber($c_avg_exp_contrib),
-                    "per_minute" => self::formatNumber($c_pmin_exp_contrib)
+                    "average" => HotstatusResponse::formatNumber($c_avg_exp_contrib),
+                    "per_minute" => HotstatusResponse::formatNumber($c_pmin_exp_contrib)
                 ];
 
                 //Best Killstreak
-                $stats['best_killstreak'] = self::formatNumber($a_best_killstreak);
+                $stats['best_killstreak'] = HotstatusResponse::formatNumber($a_best_killstreak);
 
                 //Average Time Spent Dead (in Minutes)
                 $c_avg_time_spent_dead = 0;
@@ -1931,7 +1921,7 @@ class PlayerdataController extends Controller {
                     $c_avg_time_spent_dead = round($c_avg_time_spent_dead_raw, 1);
                 }
                 $stats['time_spent_dead'] = [
-                    "average" => self::formatNumber($c_avg_time_spent_dead, 1)
+                    "average" => HotstatusResponse::formatNumber($c_avg_time_spent_dead, 1)
                 ];
 
                 //Set pagedata stats
@@ -2296,26 +2286,26 @@ class PlayerdataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][self::QUERY_RAWVALUE];
-        $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][self::QUERY_RAWVALUE];
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
+        $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
 
         /*
          * Begin building response
@@ -2405,20 +2395,20 @@ class PlayerdataController extends Controller {
 
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
@@ -2428,20 +2418,20 @@ class PlayerdataController extends Controller {
     private static function topHeroes_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
@@ -2451,20 +2441,20 @@ class PlayerdataController extends Controller {
     private static function parties_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
@@ -2474,20 +2464,20 @@ class PlayerdataController extends Controller {
     private static function recentMatches_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "type",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "type",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
@@ -2500,36 +2490,36 @@ class PlayerdataController extends Controller {
     private static function hero_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_HERO => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "hero",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "hero",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_MAP => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "map",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "map",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
@@ -2542,138 +2532,31 @@ class PlayerdataController extends Controller {
     private static function rankings_initQueries() {
         $q = [
             HotstatusPipeline::FILTER_KEY_REGION => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "region",
-                self::QUERY_TYPE => self::QUERY_TYPE_INDEX
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "region",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_INDEX
             ],
             HotstatusPipeline::FILTER_KEY_SEASON => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "season",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
 
         return $q;
-    }
-
-    private static function buildCacheKey($queryRawVals) {
-        $str = '';
-
-        foreach ($queryRawVals as $val) {
-            $str .= $val;
-        }
-
-        return $str;
-    }
-
-    /*
-     * Given an array of query string fragments of type 'WhereOr', will construct a query string fragment joining them
-     * with AND keywords, while prepending a single AND keyword. Will return an empty string if supplied an empty array.
-     *
-     * EX:
-     *
-     * 0 fragments : ''
-     * 1 fragment  : ' AND frag1'
-     * 3 fragments : ' AND frag1 AND frag2 AND frag3'
-     */
-    private static function buildQuery_WhereAnd_String($whereors, $prependAnd = TRUE) {
-        $ret = "";
-
-        $i = 0;
-        $count = count($whereors);
-        if ($prependAnd && $count > 0) $ret = " AND ";
-        foreach ($whereors as $or) {
-            $ret .= $or;
-
-            if ($i < $count - 1) {
-                $ret .= " AND ";
-            }
-
-            $i++;
-        }
-
-        return $ret;
-    }
-
-    /*
-     * Given a comma separated string of values for a given field, will construct a query string fragment,
-     * taking into account mapping type and filter key, non-numeric values are surrounded by quotes EX:
-     *
-     * Map Type 'Raw'   : '(`field` = val1 OR `field` = val2 OR `field` = "val3")'
-     * Map Type 'Range' : '((`field` >= valmin1 AND `field` <= valmax1) OR (`field` >= valmin2 AND `field` <= valmax2) OR (`field` >= "valmin3" AND `field` <= "valmax3"))'
-     */
-    private static function buildQuery_WhereOr_String($key, $field, $str, $mappingType = self::QUERY_TYPE_RAW) {
-        $decode = htmlspecialchars_decode($str);
-
-        $values = explode(",", $str);
-
-        $ret = "(";
-
-        $i = 0;
-        $count = count($values);
-        foreach ($values as $value) {
-            if ($mappingType === self::QUERY_TYPE_RAW) {
-                $val = $value;
-                if (!is_numeric($val)) {
-                    $val = '"' . $val . '"';
-                }
-
-                $ret .= "`$field` = $val";
-            }
-            else if ($mappingType === self::QUERY_TYPE_RANGE) {
-                $obj = HotstatusPipeline::$filter[$key][$value];
-                $min = $obj["min"];
-                $max = $obj["max"];
-
-                if (!is_numeric($min)) {
-                    $min = '"' . $min . '"';
-                }
-                if (!is_numeric($max)) {
-                    $max = '"' . $max . '"';
-                }
-
-                if ($count > 1) $ret .= "(";
-
-                $ret .= "`$field` >= $min AND `$field` <= $max";
-
-                if ($count > 1) $ret .= ")";
-            }
-            else if ($mappingType === self::QUERY_TYPE_INDEX) {
-                $val = HotstatusPipeline::$filter[$key][$value]['index'];
-                if (!is_numeric($val)) {
-                    $val = '"' . $val . '"';
-                }
-
-                $ret .= "`$field` = $val";
-            }
-
-            if ($i < $count - 1) {
-                $ret .= " OR ";
-            }
-
-            $i++;
-        }
-
-        $ret .= ")";
-
-        return $ret;
-    }
-
-    private static function formatNumber($n, $decimalPlaces = 0) {
-        return number_format($n, $decimalPlaces, '.', ',');
     }
 }

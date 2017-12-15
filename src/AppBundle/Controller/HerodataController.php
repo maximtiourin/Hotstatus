@@ -6,6 +6,7 @@ use Fizzik\GetDataTableHeroesStatsListAction;
 use Fizzik\GetPageDataHeroAction;
 use Fizzik\GetPageDataHeroRequestTotalStatMatrix;
 use Fizzik\HotstatusPipeline;
+use Fizzik\HotstatusResponse;
 use Fizzik\Utility\AssocArray;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -20,16 +21,6 @@ use Symfony\Component\HttpFoundation\Request;
  * In charge of fetching hero data from database and returning it as requested
  */
 class HerodataController extends Controller {
-    const QUERY_IGNORE_AFTER_CACHE = "ignoreAfterCache";
-    const QUERY_USE_FOR_SECONDARY = "useForSecondary";
-    const QUERY_ISSET = "isSet";
-    const QUERY_RAWVALUE = "rawValue";
-    const QUERY_SQLVALUE = "sqlValue";
-    const QUERY_SQLCOLUMN = "sqlColumn";
-    const QUERY_TYPE = "mappingType";
-    const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
-    const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
-
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
      *
@@ -45,7 +36,7 @@ class HerodataController extends Controller {
         /*
          * Process Query Parameters
          */
-        $query = self::hero_initQueries();
+        $query = GetPageDataHeroAction::initQueries();
         $queryCacheValues = [];
         $querySqlValues = [];
         $querySecondaryCacheValues = [];
@@ -54,38 +45,38 @@ class HerodataController extends Controller {
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
 
                 if ($qkey !== HotstatusPipeline::FILTER_KEY_HERO) {
-                    $querySecondaryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                    $querySecondaryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
                 }
             }
         }
 
-        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][self::QUERY_RAWVALUE];
+        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Collect WhereOr strings for query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if ($qobj[self::QUERY_USE_FOR_SECONDARY] && $qobj[self::QUERY_ISSET]) {
-                $querySecondarySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if ($qobj[HotstatusResponse::QUERY_USE_FOR_SECONDARY] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySecondarySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues, false);
-        $querySecondaryCache = self::buildCacheKey($querySecondaryCacheValues);
-        $querySecondarySql = self::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, false);
+        $querySecondaryCache = HotstatusResponse::buildCacheKey($querySecondaryCacheValues);
+        $querySecondarySql = HotstatusResponse::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
 
         /*
          * Begin building response
@@ -183,32 +174,32 @@ class HerodataController extends Controller {
         /*
          * Process Query Parameters
          */
-        $query = self::heroesStatsList_initQueries();
+        $query = GetDataTableHeroesStatsListAction::initQueries();
         $queryCacheValues = [];
         $querySqlValues = [];
 
         //Collect WhereOr strings from all query parameters for cache key
         foreach ($query as $qkey => &$qobj) {
             if ($request->query->has($qkey)) {
-                $qobj[self::QUERY_ISSET] = true;
-                $qobj[self::QUERY_RAWVALUE] = $request->query->get($qkey);
-                $qobj[self::QUERY_SQLVALUE] = self::buildQuery_WhereOr_String($qkey, $qobj[self::QUERY_SQLCOLUMN], $qobj[self::QUERY_RAWVALUE], $qobj[self::QUERY_TYPE]);
-                $queryCacheValues[] = $query[$qkey][self::QUERY_RAWVALUE];
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
             }
         }
 
-        $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][self::QUERY_RAWVALUE];
+        $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
-            if (!$qobj[self::QUERY_IGNORE_AFTER_CACHE] && $qobj[self::QUERY_ISSET]) {
-                $querySqlValues[] = $query[$qkey][self::QUERY_SQLVALUE];
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
             }
         }
 
         //Build WhereAnd string from collected WhereOr strings
-        $queryCache = self::buildCacheKey($queryCacheValues);
-        $querySql = self::buildQuery_WhereAnd_String($querySqlValues);
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues);
 
         //Determine cache id from query parameters
         $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
@@ -290,201 +281,5 @@ class HerodataController extends Controller {
         }
 
         return $jsonResponse;
-    }
-
-    /*
-     * Initializes the queries object for the hero pagedata
-     */
-    private static function hero_initQueries() {
-        $q = [
-            HotstatusPipeline::FILTER_KEY_HERO => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_USE_FOR_SECONDARY => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "hero",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_USE_FOR_SECONDARY => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_MAP => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_USE_FOR_SECONDARY => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "map",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_RANK => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_USE_FOR_SECONDARY => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "mmr_average",
-                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
-            ],
-            HotstatusPipeline::FILTER_KEY_DATE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_USE_FOR_SECONDARY => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "date_end",
-                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
-            ],
-        ];
-
-        return $q;
-    }
-
-    /*
-     * Initializes the queries object for the heroesStatsList
-     */
-    private static function heroesStatsList_initQueries() {
-        $q = [
-            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "gameType",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_MAP => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "map",
-                self::QUERY_TYPE => self::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_RANK => [
-                self::QUERY_IGNORE_AFTER_CACHE => false,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "mmr_average",
-                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
-            ],
-            HotstatusPipeline::FILTER_KEY_DATE => [
-                self::QUERY_IGNORE_AFTER_CACHE => true,
-                self::QUERY_ISSET => false,
-                self::QUERY_RAWVALUE => null,
-                self::QUERY_SQLVALUE => null,
-                self::QUERY_SQLCOLUMN => "date_end",
-                self::QUERY_TYPE => self::QUERY_TYPE_RANGE
-            ],
-        ];
-
-        return $q;
-    }
-
-    private static function buildCacheKey($queryRawVals) {
-        $str = '';
-
-        foreach ($queryRawVals as $val) {
-            $str .= $val;
-        }
-
-        return $str;
-    }
-
-    /*
-     * Given an array of query string fragments of type 'WhereOr', will construct a query string fragment joining them
-     * with AND keywords, while prepending a single AND keyword. Will return an empty string if supplied an empty array.
-     *
-     * EX:
-     *
-     * 0 fragments : ''
-     * 1 fragment  : ' AND frag1'
-     * 3 fragments : ' AND frag1 AND frag2 AND frag3'
-     */
-    private static function buildQuery_WhereAnd_String($whereors, $prependAnd = TRUE) {
-        $ret = "";
-
-        $i = 0;
-        $count = count($whereors);
-        if ($prependAnd && $count > 0) $ret = " AND ";
-        foreach ($whereors as $or) {
-            $ret .= $or;
-
-            if ($i < $count - 1) {
-                $ret .= " AND ";
-            }
-
-            $i++;
-        }
-
-        return $ret;
-    }
-
-    /*
-     * Given a comma separated string of values for a given field, will construct a query string fragment,
-     * taking into account mapping type and filter key, non-numeric values are surrounded by quotes EX:
-     *
-     * Map Type 'Raw'   : '(`field` = val1 OR `field` = val2 OR `field` = "val3")'
-     * Map Type 'Range' : '((`field` >= valmin1 AND `field` <= valmax1) OR (`field` >= valmin2 AND `field` <= valmax2) OR (`field` >= "valmin3" AND `field` <= "valmax3"))'
-     */
-    private static function buildQuery_WhereOr_String($key, $field, $str, $mappingType = self::QUERY_TYPE_RAW) {
-        $decode = htmlspecialchars_decode($str);
-
-        $values = explode(",", $str);
-
-        $ret = "(";
-
-        $i = 0;
-        $count = count($values);
-        foreach ($values as $value) {
-            if ($mappingType === self::QUERY_TYPE_RAW) {
-                $val = $value;
-                if (!is_numeric($val)) {
-                    $val = '"' . $val . '"';
-                }
-
-                $ret .= "`$field` = $val";
-            }
-            else if ($mappingType === self::QUERY_TYPE_RANGE) {
-                $obj = HotstatusPipeline::$filter[$key][$value];
-                $min = $obj["min"];
-                $max = $obj["max"];
-
-                if (!is_numeric($min)) {
-                    $min = '"' . $min . '"';
-                }
-                if (!is_numeric($max)) {
-                    $max = '"' . $max . '"';
-                }
-
-                if ($count > 1) $ret .= "(";
-
-                $ret .= "`$field` >= $min AND `$field` <= $max";
-
-                if ($count > 1) $ret .= ")";
-            }
-
-            if ($i < $count - 1) {
-                $ret .= " OR ";
-            }
-
-            $i++;
-        }
-
-        $ret .= ")";
-
-        return $ret;
-    }
-
-    private static function formatNumber($n, $decimalPlaces = 0) {
-        return number_format($n, $decimalPlaces, '.', ',');
     }
 }
