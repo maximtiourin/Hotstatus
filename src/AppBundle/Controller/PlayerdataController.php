@@ -2279,7 +2279,7 @@ class PlayerdataController extends Controller {
         /*
          * Process Query Parameters
          */
-        $query = self::rankings_initQueries();
+        $query = GetPageDataRankingsAction::initQueries();
         $queryCacheValues = [];
         $querySqlValues = [];
 
@@ -2519,40 +2519,6 @@ class PlayerdataController extends Controller {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "map",
-                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
-            ],
-        ];
-
-        return $q;
-    }
-
-    /*
-     * Initializes the queries object for the hero pagedata
-     */
-    private static function rankings_initQueries() {
-        $q = [
-            HotstatusPipeline::FILTER_KEY_REGION => [
-                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
-                HotstatusResponse::QUERY_ISSET => false,
-                HotstatusResponse::QUERY_RAWVALUE => null,
-                HotstatusResponse::QUERY_SQLVALUE => null,
-                HotstatusResponse::QUERY_SQLCOLUMN => "region",
-                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_INDEX
-            ],
-            HotstatusPipeline::FILTER_KEY_SEASON => [
-                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
-                HotstatusResponse::QUERY_ISSET => false,
-                HotstatusResponse::QUERY_RAWVALUE => null,
-                HotstatusResponse::QUERY_SQLVALUE => null,
-                HotstatusResponse::QUERY_SQLCOLUMN => "season",
-                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
-            ],
-            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
-                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
-                HotstatusResponse::QUERY_ISSET => false,
-                HotstatusResponse::QUERY_RAWVALUE => null,
-                HotstatusResponse::QUERY_SQLVALUE => null,
-                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
