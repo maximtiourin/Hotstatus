@@ -6,7 +6,7 @@ framework:
     assets:
         packages:
             images:
-                base_urls: 'http://cdn.hotstat.us/images'
+                base_urls: '//cdn.hotstat.us/images'
 
 #config database parameters
 #doctrine:

@@ -12,7 +12,7 @@ framework:
                 # The base url to use for the 'images' asset package, can be ammended to make use of a cdn
                 # base_urls: 'http://cdn.mycdn.com'
                 #base_path: '/images'
-                base_urls: 'http://cdn.hotstat.us/images'
+                base_urls: '//cdn.hotstat.us/images'
 
 #config database parameters
 #doctrine:

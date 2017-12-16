@@ -1103,20 +1103,22 @@ PlayerLoader.data = {
             $(window).on("resize scroll hotstatus.matchtoggle", function(e) {
                 let manifest = PlayerLoader.data.matches.internal.matchManifest;
 
-                if ($('#recentmatch-simplewidget-' + match.id).isOnScreen()) {
-                    let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
+                if (manifest[match.id + ""]) {
+                    if ($('#recentmatch-simplewidget-' + match.id).isOnScreen()) {
+                        let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
 
-                    if (!manifest[match.id + ""].shown) {
-                        sel.show();
-                        manifest[match.id + ""].shown = true;
+                        if (!manifest[match.id + ""].shown) {
+                            sel.show();
+                            manifest[match.id + ""].shown = true;
+                        }
                     }
-                }
-                else {
-                    let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
+                    else {
+                        let sel = $('#recentmatch-simplewidget-outline-container-' + match.id);
 
-                    if (manifest[match.id + ""].shown) {
-                        sel.hide();
-                        manifest[match.id + ""].shown = false;
+                        if (manifest[match.id + ""].shown) {
+                            sel.hide();
+                            manifest[match.id + ""].shown = false;
+                        }
                     }
                 }
             });
