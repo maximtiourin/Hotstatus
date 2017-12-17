@@ -30,7 +30,17 @@
         <div class="row">
             <div class="col-xl-2"></div>
             <div class="col-12 col-xl-8">
-
+                <div class="hotstatus-container">
+                    <div class="hotstatus-subcontainer contact-container">
+                        Hotstat.us is a web application with which you can view Heroes of the Storm statistics parsed from player-submitted replay files.
+                        <br><br>
+                        View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero and map statistics, and even approximated rankings for each league based on your region!
+                        <br><br>
+                        Check back here in the future for any news regarding updates to the site!
+                        <br><br>
+                        Over <div class="d-inline-block"><h5>1,000,000</h5></div> replays have been processed for <div class="d-inline-block"><h5>880,000</h5></div> unique players since September 2017!
+                    </div>
+                </div>
             </div>
             <div class="col-xl-2">
                 {% include ':snippets:advertising/responsive_vertical.html.twig' %}
@@ -52,6 +62,6 @@
 
 {# Tail Javascript #}
 {% block tailJavascript %}
-    Hotstatus.advertising.internal.generateByDefault = false;
+    {# Hotstatus.advertising.internal.generateByDefault = false; TODO - uncomment once the blog loader is implemented#}
 {% endblock %}
 

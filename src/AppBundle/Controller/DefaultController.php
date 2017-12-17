@@ -332,7 +332,7 @@ class DefaultController extends Controller
         if ($playerresult !== FALSE) {
             if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
                 HotstatusPipeline::filter_generate_date();
-                HotstatusPipeline::filter_generate_season();
+                HotstatusPipeline::filter_generate_season(false);
 
                 //Select correct hero in hero filter
                 $herofilter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
@@ -367,7 +367,7 @@ class DefaultController extends Controller
         $playerresult = self::getPlayer($id);
 
         if ($playerresult !== FALSE) {
-            HotstatusPipeline::filter_generate_season();
+            HotstatusPipeline::filter_generate_season(false);
 
             return $this->render(':default:player.html.twig', [
                 "player" => $playerresult,

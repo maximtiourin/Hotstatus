@@ -980,7 +980,7 @@ PlayerLoader.data = {
 
                 if (isSilenced) {
                     if (size > 0) {
-                        let path = image_bpath + '/ui/icon_toxic.png';
+                        let path = image_bpath + 'ui/icon_toxic.png';
                         s += '<span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<span class=\'rm-sw-link-toxic\'>Silenced</span>"><img class="rm-sw-toxic" style="width:' + size + 'px;height:' + size + 'px;" src="' + path + '"></span>';
                     }
                 }
@@ -1256,7 +1256,7 @@ PlayerLoader.data = {
 
                 if (isSilenced) {
                     if (size > 0) {
-                        let path = image_bpath + '/ui/icon_toxic.png';
+                        let path = image_bpath + 'ui/icon_toxic.png';
                         s += '<span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<span class=\'rm-sw-link-toxic\'>Silenced</span>"><img class="rm-sw-toxic" style="width:' + size + 'px;height:' + size + 'px;" src="' + path + '"></span>';
                     }
                 }
