@@ -3,7 +3,7 @@
         data-max-options="1" data-max-options-text="Max 1 Hero" data-live-search="true" data-live-search-placeholder="Search for Hero..." multiple>
     {% for key, hero in filter_heroes %}
         <option {% if hero.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
-                data-tokens="{{ hero.name_sort }}"
+                data-tokens="{{ key ~ ' ' ~ hero.name_sort }}"
                 data-content="<img class='filter-dropdown-image-hero filter-dropdown-image-margin-right-8' src='{{ asset('/'~hero.image_minimap~'.png', 'images') }}'>{{ key }}"
                 value="{{ key }}">{{ key }}</option>
     {% endfor %}
