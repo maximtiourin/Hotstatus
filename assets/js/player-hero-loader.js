@@ -151,18 +151,38 @@ HeroLoader.ajax = {
                     for (let c = json_talents[rkey]['minCol']; c <= json_talents[rkey]['maxCol']; c++) {
                         let ckey = c + '';
 
-                        let talent = json_talents[rkey][ckey];
+                        let oldtalent = json_talents[rkey][ckey];
 
-                        //Add talent to collapsed obj
-                        talentsCollapsed[talent['name_internal']] = {
-                            name: talent['name'],
-                            desc_simple: talent['desc_simple'],
-                            image: talent['image']
-                        };
+                        if (oldtalent.hasOwnProperty("name")) {
+                            let talent = json_talents[rkey][ckey];
 
-                        //Create datatable row
-                        talents_datatable.data.push(data_talents.generateTableData(r, c, tier, talent['name'], talent['desc_simple'],
-                            talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
+                            //Add talent to collapsed obj
+                            talentsCollapsed[talent['name_internal']] = {
+                                name: talent['name'],
+                                desc_simple: talent['desc_simple'],
+                                image: talent['image']
+                            };
+
+                            //Create datatable row
+                            talents_datatable.data.push(data_talents.generateTableData(r, c, tier, talent['name'], talent['desc_simple'],
+                                talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
+                        }
+                        else {
+                            for (let cinner = 0; cinner < json_talents[rkey][ckey].length; cinner++) {
+                                let talent = json_talents[rkey][ckey][cinner];
+
+                                //Add talent to collapsed obj
+                                talentsCollapsed[talent['name_internal']] = {
+                                    name: talent['name'],
+                                    desc_simple: talent['desc_simple'],
+                                    image: talent['image']
+                                };
+
+                                //Create datatable row
+                                talents_datatable.data.push(data_talents.generateTableData(r, c, tier, talent['name'], talent['desc_simple'],
+                                    talent['image'], talent['pickrate'], talent['popularity'], talent['winrate'], talent['winrate_percentOnRange'], talent['winrate_display']));
+                            }
+                        }
                     }
                 }
 

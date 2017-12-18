@@ -1930,8 +1930,8 @@ class PlayerdataController extends Controller {
                 $pagedata['stats'] = $stats;
 
                 /*
-                 * Collect Talents
-                 */
+         * Collect Talents
+         */
                 $talents = [
                     "minRow" => PHP_INT_MAX,
                     "maxRow" => PHP_INT_MIN
@@ -1959,11 +1959,15 @@ class PlayerdataController extends Controller {
                         ];
                     }
 
+                    if (!key_exists($tcolkey, $talents[$trowkey])) {
+                        $talents[$trowkey][$tcolkey] = [];
+                    }
+
                     $talents[$trowkey]['minCol'] = min($row['tier_column'], $talents[$trowkey]['minCol']);
                     $talents[$trowkey]['maxCol'] = max($row['tier_column'], $talents[$trowkey]['maxCol']);
 
                     //Set row/col talent
-                    $talents[$trowkey][$tcolkey] = [
+                    $talents[$trowkey][$tcolkey][] = [
                         "name" => $row['name'],
                         "name_internal" => $row['name_internal'],
                         "desc_simple" => $row['desc_simple'],
@@ -1979,40 +1983,42 @@ class PlayerdataController extends Controller {
                     $rowMaxWinrate = PHP_INT_MIN;
 
                     for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
-                        $talent = &$talents[$r.''][$c.''];
+                        for ($cinner = 0; $cinner < count($talents[$r.''][$c.'']); $cinner++) {
+                            $talent = &$talents[$r . ''][$c . ''][$cinner];
 
-                        //Pickrate / Winrate
-                        $picked = 0;
-                        $won = 0;
-                        $winrate = 0;
+                            //Pickrate / Winrate
+                            $picked = 0;
+                            $won = 0;
+                            $winrate = 0;
 
-                        //Special winrate display value, to display nothing rather than 0 for winrates that don't have high enough pickrate
-                        $talent['winrate_display'] = '';
+                            //Special winrate display value, to display nothing rather than 0 for winrates that don't have high enough pickrate
+                            $talent['winrate_display'] = '';
 
-                        if (key_exists($talent['name_internal'], $a_talents)) {
-                            $talentStats = $a_talents[$talent['name_internal']];
+                            if (key_exists($talent['name_internal'], $a_talents)) {
+                                $talentStats = $a_talents[$talent['name_internal']];
 
-                            $rowTotalPicked += $talentStats['played'];
-                            $picked += $talentStats['played'];
-                            $won += $talentStats['won'];
+                                $rowTotalPicked += $talentStats['played'];
+                                $picked += $talentStats['played'];
+                                $won += $talentStats['won'];
 
-                            //Make sure pickrate >= min pickrate in order to display valuable winrate
-                            if ($picked >= self::TALENT_WINRATE_MIN_PLAYED) {
-                                $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
+                                //Make sure pickrate >= min pickrate in order to display valuable winrate
+                                if ($picked >= self::TALENT_WINRATE_MIN_PLAYED) {
+                                    $winrate = round(($won / ($picked * 1.00)) * 100.0, 1);
 
-                                $colorclass = "hsl-number-winrate-red";
-                                if ($winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
+                                    $colorclass = "hsl-number-winrate-red";
+                                    if ($winrate >= 50.0) $colorclass = "hsl-number-winrate-green";
 
-                                $talent['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
+                                    $talent['winrate_display'] = '<span class="' . $colorclass . '">' . sprintf("%03.1f %%", $winrate) . '</span>';
+                                }
                             }
+
+                            //Min/Max
+                            $rowMinWinrate = min($winrate, $rowMinWinrate);
+                            $rowMaxWinrate = max($winrate, $rowMaxWinrate);
+
+                            $talent['pickrate'] = $picked;
+                            $talent['winrate'] = $winrate;
                         }
-
-                        //Min/Max
-                        $rowMinWinrate = min($winrate, $rowMinWinrate);
-                        $rowMaxWinrate = max($winrate, $rowMaxWinrate);
-
-                        $talent['pickrate'] = $picked;
-                        $talent['winrate'] = $winrate;
                     }
 
                     //Total talent picks for Row
@@ -2028,28 +2034,30 @@ class PlayerdataController extends Controller {
                     $rowMaxWinrate = $talents[$r.'']['maxWinrate'];
 
                     for ($c = $talents[$r.'']['minCol']; $c <= $talents[$r.'']['maxCol']; $c++) {
-                        $talent = &$talents[$r.''][$c.''];
+                        for ($cinner = 0; $cinner < count($talents[$r.''][$c.'']); $cinner++) {
+                            $talent = &$talents[$r . ''][$c . ''][$cinner];
 
-                        //Winrate Percent On Range
-                        $percentOnRange = 0;
-                        if ($rowMaxWinrate - $rowMinWinrate > 0) {
-                            $percentOnRange = ((($talent['winrate'] - $rowMinWinrate) * 1.00) / (($rowMaxWinrate - $rowMinWinrate) * 1.00)) * 100.0;
-                        }
-
-                        $talent['winrate_percentOnRange'] = $percentOnRange;
-
-                        //Popularity
-                        $popularity = 0;
-                        if (key_exists($talent['name_internal'], $a_talents)) {
-                            $talentStats = $a_talents[$talent['name_internal']];
-
-                            $picked = $talentStats['played'];
-
-                            if ($rowTotalPicked > 0) {
-                                $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                            //Winrate Percent On Range
+                            $percentOnRange = 0;
+                            if ($rowMaxWinrate - $rowMinWinrate > 0) {
+                                $percentOnRange = ((($talent['winrate'] - $rowMinWinrate) * 1.00) / (($rowMaxWinrate - $rowMinWinrate) * 1.00)) * 100.0;
                             }
+
+                            $talent['winrate_percentOnRange'] = $percentOnRange;
+
+                            //Popularity
+                            $popularity = 0;
+                            if (key_exists($talent['name_internal'], $a_talents)) {
+                                $talentStats = $a_talents[$talent['name_internal']];
+
+                                $picked = $talentStats['played'];
+
+                                if ($rowTotalPicked > 0) {
+                                    $popularity = round((($picked * 1.00) / (($rowTotalPicked) * 1.00)) * 100.0, 1);
+                                }
+                            }
+                            $talent['popularity'] = $popularity;
                         }
-                        $talent['popularity'] = $popularity;
                     }
                 }
 
