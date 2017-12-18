@@ -148,8 +148,8 @@ class PlayerdataController extends Controller {
                     $rating = (is_numeric($rating)) ? ($rating) : (0);
 
                     $mmr['rating'] = $rating;
-                    $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating);
-                    $mmr['tier'] = HotstatusPipeline::getRankTierForPlayerRating($rating);
+                    $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating, $querySeason);
+                    $mmr['tier'] = HotstatusPipeline::getRankTierForPlayerRating($rating, $querySeason);
 
                     $mmrs[] = $mmr;
                 }
@@ -1225,7 +1225,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetMatch",
-                    "SELECT `type`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
+                    "SELECT `type`, `date`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
                 $db->bind("GetMatch", "i", $r_match_id);
 
                 $db->prepare("GetTalentsForHero",
@@ -1298,6 +1298,8 @@ class PlayerdataController extends Controller {
                     $arr_team_level = json_decode($row['team_level'], true);
                     $arr_bans = json_decode($row['bans'], true);
                     $arr_mmr = json_decode($row['mmr'], true);
+
+                    $season = HotstatusPipeline::getSeasonStringForDateTime($row['date']);
 
                     $match['winner'] = $row['winner'];
                     $match['quality'] = $arr_mmr['quality'];
@@ -1433,8 +1435,8 @@ class PlayerdataController extends Controller {
                                 $mmr_old = (is_numeric($mplayer['mmr']['old']['rating'])) ? ($mplayer['mmr']['old']['rating']) : (0);
                                 $p['mmr'] = [
                                     "delta" => $mmr_new - $mmr_old,
-                                    "rank" => HotstatusPipeline::getRankNameForPlayerRating($mplayer['mmr']['old']['rating']),
-                                    "tier" => HotstatusPipeline::getRankTierForPlayerRating($mplayer['mmr']['old']['rating']),
+                                    "rank" => HotstatusPipeline::getRankNameForPlayerRating($mplayer['mmr']['old']['rating'], $season),
+                                    "tier" => HotstatusPipeline::getRankTierForPlayerRating($mplayer['mmr']['old']['rating'], $season),
                                 ];
 
                                 //Medal
