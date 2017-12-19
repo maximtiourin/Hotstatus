@@ -2296,9 +2296,8 @@ class PlayerdataController extends Controller {
     /**
      * Returns the top 500 rankings result for the given region/season/gameType
      *
-     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, name="playerdata_pagedata_rankings")
+     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_rankings")
      */
-    //condition="request.isXmlHttpRequest()",  TODO
     public function getPageDataRankingsAction(Request $request) {
         $_TYPE = GetPageDataRankingsAction::_TYPE();
         $_ID = GetPageDataRankingsAction::_ID();
