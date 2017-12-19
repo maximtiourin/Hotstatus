@@ -32,9 +32,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns the relevant player data for a player necessary to build a player page
      *
-     * @Route("/playerdata/pagedata/{player}", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player")
+     * @Route("/playerdata/pagedata/{region}/{player}", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player")
      */
-    public function getPageDataPlayerAction(Request $request, $player) {
+    public function getPageDataPlayerAction(Request $request, $region, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerAction";
         $_VERSION = 1;
@@ -78,7 +78,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+        $CACHE_ID = "$_ID:$region:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -121,11 +121,14 @@ class PlayerdataController extends Controller {
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $t_players_mmr = HotstatusPipeline::$table_pointers['players_mmr'];
+
                 $db->prepare("GetMMR",
-                    "SELECT `rating`, `gameType` FROM `players_mmr` WHERE `id` = ? AND `season` = ? $querySql");
-                $db->bind("GetMMR", "is", $r_player_id, $r_season);
+                    "SELECT `rating`, `gameType` FROM `$t_players_mmr` WHERE `id` = ? AND `region` = ? AND `season` = ? $querySql");
+                $db->bind("GetMMR", "iis", $r_player_id, $r_region, $r_season);
 
                 $r_player_id = $player;
+                $r_region = $region;
                 $r_season = $querySeason;
 
                 /*
@@ -229,9 +232,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns top heroes (and top maps) for player, as well as MVP percent and matches played
      *
-     * @Route("/playerdata/pagedata/{player}/topheroes", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_topheroes")
+     * @Route("/playerdata/pagedata/{region}/{player}/topheroes", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_topheroes")
      */
-    public function getPageDataPlayerTopHeroesAction(Request $request, $player) {
+    public function getPageDataPlayerTopHeroesAction(Request $request, $region, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerTopHeroesAction";
         $_VERSION = 1;
@@ -275,7 +278,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+        $CACHE_ID = "$_ID:$region:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -312,12 +315,15 @@ class PlayerdataController extends Controller {
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $t_players_matches_recent_granular = HotstatusPipeline::$table_pointers['players_matches_recent_granular'];
+
                 $db->prepare("GetTopHeroes",
-                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `medals` FROM `players_matches_recent_granular` 
-                    WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
-                $db->bind("GetTopHeroes", "iss", $r_player_id, $r_date_start, $r_date_end);
+                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `medals` FROM `$t_players_matches_recent_granular` 
+                    WHERE `id` = ? AND `region` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetTopHeroes", "iiss", $r_player_id, $r_region, $r_date_start, $r_date_end);
 
                 $r_player_id = $player;
+                $r_region = $region;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
 
@@ -551,9 +557,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent parties for player, as well as party statistics
      *
-     * @Route("/playerdata/pagedata/{player}/parties", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_parties")
+     * @Route("/playerdata/pagedata/{region}/{player}/parties", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_parties")
      */
-    public function getPageDataPlayerPartiesAction(Request $request, $player) {
+    public function getPageDataPlayerPartiesAction(Request $request, $region, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerPartiesAction";
         $_VERSION = 1;
@@ -597,7 +603,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+        $CACHE_ID = "$_ID:$region:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -634,20 +640,25 @@ class PlayerdataController extends Controller {
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $t_players_matches_recent_granular = HotstatusPipeline::$table_pointers['players_matches_recent_granular'];
+                $t_players_parties = HotstatusPipeline::$table_pointers['players_parties'];
+                $t_players = HotstatusPipeline::$table_pointers['players'];
+
                 $db->prepare("GetParties",
-                    "SELECT `parties` FROM `players_matches_recent_granular` 
-                    WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
-                $db->bind("GetParties", "iss", $r_player_id, $r_date_start, $r_date_end);
+                    "SELECT `parties` FROM `$t_players_matches_recent_granular` 
+                    WHERE `id` = ? AND `region` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetParties", "iiss", $r_player_id, $r_region, $r_date_start, $r_date_end);
 
                 $db->prepare("GetPartyPlayers",
-                    "SELECT `players` FROM `players_parties` WHERE `id` = ? AND `party` = ? LIMIT 1");
-                $db->bind("GetPartyPlayers", "is", $r_player_id, $r_party);
+                    "SELECT `players` FROM `$t_players_parties` WHERE `id` = ? AND `region` = ? AND `party` = ? LIMIT 1");
+                $db->bind("GetPartyPlayers", "iis", $r_player_id, $r_region, $r_party);
 
                 $db->prepare("GetPlayerNameFromId",
-                    "SELECT `name` FROM `players` WHERE `id` = ? LIMIT 1");
-                $db->bind("GetPlayerNameFromId", "i", $r_other_player_id);
+                    "SELECT `name` FROM `$t_players` WHERE `id` = ? AND `region` = ? LIMIT 1");
+                $db->bind("GetPlayerNameFromId", "ii", $r_other_player_id, $r_region);
 
                 $r_player_id = $player;
+                $r_region = $region;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
 
@@ -769,9 +780,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns recent matches for player based on offset and match limit
      *
-     * @Route("/playerdata/pagedata/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_recentmatches")
+     * @Route("/playerdata/pagedata/{region}/{player}/{offset}/{limit}/recentmatches", defaults={"offset" = 0, "limit" = 10}, requirements={"region": "\d+", "player": "\d+", "offset": "\d+", "limit": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_recentmatches")
      */
-    public function getPageDataPlayerRecentMatchesAction(Request $request, $player, $offset, $limit) {
+    public function getPageDataPlayerRecentMatchesAction(Request $request, $region, $player, $offset, $limit) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerRecentMatchesAction";
         $_VERSION = 1;
@@ -815,7 +826,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = "$_ID:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : ("")).":$limit:$offset";
+        $CACHE_ID = "$_ID:$region:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : ("")).":$limit:$offset";
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -852,17 +863,20 @@ class PlayerdataController extends Controller {
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $t_players_matches = HotstatusPipeline::$table_pointers['players_matches'];
+
                 $db->prepare("GetRecentMatches",
-                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`winner`, m.`players` 
-                    FROM `players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
-                    WHERE pm.`id` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
-                $db->bind("GetRecentMatches", "iss", $r_player_id, $r_date_start, $r_date_end);
+                    "SELECT m.`id`, m.`type`, m.`map`, m.`date`, m.`match_length`, m.`region`, m.`winner`, m.`players` 
+                    FROM `$t_players_matches` `pm` INNER JOIN `matches` `m` ON pm.`match_id` = m.`id` 
+                    WHERE pm.`id` = ? AND pm.`region` = ? AND pm.`date` >= ? AND pm.`date` <= ? $querySql ORDER BY pm.`date` DESC LIMIT $limit OFFSET $offset");
+                $db->bind("GetRecentMatches", "iiss", $r_player_id, $r_region, $r_date_start, $r_date_end);
 
                 $db->prepare("GetTalentsForHero",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image` FROM `herodata_talents` WHERE `hero` = ?");
                 $db->bind("GetTalentsForHero", "s", $r_hero);
 
                 $r_player_id = $player;
+                $r_region = $region;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
 
@@ -944,6 +958,7 @@ class PlayerdataController extends Controller {
                     $match['map_image'] = 'ui/map_match_leftpane_' . HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP][$match['map']]['name_sort'];
                     $match['date'] = (new \DateTime($row['date']))->getTimestamp();
                     $match['match_length'] = $row['match_length'];
+                    $match['region'] = $row['region'];
                     $match['winner'] = $row['winner'];
 
                     //In-depth stats disabled for recentmatches fetch
@@ -1225,7 +1240,7 @@ class PlayerdataController extends Controller {
 
                 //Prepare Statements
                 $db->prepare("GetMatch",
-                    "SELECT `type`, `date`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
+                    "SELECT `type`, `date`, `region`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
                 $db->bind("GetMatch", "i", $r_match_id);
 
                 $db->prepare("GetTalentsForHero",
@@ -1301,6 +1316,7 @@ class PlayerdataController extends Controller {
 
                     $season = HotstatusPipeline::getSeasonStringForDateTime($row['date']);
 
+                    $match['region'] = $row['region'];
                     $match['winner'] = $row['winner'];
                     $match['quality'] = $arr_mmr['quality'];
 
@@ -1526,9 +1542,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns the relevant hero data for a hero necessary to build a hero page
      *
-     * @Route("/playerdata/pagedata/{player}/hero", requirements={"player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_hero")
+     * @Route("/playerdata/pagedata/{region}/{player}/hero", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_hero")
      */
-    public function getPageDataPlayerHeroAction(Request $request, $player) {
+    public function getPageDataPlayerHeroAction(Request $request, $region, $player) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPageDataPlayerHeroAction";
         $_VERSION = 1;
@@ -1573,7 +1589,7 @@ class PlayerdataController extends Controller {
         $validResponse = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ":" . $player . ":" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+        $CACHE_ID = $_ID . ":$region:$player:" . $queryHero .((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -1610,6 +1626,8 @@ class PlayerdataController extends Controller {
                 $date_end = $seasonobj['end'];
 
                 //Prepare Statements
+                $t_players_matches_recent_granular = HotstatusPipeline::$table_pointers['players_matches_recent_granular'];
+
                 $db->prepare("GetHeroData",
                     "SELECT `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero` 
                     FROM herodata_heroes WHERE `name` = \"$queryHero\" LIMIT 1");
@@ -1618,8 +1636,8 @@ class PlayerdataController extends Controller {
                     "SELECT `played`, `won`, `time_played`, `stats_kills`, `stats_assists`, `stats_deaths`,
                     `stats_siege_damage`, `stats_hero_damage`, `stats_structure_damage`, `stats_healing`, `stats_damage_taken`, `stats_merc_camps`, `stats_exp_contrib`,
                     `stats_best_killstreak`, `stats_time_spent_dead`, `medals`, `talents`, `builds` 
-                    FROM players_matches_recent_granular WHERE `id` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
-                $db->bind("GetHeroStats", "iss", $r_player_id, $r_date_start, $r_date_end);
+                    FROM `$t_players_matches_recent_granular` WHERE `id` = ? AND `region` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetHeroStats", "iiss", $r_player_id, $r_region, $r_date_start, $r_date_end);
 
                 $db->prepare("GetHeroTalents",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column` FROM herodata_talents WHERE `hero` = \"$queryHero\" ORDER BY `tier_row` ASC, `tier_column` ASC");
@@ -1630,6 +1648,7 @@ class PlayerdataController extends Controller {
 
 
                 $r_player_id = $player;
+                $r_region = $region;
                 $r_date_start = $date_start;
                 $r_date_end = $date_end;
 
@@ -2277,8 +2296,9 @@ class PlayerdataController extends Controller {
     /**
      * Returns the top 500 rankings result for the given region/season/gameType
      *
-     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_rankings")
+     * @Route("/playerdata/pagedata/rankings", options={"expose"=true}, name="playerdata_pagedata_rankings")
      */
+    //condition="request.isXmlHttpRequest()",  TODO
     public function getPageDataRankingsAction(Request $request) {
         $_TYPE = GetPageDataRankingsAction::_TYPE();
         $_ID = GetPageDataRankingsAction::_ID();
@@ -2305,6 +2325,7 @@ class PlayerdataController extends Controller {
 
         $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
         $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
+        $queryRegion = $query[HotstatusPipeline::FILTER_KEY_REGION][HotstatusResponse::QUERY_RAWVALUE];
 
         //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
         foreach ($query as $qkey => &$qobj) {
@@ -2315,7 +2336,7 @@ class PlayerdataController extends Controller {
 
         //Build WhereAnd string from collected WhereOr strings
         $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
-        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
 
         /*
          * Begin building response
@@ -2332,6 +2353,7 @@ class PlayerdataController extends Controller {
         $payload = [
             "querySeason" => $querySeason,
             "queryGameType" => $queryGameType,
+            "queryRegion" => $queryRegion,
             "querySql" => $querySql,
         ];
 

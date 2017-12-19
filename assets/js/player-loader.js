@@ -188,6 +188,7 @@ PlayerLoader.ajax.topheroes = {
         let self = PlayerLoader.ajax.topheroes;
 
         let bUrl = Routing.generate("playerdata_pagedata_player_topheroes", {
+            region: player_region,
             player: player_id
         });
 
@@ -285,6 +286,7 @@ PlayerLoader.ajax.parties = {
         let self = PlayerLoader.ajax.parties;
 
         let bUrl = Routing.generate("playerdata_pagedata_player_parties", {
+            region: player_region,
             player: player_id
         });
 
@@ -369,6 +371,7 @@ PlayerLoader.ajax.matches = {
         let self = PlayerLoader.ajax.matches;
 
         let bUrl = Routing.generate("playerdata_pagedata_player_recentmatches", {
+            region: player_region,
             player: player_id,
             offset: self.internal.offset,
             limit: self.internal.limit
@@ -595,7 +598,7 @@ PlayerLoader.data = {
              * Hero
              */
             let herofield = '<div class="pl-th-heropane"><div><img class="pl-th-hp-heroimage" src="' + image_bpath + hero.image_hero +'.png"></div>' +
-                '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
+                '<div><a class="pl-th-hp-heroname" href="' + Routing.generate("playerhero", {region: player_region, id: player_id, heroProperName: hero.name}) + '" target="_blank">'+ hero.name +'</a></div></div>';
 
 
             /*
@@ -821,7 +824,7 @@ PlayerLoader.data = {
              */
             let partyinner = '';
             for (let player of party.players) {
-                partyinner += '<div class="pl-p-p-player pl-p-p-player-'+ party.players.length +'"><a class="pl-p-p-playername" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">'+ player.name +'</a></div>';
+                partyinner += '<div class="pl-p-p-player pl-p-p-player-'+ party.players.length +'"><a class="pl-p-p-playername" href="' + Routing.generate("player", {region: player_region, id: player.id}) + '" target="_blank">'+ player.name +'</a></div>';
             }
 
             let partyfield = '<div class="pl-parties-partypane">'+ partyinner +'</div>';
@@ -1046,7 +1049,7 @@ PlayerLoader.data = {
                         partiesCounter[partyOffset]++;
                     }
 
-                    let special = '<a class="'+silence(player.silenced)+'" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
+                    let special = '<a class="'+silence(player.silenced)+'" href="' + Routing.generate("player", {region: match.region, id: player.id}) + '" target="_blank">';
                     if (player.id === match.player.id) {
                         special = '<a class="rm-sw-special">';
                     }
@@ -1070,7 +1073,7 @@ PlayerLoader.data = {
                 '</div>' +
                 '<div class="recentmatch-simplewidget-heropane">' +
                 '<div><img class="rounded-circle rm-sw-hp-portrait" src="' + image_bpath + match.player.image_hero +'.png"></div>' +
-                '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("playerhero", {id: player_id, heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
+                '<div class="rm-sw-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("playerhero", {region: match.region, id: player_id, heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
                 '</div>' +
                 '<div class="recentmatch-simplewidget-statspane"><div class="rm-sw-sp-inner">' +
                 nomedalhtml +
@@ -1178,7 +1181,7 @@ PlayerLoader.data = {
                 let p = 0;
                 for (let player of team.players) {
                     //Player Row
-                    self.generateFullmatchRow(matchid, team_container, player, team.color, match.stats, p % 2, partiesCounter);
+                    self.generateFullmatchRow(matchid, match.region, team_container, player, team.color, match.stats, p % 2, partiesCounter);
 
                     if (player.party > 0) {
                         let partyOffset = player.party - 1;
@@ -1231,7 +1234,7 @@ PlayerLoader.data = {
 
             container.append(html);
         },
-        generateFullmatchRow: function(matchid, container, player, teamColor, matchStats, oddEven, partiesCounter) {
+        generateFullmatchRow: function(matchid, matchregion, container, player, teamColor, matchStats, oddEven, partiesCounter) {
             let self = PlayerLoader.data.matches;
 
             //Match player
@@ -1271,7 +1274,7 @@ PlayerLoader.data = {
                 special = '<a class="rm-fm-r-playername rm-sw-special">';
             }
             else {
-                special = '<a class="rm-fm-r-playername '+ silence(player.silenced) +'" href="' + Routing.generate("player", {id: player.id}) + '" target="_blank">';
+                special = '<a class="rm-fm-r-playername '+ silence(player.silenced) +'" href="' + Routing.generate("player", {region: matchregion, id: player.id}) + '" target="_blank">';
             }
             playername += silence_image(player.silenced, 14) + special + player.name + '</a>';
 
@@ -1484,7 +1487,7 @@ $(document).ready(function() {
     };
 
     //Set the initial url based on default filters, and attempt to load after validation
-    let baseUrl = Routing.generate('playerdata_pagedata_player', {player: player_id});
+    let baseUrl = Routing.generate('playerdata_pagedata_player', {region: player_region, player: player_id});
 
     let filterTypes = ["season", "gameType"];
     let filterAjax = PlayerLoader.ajax.filter;

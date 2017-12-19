@@ -14,6 +14,7 @@
 {# Inject dynamic content variables #}
 {% block dynamicVariables %}
     let player_id = {{ player.id }};
+    let player_region = {{ player.region_raw }};
     let player_name = "{{ player.name }}";
     let player_tag = {{ player.tag }};
     let average_stats = {{ average_stats | json_encode | raw}};

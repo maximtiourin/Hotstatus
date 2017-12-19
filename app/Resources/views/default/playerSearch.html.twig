@@ -41,7 +41,7 @@
                                 <div class="hotstatus-subcontainer">
                                     {% for player in playerArr %}
                                         <div>
-                                            <a href="{{ path("player", {"id": player['id']}) }}" class="psearch-player">{{ player['name'] ~ "#" ~ player['tag'] }}</a>
+                                            <a href="{{ path("player", {"region": player['region'], "id": player['id']}) }}" class="psearch-player">{{ player['name'] ~ "#" ~ player['tag'] }}</a>
                                         </div>
                                     {% endfor %}
                                 </div>

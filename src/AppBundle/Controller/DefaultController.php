@@ -157,14 +157,16 @@ class DefaultController extends Controller
                         $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                         //Prepare Statement
+                        $playersTable = HotstatusPipeline::$table_pointers['players'];
+
                         if ($isNamePlusBattletag) {
                             $db->prepare("SearchPlayer",
-                                "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? AND `tag` = ? LIMIT 25");
+                                "SELECT `id`, `name`, `tag`, `region` FROM `$playersTable` WHERE `name` = ? AND `tag` = ? LIMIT 25");
                             $db->bind("SearchPlayer", "si", $r_name, $r_tag);
                         }
                         else {
                             $db->prepare("SearchPlayer",
-                                "SELECT `id`, `name`, `tag`, `region` FROM `players` WHERE `name` = ? LIMIT 25");
+                                "SELECT `id`, `name`, `tag`, `region` FROM `$playersTable` WHERE `name` = ? LIMIT 25");
                             $db->bind("SearchPlayer", "s", $r_name);
                         }
 
@@ -180,6 +182,7 @@ class DefaultController extends Controller
                             }
 
                             $pres[$region][] = [
+                                "region" => $row['region'],
                                 "id" => $row['id'],
                                 "name" => $row['name'],
                                 "tag" => $row['tag'],
@@ -217,9 +220,9 @@ class DefaultController extends Controller
     }
 
     /*
-     * Handles retrieving the basic player information for the given id, if the player exists.
+     * Handles retrieving the basic player information for the given id and region, if the player exists.
      */
-    private function getPlayer($id) {
+    private function getPlayer($region, $id) {
         $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_PAGEDATA;
         $_ID = "getPlayer";
         $_VERSION = 1;
@@ -230,7 +233,7 @@ class DefaultController extends Controller
         $validResult = FALSE;
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ':' . $id;
+        $CACHE_ID = $_ID . ':' . $region . ':' . $id;
 
         //Get credentials
         $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
@@ -263,13 +266,16 @@ class DefaultController extends Controller
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 //Prepare Statement
+                $playersTable = HotstatusPipeline::$table_pointers['players'];
+
                 $db->prepare("FindPlayer",
-                    "SELECT * FROM `players` WHERE `id` = ? LIMIT 1");
-                $db->bind("FindPlayer", "i", $r_id);
+                    "SELECT * FROM `$playersTable` WHERE `id` = ? AND `region` = ? LIMIT 1");
+                $db->bind("FindPlayer", "ii", $r_id, $r_region);
 
                 //Search for player
                 $player = [];
                 $r_id = $id;
+                $r_region = $region;
                 $playerResult = $db->execute("FindPlayer");
                 $playerResultRows = $db->countResultRows($playerResult);
                 if ($playerResultRows > 0) {
@@ -279,6 +285,7 @@ class DefaultController extends Controller
                     $player['name'] = $row['name'];
                     $player['tag'] = $row['tag'];
                     $player['region'] = HotstatusPipeline::$ENUM_REGIONS[$row['region']];
+                    $player['region_raw'] = $row['region'];
                     $player['account_level'] = $row['account_level'];
                 }
 
@@ -314,20 +321,21 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/players/{id}/heroes", requirements={"id": "\d+"}, name="playerheroes")
+     * @Route("/players/{region}/{id}/heroes", requirements={"region": "\d+", "id": "\d+"}, name="playerheroes")
      */
-    public function playerHeroDefaultAction($id) {
+    public function playerHeroDefaultAction($region, $id) {
         return $this->redirectToRoute("playerhero", [
+            "region" => $region,
             "id" => $id,
             "heroProperName" => "Abathur"
         ]);
     }
 
     /**
-     * @Route("/players/{id}/hero/{heroProperName}", options={"expose"=true}, requirements={"id": "\d+"}, name="playerhero")
+     * @Route("/players/{region}/{id}/hero/{heroProperName}", options={"expose"=true}, requirements={"region": "\d+", "id": "\d+"}, name="playerhero")
      */
-    public function playerHeroAction($id, $heroProperName) {
-        $playerresult = self::getPlayer($id);
+    public function playerHeroAction($region, $id, $heroProperName) {
+        $playerresult = self::getPlayer($region, $id);
 
         if ($playerresult !== FALSE) {
             if (key_exists($heroProperName, HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO])) {
@@ -351,6 +359,7 @@ class DefaultController extends Controller
             }
             else {
                 return $this->redirectToRoute("player", [
+                    "region" => $region,
                     "id" => $id,
                 ]);
             }
@@ -361,10 +370,10 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/players/{id}", options={"expose"=true}, requirements={"id": "\d+"}, name="player")
+     * @Route("/players/{region}/{id}", options={"expose"=true}, requirements={"region": "\d+", "id": "\d+"}, name="player")
      */
-    public function playerAction($id) {
-        $playerresult = self::getPlayer($id);
+    public function playerAction($region, $id) {
+        $playerresult = self::getPlayer($region, $id);
 
         if ($playerresult !== FALSE) {
             HotstatusPipeline::filter_generate_season(false);
@@ -381,9 +390,9 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/players/{id}", defaults={"id" = "Invalid"}, name="playerError")
+     * @Route("/players/{region}/{id}", defaults={"region" = "Invalid", "id" = "Invalid"}, name="playerError")
      */
-    public function playerErrorAction($id) {
+    public function playerErrorAction($region, $id) {
         return $this->redirectToRoute("heroes");
     }
 

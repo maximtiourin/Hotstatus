@@ -251,7 +251,7 @@ HeroLoader.data = {
             document.title = "Hotstat.us: " + str + " (" + player_name +"#"+ player_tag + ")";
         },
         url: function(hero) {
-            let url = Routing.generate("playerhero", {id: player_id, heroProperName: hero});
+            let url = Routing.generate("playerhero", {region: player_region, id: player_id, heroProperName: hero});
             history.replaceState(hero, hero, url);
         },
         showInitialCollapse: function() {
@@ -507,6 +507,7 @@ $(document).ready(function() {
 
     //Set the initial url based on default filters, and attempt to load after validation
     let baseUrl = Routing.generate('playerdata_pagedata_player_hero', {
+        region: player_region,
         player: player_id
     });
     let filterTypes = ["season", "hero", "gameType", "map"];

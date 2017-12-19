@@ -166,7 +166,7 @@ RankingsLoader.data = {
         generateTableData: function(row) {
             let rank = row.rank;
 
-            let player = '<a class="rankings-playername" href="' + Routing.generate("player", {id: row.player_id}) + '" target="_blank">'+ row.player_name +'</a>';
+            let player = '<a class="rankings-playername" href="' + Routing.generate("player", {region: row.region, id: row.player_id}) + '" target="_blank">'+ row.player_name +'</a>';
 
             let played = row.played;
 

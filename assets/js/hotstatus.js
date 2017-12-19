@@ -17,7 +17,9 @@
 
                     //Google Ads Define
                     try {
-                        (adsbygoogle = window.adsbygoogle || []).push({});
+                        $('.adsbygoogle').each(function() {
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                        });
                     }
                     catch (e) {
                         //Google ad exception -- fail quietly
