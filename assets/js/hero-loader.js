@@ -282,7 +282,7 @@ HeroLoader.ajax = {
                                 let matchup = json_matchups.foes[mkey];
 
                                 //Create datatable row
-                                matchup_foes_datatable.data.push(data_matchups.generateTableData(mkey, matchup));
+                                matchup_foes_datatable.data.push(data_matchups.generateTableData(mkey, matchup, json_stats.winrate_raw));
                             }
                         }
 
@@ -308,7 +308,7 @@ HeroLoader.ajax = {
                                 let matchup = json_matchups.friends[mkey];
 
                                 //Create datatable row
-                                matchup_friends_datatable.data.push(data_matchups.generateTableData(mkey, matchup));
+                                matchup_friends_datatable.data.push(data_matchups.generateTableData(mkey, matchup, json_stats.winrate_raw));
                             }
                         }
 
@@ -950,7 +950,7 @@ HeroLoader.data = {
             $('#hl-matchups-container').append('<div class="hotstatus-subcontainer"><div class="row"><div class="col-lg-6 padding-lg-right-0"><div id="hl-matchups-foes-container"></div></div>' +
                 '<div class="col-lg-6 padding-lg-left-0"><div id="hl-matchups-friends-container"></div></div></div></div>');
         },
-        generateTableData: function(hero, matchupData) {
+        generateTableData: function(hero, matchupData, mainHeroWinrate) {
             let self = HeroLoader.data.matchups;
 
             let imageField = '<img class="hl-matchups-image" src="' + image_base_path + matchupData.image + '.png">';
@@ -965,7 +965,17 @@ HeroLoader.data = {
 
             let winrateField = '<span class="hl-row-height">' + matchupData.winrate_display + '</span>';
 
-            return [imageField, heroField, heroSortField, roleField, roleSpecificField, playedField, winrateField];
+            let edgeWinrate = matchupData.winrate - mainHeroWinrate;
+
+            let colorclass = "hl-number-winrate-red";
+            let sign = '';
+            if (edgeWinrate > 0) {
+                colorclass = "hl-number-winrate-green";
+                sign = '+';
+            }
+            let edgeField = '<span class="'+ colorclass +'">'+ sign + edgeWinrate.toFixed(1) +'%</span>';
+
+            return [imageField, heroField, heroSortField, roleField, roleSpecificField, playedField, winrateField, edgeField];
         },
         generateFoesTable: function() {
             $('#hl-matchups-foes-container').append('<table id="hl-matchups-foes-table" class="hotstatus-datatable display table table-sm dt-responsive" width="100%"><thead class=""></thead></table>');
@@ -979,12 +989,13 @@ HeroLoader.data = {
             //Columns definition
             datatable.columns = [
                 {"width": "10%", "bSortable": false, "searchable": false},
-                {"title": 'Foe', "width": "30%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+                {"title": 'Foe', "width": "25%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
                 {"title": 'Hero_Sort', "visible": false},
                 {"title": 'Role', "visible": false},
                 {"title": 'Role_Specific', "visible": false},
-                {"title": 'Played Against', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Played Against', "width": "25%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
                 {"title": 'Wins Against', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Edge', "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
             ];
 
             datatable.language = {
@@ -994,7 +1005,7 @@ HeroLoader.data = {
                 emptyTable: ' ' //Message when table is empty regardless of filtering
             };
 
-            datatable.order = [[6, 'asc']];
+            datatable.order = [[7, 'asc']];
 
             datatable.searching = false;
             datatable.deferRender = false;
@@ -1015,12 +1026,13 @@ HeroLoader.data = {
             //Columns definition
             datatable.columns = [
                 {"width": "10%", "bSortable": false, "searchable": false},
-                {"title": 'Friend', "width": "30%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+                {"title": 'Friend', "width": "25%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc']}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
                 {"title": 'Hero_Sort', "visible": false},
                 {"title": 'Role', "visible": false},
                 {"title": 'Role_Specific', "visible": false},
-                {"title": 'Played With', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Played With', "width": "25%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
                 {"title": 'Wins With', "width": "30%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
+                {"title": 'Edge', "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc']},
             ];
 
             datatable.language = {
@@ -1030,7 +1042,7 @@ HeroLoader.data = {
                 emptyTable: ' ' //Message when table is empty regardless of filtering
             };
 
-            datatable.order = [[6, 'desc']];
+            datatable.order = [[7, 'desc']];
 
             datatable.searching = false;
             datatable.deferRender = false;

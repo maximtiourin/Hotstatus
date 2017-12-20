@@ -29,6 +29,8 @@ class PlayerdataController extends Controller {
     const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to determine percentOnRange calculations, used to normalize ranges.
     const TALENT_BUILD_POPULARITY_MIN_OFFSET = .1; //How much to subtract from the min popularity for a talent build to determine percentOnRange calcs, used to normalize range
 
+    const IGNORE_SEASONS_FOR_MMR_BUG = ['2017 Season 3'];
+
     /**
      * Returns the relevant player data for a player necessary to build a player page
      *
@@ -139,51 +141,56 @@ class PlayerdataController extends Controller {
                  * MMR
                  */
                 $mmrs = [];
-                $mmrresult = $db->execute("GetMMR");
-                $mmrrows = $db->countResultRows($mmrresult);
-                while ($row = $db->fetchArray($mmrresult)) {
-                    $mmr = [];
 
-                    $mmr['gameType'] = $row['gameType'];
-                    $mmr['gameType_image'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$mmr['gameType']]['name_sort'];
+                //Ignore any ranks from bugged seasons
+                if (!in_array($querySeason, self::IGNORE_SEASONS_FOR_MMR_BUG, true)) {
+                    $mmrresult = $db->execute("GetMMR");
+                    $mmrrows = $db->countResultRows($mmrresult);
+                    while ($row = $db->fetchArray($mmrresult)) {
+                        $mmr = [];
 
-                    $rating = $row['rating'];
-                    $rating = (is_numeric($rating)) ? ($rating) : (0);
+                        $mmr['gameType'] = $row['gameType'];
+                        $mmr['gameType_image'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$mmr['gameType']]['name_sort'];
 
-                    $mmr['rating'] = $rating;
-                    $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating, $querySeason);
-                    $mmr['tier'] = HotstatusPipeline::getRankTierForPlayerRating($rating, $querySeason);
+                        $rating = $row['rating'];
+                        $rating = (is_numeric($rating)) ? ($rating) : (0);
 
-                    $mmrs[] = $mmr;
+                        $mmr['rating'] = $rating;
+                        $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating, $querySeason);
+                        $mmr['tier'] = HotstatusPipeline::getRankTierForPlayerRating($rating, $querySeason);
+
+                        $mmrs[] = $mmr;
+                    }
+
+                    $db->freeResult($mmrresult);
+
+
+                    //Sort mmr
+                    usort($mmrs, function ($a, $b) {
+                        $mmrSortValue = function ($gameType) {
+                            if ($gameType === "Hero League") {
+                                return 1;
+                            }
+                            else if ($gameType === "Team League") {
+                                return 2;
+                            }
+                            else if ($gameType === "Unranked Draft") {
+                                return 3;
+                            }
+                            else if ($gameType === "Quick Match") {
+                                return 4;
+                            }
+                            else {
+                                return 5;
+                            }
+                        };
+
+                        $aval = $mmrSortValue($a['gameType']);
+                        $bval = $mmrSortValue($b['gameType']);
+
+                        return $aval - $bval;
+                    });
                 }
-
-                $db->freeResult($mmrresult);
-
-                //Sort mmr
-                usort($mmrs, function($a, $b) {
-                    $mmrSortValue = function($gameType) {
-                        if ($gameType === "Hero League") {
-                            return 1;
-                        }
-                        else if ($gameType === "Team League") {
-                            return 2;
-                        }
-                        else if ($gameType === "Unranked Draft") {
-                            return 3;
-                        }
-                        else if ($gameType === "Quick Match") {
-                            return 4;
-                        }
-                        else {
-                            return 5;
-                        }
-                    };
-
-                    $aval = $mmrSortValue($a['gameType']);
-                    $bval = $mmrSortValue($b['gameType']);
-
-                    return $aval - $bval;
-                });
 
                 $pagedata['mmr'] = $mmrs;
 
