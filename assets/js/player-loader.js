@@ -514,7 +514,7 @@ PlayerLoader.data = {
             let html = '<div id="pl-mmr-container" class="pl-mmr-container hotstatus-subcontainer margin-bottom-spacer-1 padding-left-0 padding-right-0">' +
                 '</div>';
 
-            $('#player-leftpane-container').append(html);
+            $('#pl-mmr-container-frame').append(html);
         },
         generateMMRBadges: function(mmrs) {
             self = PlayerLoader.data.mmr;
@@ -591,7 +591,7 @@ PlayerLoader.data = {
                 mvppercentcontainer +
                 '</div>';
 
-            $('#player-leftpane-container').append(html);
+            $('#pl-topheroes-container-frame').append(html);
         },
         generateTopHeroesTableData: function(hero) {
             /*

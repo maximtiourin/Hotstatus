@@ -2126,7 +2126,6 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 .playersummary-container {
     position:relative;
     width:100%;
-    margin: 0 auto;
     text-align: center;
 }
 
@@ -2402,6 +2401,7 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     text-align: center;
     height: 64px;
     line-height: 64px;
+    margin-top: 4px!important;
 }
 
 .pl-mmr-badge {
@@ -2680,4 +2680,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border-color: #10042B!important;
     padding: 4px 8px!important;
     margin: 2px 4px!important;
+}
+
+.social-button {
+    margin: 0 4px;
+    color: #44515a;
+    cursor: pointer;
 }

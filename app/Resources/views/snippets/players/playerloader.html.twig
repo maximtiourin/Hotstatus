@@ -21,14 +21,14 @@
                             <div class="hotstatus-subcontainer margin-bottom-spacer-1">
                                 {% block player_summary %}{% endblock %}
                             </div>
-                            {# MMR PLAYERLOADER GENERATED #}
-                            {# Top Heroes PLAYERLOADER GENERATED #}
+                            <div id="pl-mmr-container-frame">{# MMR PLAYERLOADER GENERATED #}</div>
+                            <div id="pl-topheroes-container-frame">{# Top Heroes PLAYERLOADER GENERATED #}</div>
                         </div>
                     </div>
                     {# Left Pane MID #}
                     <div class="player-leftpane-block">
                         <div id="player-leftpane-mid-container" class="player-leftpane player-leftpane-mid-container">
-                            {# Parties PLAYERLOADER GENERATED #}
+                            {# TpP Maps PLAYERLOADER GENERATED #}
                         </div>
                     </div>
                     {# Left Pane BOT #}
@@ -41,12 +41,19 @@
             </div>
         </div>
         <div class="col">
-            <div class="row">
+            <div class="row margin-bottom-spacer-1">
                 <div class="col text-center">
                     {# Right Pane #}
                     <div id="player-rightpane-container" class="player-rightpane-container">
                         <div id="pl-recentmatches-loader"></div>
                         {# Recent Matches PLAYERLOADER GENERATED #}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="hotstatus-subcontainer">
+                        {% block social_integration %}{% endblock %}
                     </div>
                 </div>
             </div>
