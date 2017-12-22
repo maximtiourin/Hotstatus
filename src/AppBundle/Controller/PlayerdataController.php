@@ -125,13 +125,13 @@ class PlayerdataController extends Controller {
                 //Prepare Statements
                 $t_players_mmr = HotstatusPipeline::$table_pointers['players_mmr'];
 
-                $db->prepare("GetMMR",
+                /*$db->prepare("GetMMR",
                     "SELECT `rating`, `gameType` FROM `$t_players_mmr` WHERE `id` = ? AND `region` = ? AND `season` = ? $querySql");
                 $db->bind("GetMMR", "iis", $r_player_id, $r_region, $r_season);
 
                 $r_player_id = $player;
                 $r_region = $region;
-                $r_season = $querySeason;
+                $r_season = $querySeason;*/
 
                 /*
                  * Collect playerdata
@@ -143,6 +143,7 @@ class PlayerdataController extends Controller {
                 $mmrs = [];
 
                 //Ignore any ranks from bugged seasons
+                /*
                 if (!in_array($querySeason, self::IGNORE_SEASONS_FOR_MMR_BUG, true)) {
                     $mmrresult = $db->execute("GetMMR");
                     $mmrrows = $db->countResultRows($mmrresult);
@@ -191,6 +192,7 @@ class PlayerdataController extends Controller {
                         return $aval - $bval;
                     });
                 }
+                */
 
                 $pagedata['mmr'] = $mmrs;
 

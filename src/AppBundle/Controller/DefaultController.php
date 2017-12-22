@@ -416,13 +416,14 @@ class DefaultController extends Controller
      * @Route("/rankings", name="rankings")
      */
     public function rankingsAction() {
-        HotstatusPipeline::filter_generate_season();
+        /*HotstatusPipeline::filter_generate_season();
 
         return $this->render('default/rankings.html.twig', [
             "filter_regions" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_REGION],
             "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
             "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
-        ]);
+        ]);*/
+        return $this->redirectToRoute("news");
     }
 
     /**
