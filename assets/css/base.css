@@ -2687,3 +2687,17 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     color: #44515a;
     cursor: pointer;
 }
+
+.headsup-announcement {
+    background-color: #240841;
+    border: 2px;
+    border-color: #41416e;
+    border-style: solid;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    color: #FFFFFF;
+    font-size: 14px;
+    position: relative;
+    cursor: default;
+}

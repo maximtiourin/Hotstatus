@@ -37,6 +37,11 @@
             <div class="col-12 col-xl-8">
                 {% embed ':snippets:players/playerloader.html.twig' %}
                     {% block javascripts %}{% endblock %}
+                    {% block announcement %}
+                        <div class="headsup-announcement">
+                            Service Announcement: Hotstatus is currently migrating to a new database and cloud provider, recently uploaded replays will not be processed until after migration is complete.
+                        </div>
+                    {% endblock %}
                     {% block player_tab_index %}
                         {% include ':snippets:players/player_tab_index.html.twig' %}
                     {% endblock %}
