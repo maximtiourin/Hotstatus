@@ -393,6 +393,9 @@ HeroLoader.data = {
 
                     talentField += self.generateFieldTalentImage(talent.name, talent.desc_simple, talent.image);
                 }
+                else {
+                    talentField += self.generateFieldTalentImage(talentNameInternal, "Talent no longer exists...", "storm_ui_icon_monk_trait1");
+                }
             }
 
             let pickrateField = '<span class="hl-row-height">' + pickrate + '</span>';
