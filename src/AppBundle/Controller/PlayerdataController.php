@@ -29,8 +29,6 @@ class PlayerdataController extends Controller {
     const TALENT_BUILD_WINRATE_MIN_OFFSET = 2.5; //How much to subtract from the min winrate for a talent build to determine percentOnRange calculations, used to normalize ranges.
     const TALENT_BUILD_POPULARITY_MIN_OFFSET = .1; //How much to subtract from the min popularity for a talent build to determine percentOnRange calcs, used to normalize range
 
-    const IGNORE_SEASONS_FOR_MMR_BUG = ['2017 Season 3'];
-
     /**
      * Returns the relevant player data for a player necessary to build a player page
      *
@@ -125,13 +123,13 @@ class PlayerdataController extends Controller {
                 //Prepare Statements
                 $t_players_mmr = HotstatusPipeline::$table_pointers['players_mmr'];
 
-                /*$db->prepare("GetMMR",
+                $db->prepare("GetMMRForPlayer",
                     "SELECT `rating`, `gameType` FROM `$t_players_mmr` WHERE `id` = ? AND `region` = ? AND `season` = ? $querySql");
-                $db->bind("GetMMR", "iis", $r_player_id, $r_region, $r_season);
+                $db->bind("GetMMRForPlayer", "iis", $r_player_id, $r_region, $r_season);
 
                 $r_player_id = $player;
                 $r_region = $region;
-                $r_season = $querySeason;*/
+                $r_season = $querySeason;
 
                 /*
                  * Collect playerdata
@@ -142,19 +140,17 @@ class PlayerdataController extends Controller {
                  */
                 $mmrs = [];
 
-                //Ignore any ranks from bugged seasons
-                /*
-                if (!in_array($querySeason, self::IGNORE_SEASONS_FOR_MMR_BUG, true)) {
-                    $mmrresult = $db->execute("GetMMR");
-                    $mmrrows = $db->countResultRows($mmrresult);
-                    while ($row = $db->fetchArray($mmrresult)) {
+                $MMRResult = $db->execute("GetMMRForPlayer");
+                $MMRResultRows = $db->countResultRows($MMRResult);
+                if ($MMRResultRows > 0) {
+                    while ($row = $db->fetchArray($MMRResult)) {
                         $mmr = [];
 
-                        $mmr['gameType'] = $row['gameType'];
+                        $mmr['gameType'] = strval($row['gameType']);
                         $mmr['gameType_image'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$mmr['gameType']]['name_sort'];
 
                         $rating = $row['rating'];
-                        $rating = (is_numeric($rating)) ? ($rating) : (0);
+                        $rating = ($rating !== "?") ? (intval($rating)) : (0);
 
                         $mmr['rating'] = $rating;
                         $mmr['rank'] = HotstatusPipeline::getRankNameForPlayerRating($rating, $querySeason);
@@ -162,11 +158,12 @@ class PlayerdataController extends Controller {
 
                         $mmrs[] = $mmr;
                     }
+                }
 
-                    $db->freeResult($mmrresult);
+                $db->freeResult($MMRResult);
 
-
-                    //Sort mmr
+                //Sort mmr
+                if (count($mmrs) > 0) {
                     usort($mmrs, function ($a, $b) {
                         $mmrSortValue = function ($gameType) {
                             if ($gameType === "Hero League") {
@@ -192,7 +189,6 @@ class PlayerdataController extends Controller {
                         return $aval - $bval;
                     });
                 }
-                */
 
                 $pagedata['mmr'] = $mmrs;
 
@@ -1248,9 +1244,16 @@ class PlayerdataController extends Controller {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 //Prepare Statements
+                $t_matches = HotstatusPipeline::$table_pointers['matches'];
+                $t_matches_mmr = HotstatusPipeline::$table_pointers['matches_mmr'];
+
                 $db->prepare("GetMatch",
-                    "SELECT `type`, `date`, `region`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `matches` WHERE `id` = ? LIMIT 1");
+                    "SELECT `type`, `date`, `region`, `winner`, `players`, `bans`, `team_level`, `mmr` FROM `$t_matches` WHERE `id` = ? LIMIT 1");
                 $db->bind("GetMatch", "i", $r_match_id);
+
+                $db->prepare("GetMatchMMR",
+                    "SELECT `players`, `teams` FROM `$t_matches_mmr` WHERE `id` = ? LIMIT 1");
+                $db->bind("GetMatchMMR", "i", $r_match_id);
 
                 $db->prepare("GetTalentsForHero",
                     "SELECT `name`, `name_internal`, `desc_simple`, `image` FROM `herodata_talents` WHERE `hero` = ?");
@@ -1315,203 +1318,235 @@ class PlayerdataController extends Controller {
                 /*
                  * Match
                  */
+                $players_mmr = [];
+                $teams_mmr = [];
+
+                $haveMatchMMR = false;
+                $matchMMRResult = $db->execute("GetMatchMMR");
+                $matchMMRResultRows = $db->countResultRows($matchMMRResult);
+                if ($matchMMRResultRows > 0) {
+                    $mmrRow = $db->fetchArray($matchMMRResult);
+
+                    $players_mmr = json_decode($mmrRow['players'], true);
+                    $teams_mmr = json_decode($mmrRow['teams'], true);
+
+                    $haveMatchMMR = true;
+                }
+
+
                 $match = [];
                 $matchResult = $db->execute("GetMatch");
-                while ($row = $db->fetchArray($matchResult)) {
-                    $arr_players = json_decode($row['players'], true);
-                    $arr_team_level = json_decode($row['team_level'], true);
-                    $arr_bans = json_decode($row['bans'], true);
-                    $arr_mmr = json_decode($row['mmr'], true);
+                $matchResultRows = $db->countResultRows($matchResult);
+                if ($matchResultRows > 0) {
+                    while ($row = $db->fetchArray($matchResult)) {
+                        $arr_players = json_decode($row['players'], true);
+                        $arr_team_level = json_decode($row['team_level'], true);
+                        $arr_bans = json_decode($row['bans'], true);
 
-                    $season = HotstatusPipeline::getSeasonStringForDateTime($row['date']);
-
-                    $match['region'] = $row['region'];
-                    $match['winner'] = $row['winner'];
-                    $match['quality'] = $arr_mmr['quality'];
-
-                    $mtype = $row['type'];
-                    $match['hasBans'] = ($mtype === "Hero League" || $mtype === "Team League" || $mtype === "Unranked Draft");
-
-                    //Min/Max Stats
-                    $match['stats'] = [
-                        "hero_damage" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                        "siege_damage" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                        "merc_camps" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                        "healing" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                        "damage_taken" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                        "exp_contrib" => [
-                            "max" => PHP_INT_MIN,
-                        ],
-                    ];
-
-
-                    //Teams
-                    $match['teams'] = [];
-                    for ($t = 0; $t <= 1; $t++) {
-                        $team = [];
-
-                        //In-depth stats disabled for recentmatches fetch
-                        $team['color'] = ($t == 0) ? ("blue") : ("red");
-
-                        //Team level
-                        $team['level'] = $arr_team_level[$t];
-
-                        //Bans
-                        $team['bans'] = [];
-                        $bans = $arr_bans[$t];
-                        for ($b = 0; $b < count($bans); $b++) {
-                            $ban = HotstatusPipeline::filter_getHeroNameFromHeroAttribute($bans[$b]);
-
-                            if ($ban !== HotstatusPipeline::UNKNOWN) {
-                                $team['bans'][] = [
-                                    "name" => $ban,
-                                    "image" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$ban]['image_hero'],
-                                ];
-                            }
+                        if ($haveMatchMMR) {
+                            $arr_mmr = $teams_mmr;
+                        }
+                        else {
+                            $arr_mmr = json_decode($row['mmr'], true);
                         }
 
-                        //MMR
-                        $m_mmr = $arr_mmr["$t"];
-                        $mmr = [];
+                        $season = HotstatusPipeline::getSeasonStringForDateTime($row['date']);
 
-                        $mmr['old'] = $m_mmr['old'];
-                        $mmr['new'] = $m_mmr['new'];
+                        $match['region'] = $row['region'];
+                        $match['winner'] = $row['winner'];
+                        $match['quality'] = $arr_mmr['quality'];
 
-                        $team['mmr'] = $mmr;
+                        $mtype = $row['type'];
+                        $match['hasBans'] = ($mtype === "Hero League" || $mtype === "Team League" || $mtype === "Unranked Draft");
 
-                        //Players
-                        $players = [];
+                        //Min/Max Stats
+                        $match['stats'] = [
+                            "hero_damage" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                            "siege_damage" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                            "merc_camps" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                            "healing" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                            "damage_taken" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                            "exp_contrib" => [
+                                "max" => PHP_INT_MIN,
+                            ],
+                        ];
 
-                        foreach ($arr_players as $mplayer) {
-                            if ($mplayer['team'] == $t) {
-                                $p = [];
 
-                                //Set relevant player info
-                                $p['id'] = $mplayer['id'];
-                                $p['image_hero'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'];
-                                $p['name'] = $mplayer['name'];
-                                $p['hero'] = $mplayer['hero'];
-                                $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
+                        //Teams
+                        $match['teams'] = [];
+                        for ($t = 0; $t <= 1; $t++) {
+                            $team = [];
 
-                                //Get party info
-                                $party = 0;
-                                if (count($mplayer['party']) > 0) {
-                                    $party = $mplayer['party'][0]['party_id'];
-                                }
-                                $p['party'] = $party;
+                            //In-depth stats disabled for recentmatches fetch
+                            $team['color'] = ($t == 0) ? ("blue") : ("red");
 
-                                //Stats
-                                $mstats = $mplayer['stats'];
+                            //Team level
+                            $team['level'] = $arr_team_level[$t];
 
-                                $mp_kda = $mstats['kills'] + $mstats['assists'];
-                                if ($mstats['deaths'] > 0) {
-                                    $mp_kda = round(($mp_kda / ($mstats['deaths'] * 1.00)), 2);
-                                    $mp_kda_raw = $mp_kda;
-                                    $mp_kda = HotstatusResponse::formatNumber($mp_kda, 2);
-                                }
-                                else {
-                                    $mp_kda = "Perfect";
-                                    $mp_kda_raw = 999999999;
-                                }
+                            //Bans
+                            $team['bans'] = [];
+                            $bans = $arr_bans[$t];
+                            for ($b = 0; $b < count($bans); $b++) {
+                                $ban = HotstatusPipeline::filter_getHeroNameFromHeroAttribute($bans[$b]);
 
-                                $p['stats'] = [
-                                    "kills" => $mstats['kills'],
-                                    "deaths" => $mstats['deaths'],
-                                    "assists" => $mstats['assists'],
-                                    "kda_raw" => $mp_kda_raw,
-                                    "kda" => $mp_kda,
-                                    "healing_raw" => $mstats['healing'],
-                                    "healing" => HotstatusResponse::formatNumber($mstats['healing']),
-                                    "damage_taken_raw" => $mstats['damage_taken'],
-                                    "damage_taken" => HotstatusResponse::formatNumber($mstats['damage_taken']),
-                                    "merc_camps_raw" => $mstats['merc_camps'],
-                                    "merc_camps" => HotstatusResponse::formatNumber($mstats['merc_camps']),
-                                    "exp_contrib_raw" => $mstats['exp_contrib'],
-                                    "exp_contrib" => HotstatusResponse::formatNumber($mstats['exp_contrib']),
-                                    "hero_damage_raw" => $mstats['hero_damage'],
-                                    "hero_damage" => HotstatusResponse::formatNumber($mstats['hero_damage']),
-                                    "siege_damage_raw" => $mstats['siege_damage'],
-                                    "siege_damage" => HotstatusResponse::formatNumber($mstats['siege_damage']),
-                                ];
-
-                                //Maintain min/max stats
-                                foreach ($match['stats'] as $statkey => &$statobj) {
-                                    $max = &$statobj['max'];
-                                    $pstat = $p['stats'][$statkey . '_raw'];
-
-                                    if ($max < $pstat) $max = $pstat;
-                                }
-
-                                //Additional
-                                $p['hero_level'] = $mplayer['hero_level'];
-
-                                //Mmr
-                                $mmr_new = (is_numeric($mplayer['mmr']['new']['rating'])) ? ($mplayer['mmr']['new']['rating']) : (0);
-                                $mmr_old = (is_numeric($mplayer['mmr']['old']['rating'])) ? ($mplayer['mmr']['old']['rating']) : (0);
-                                $p['mmr'] = [
-                                    "delta" => $mmr_new - $mmr_old,
-                                    "rank" => HotstatusPipeline::getRankNameForPlayerRating($mplayer['mmr']['old']['rating'], $season),
-                                    "tier" => HotstatusPipeline::getRankTierForPlayerRating($mplayer['mmr']['old']['rating'], $season),
-                                ];
-
-                                //Medal
-                                $p['medal'] = $processMedal($mstats['medals']);
-
-                                //Talents
-                                $r_hero = $mplayer['hero'];
-
-                                $talentMap = [];
-                                foreach ($mplayer['talents'] as $t_name_internal) {
-                                    $talentMap[$t_name_internal] = [
-                                        "name" => $t_name_internal,
-                                        "desc_simple" => "Talent no longer exists...",
-                                        "image" => 'storm_ui_icon_monk_trait1',
+                                if ($ban !== HotstatusPipeline::UNKNOWN) {
+                                    $team['bans'][] = [
+                                        "name" => $ban,
+                                        "image" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$ban]['image_hero'],
                                     ];
                                 }
+                            }
 
-                                $talentsResult = $db->execute("GetTalentsForHero");
-                                while ($trow = $db->fetchArray($talentsResult)) {
-                                    if (key_exists($trow['name_internal'], $talentMap)) {
-                                        $talentMap[$trow['name_internal']] = [
-                                            "name" => $trow['name'],
-                                            "desc_simple" => $trow['desc_simple'],
-                                            "image" => $trow['image'],
+                            //MMR
+                            $m_mmr = $arr_mmr["$t"];
+                            $mmr = [];
+
+                            $mmr['old'] = $m_mmr['old'];
+                            $mmr['new'] = $m_mmr['new'];
+
+                            $team['mmr'] = $mmr;
+
+                            //Players
+                            $players = [];
+
+                            foreach ($arr_players as $mplayer) {
+                                if ($mplayer['team'] == $t) {
+                                    $p = [];
+
+                                    //Set relevant player info
+                                    $p['id'] = $mplayer['id'];
+                                    $p['image_hero'] = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$mplayer['hero']]['image_hero'];
+                                    $p['name'] = $mplayer['name'];
+                                    $p['hero'] = $mplayer['hero'];
+                                    $p['silenced'] = ($mplayer['silenced'] === 0) ? (false) : (true);
+
+                                    //Get party info
+                                    $party = 0;
+                                    if (count($mplayer['party']) > 0) {
+                                        $party = $mplayer['party'][0]['party_id'];
+                                    }
+                                    $p['party'] = $party;
+
+                                    //Stats
+                                    $mstats = $mplayer['stats'];
+
+                                    $mp_kda = $mstats['kills'] + $mstats['assists'];
+                                    if ($mstats['deaths'] > 0) {
+                                        $mp_kda = round(($mp_kda / ($mstats['deaths'] * 1.00)), 2);
+                                        $mp_kda_raw = $mp_kda;
+                                        $mp_kda = HotstatusResponse::formatNumber($mp_kda, 2);
+                                    }
+                                    else {
+                                        $mp_kda = "Perfect";
+                                        $mp_kda_raw = 999999999;
+                                    }
+
+                                    $p['stats'] = [
+                                        "kills" => $mstats['kills'],
+                                        "deaths" => $mstats['deaths'],
+                                        "assists" => $mstats['assists'],
+                                        "kda_raw" => $mp_kda_raw,
+                                        "kda" => $mp_kda,
+                                        "healing_raw" => $mstats['healing'],
+                                        "healing" => HotstatusResponse::formatNumber($mstats['healing']),
+                                        "damage_taken_raw" => $mstats['damage_taken'],
+                                        "damage_taken" => HotstatusResponse::formatNumber($mstats['damage_taken']),
+                                        "merc_camps_raw" => $mstats['merc_camps'],
+                                        "merc_camps" => HotstatusResponse::formatNumber($mstats['merc_camps']),
+                                        "exp_contrib_raw" => $mstats['exp_contrib'],
+                                        "exp_contrib" => HotstatusResponse::formatNumber($mstats['exp_contrib']),
+                                        "hero_damage_raw" => $mstats['hero_damage'],
+                                        "hero_damage" => HotstatusResponse::formatNumber($mstats['hero_damage']),
+                                        "siege_damage_raw" => $mstats['siege_damage'],
+                                        "siege_damage" => HotstatusResponse::formatNumber($mstats['siege_damage']),
+                                    ];
+
+                                    //Maintain min/max stats
+                                    foreach ($match['stats'] as $statkey => &$statobj) {
+                                        $max = &$statobj['max'];
+                                        $pstat = $p['stats'][$statkey . '_raw'];
+
+                                        if ($max < $pstat) $max = $pstat;
+                                    }
+
+                                    //Additional
+                                    $p['hero_level'] = $mplayer['hero_level'];
+
+                                    //Mmr
+                                    if ($haveMatchMMR) {
+                                        $mmrPlayer = $players_mmr[$mplayer['id']];
+                                    }
+                                    else {
+                                        $mmrPlayer = $mplayer['mmr'];
+                                    }
+
+                                    $mmr_new = (is_numeric($mmrPlayer['new']['rating'])) ? ($mmrPlayer['new']['rating']) : (0);
+                                    $mmr_old = (is_numeric($mmrPlayer['old']['rating'])) ? ($mmrPlayer['old']['rating']) : (0);
+                                    $p['mmr'] = [
+                                        "delta" => $mmr_new - $mmr_old,
+                                        "rank" => HotstatusPipeline::getRankNameForPlayerRating($mmrPlayer['old']['rating'], $season),
+                                        "tier" => HotstatusPipeline::getRankTierForPlayerRating($mmrPlayer['old']['rating'], $season),
+                                    ];
+
+                                    //Medal
+                                    $p['medal'] = $processMedal($mstats['medals']);
+
+                                    //Talents
+                                    $r_hero = $mplayer['hero'];
+
+                                    $talentMap = [];
+                                    foreach ($mplayer['talents'] as $t_name_internal) {
+                                        $talentMap[$t_name_internal] = [
+                                            "name" => $t_name_internal,
+                                            "desc_simple" => "Talent no longer exists...",
+                                            "image" => 'storm_ui_icon_monk_trait1',
                                         ];
                                     }
+
+                                    $talentsResult = $db->execute("GetTalentsForHero");
+                                    while ($trow = $db->fetchArray($talentsResult)) {
+                                        if (key_exists($trow['name_internal'], $talentMap)) {
+                                            $talentMap[$trow['name_internal']] = [
+                                                "name" => $trow['name'],
+                                                "desc_simple" => $trow['desc_simple'],
+                                                "image" => $trow['image'],
+                                            ];
+                                        }
+                                    }
+                                    $db->freeResult($talentsResult);
+
+                                    //Set talent arr
+                                    $talentArr = [];
+                                    foreach ($talentMap as $name_internal => $talent) {
+                                        $talentArr[] = [
+                                            "name" => $talent['name'],
+                                            "desc_simple" => $talent['desc_simple'],
+                                            "image" => $talent['image'],
+                                        ];
+                                    }
+
+                                    $p['talents'] = $talentArr;
+
+                                    $players[] = $p;
                                 }
-                                $db->freeResult($talentsResult);
-
-                                //Set talent arr
-                                $talentArr = [];
-                                foreach ($talentMap as $name_internal => $talent) {
-                                    $talentArr[] = [
-                                        "name" => $talent['name'],
-                                        "desc_simple" => $talent['desc_simple'],
-                                        "image" => $talent['image'],
-                                    ];
-                                }
-
-                                $p['talents'] = $talentArr;
-
-                                $players[] = $p;
                             }
+
+                            $team['players'] = $players;
+
+
+                            //Set team
+                            $match['teams'][$t] = $team;
                         }
-
-                        $team['players'] = $players;
-
-
-                        //Set team
-                        $match['teams'][$t] = $team;
                     }
                 }
 
