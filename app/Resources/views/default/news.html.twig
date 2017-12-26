@@ -38,11 +38,22 @@
                         Hotstat.us is a web application with which you can view Heroes of the Storm statistics parsed from player-submitted replay files.
                         <br><br>
                         View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero and map statistics.
-                        <br><br>
+                        <hr/>
                         Check back here in the future for any news regarding updates to the site (a blog format is in the works)!
+                        <hr/>
+                        <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,060,000</h5></div> unique players since September 2017!
                         <br><br>
-                        Over <div class="d-inline-block"><h5>1,300,000</h5></div> replays have been processed for <div class="d-inline-block"><h5>1,060,000</h5></div> unique players since September 2017!
-                        <br><br>
+                        {% if queuedReplays_raw > 0 %}<div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
+                        <hr/>
+                        If you find Hotstat.us useful, please consider disabling AdBlock or supporting development through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!
+                        <hr/>
+                        <h5>News (2017-12-26):</h5>
+                        <ul>
+                            <li>A lot of behind the scenes work has been done with the cloud infrastructure in order to reduce costs while aiming to deliver the same speed for requests.
+                            <li>Migrated cache generation workers to Google Cloud to reduce data fees.</li>
+                            <li>Switched to using fixed replay processing rates. (Temporary)</li>
+                            <li>Added replay processed and queued counters displayed on news page to let people know when there is a backlog of replays to process. Queued count is updated every minute.</li>
+                        </ul>
                         <h5>News (2017-12-23):</h5>
                         <ul>
                             <li>Rankings have been reprocessed, rank displays have been re-enabled and will continue to be adjusted.</li>

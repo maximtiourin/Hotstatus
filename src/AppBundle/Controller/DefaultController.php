@@ -7,6 +7,7 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 use Fizzik\HotstatusCache;
 use Fizzik\HotstatusPipeline;
+use Fizzik\HotstatusResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -26,7 +27,47 @@ class DefaultController extends Controller
      * @Route("/news", name="news")
      */
     public function newsAction() {
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Try to get Mysql value
+        $db = new MySqlDatabase();
+
+        $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+        $queuedReplays = 0;
+        $processedReplays = 0;
+
+        if ($connected_mysql !== FALSE) {
+            $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+            //Prepare Statement
+            $db->prepare("GetAnalytics",
+                "SELECT `val_int` AS `value` FROM `pipeline_analytics` WHERE `key_name` = ? LIMIT 1");
+            $db->bind("GetAnalytics", "s", $r_key_name);
+
+            $r_key_name = "replays_queued_total";
+            $result = $db->execute("GetAnalytics");
+            while ($row = $db->fetchArray($result)) {
+                $queuedReplays = $row['value'];
+            }
+            $db->freeResult($result);
+
+            $r_key_name = "replays_processed_total";
+            $result = $db->execute("GetAnalytics");
+            while ($row = $db->fetchArray($result)) {
+                $processedReplays = $row['value'];
+            }
+            $db->freeResult($result);
+
+            //Close connection and set valid response
+            $db->close();
+        }
+
         return $this->render('default/news.html.twig', [
+            "queuedReplays" => HotstatusResponse::formatNumber($queuedReplays),
+            "queuedReplays_raw" => $queuedReplays,
+            "processedReplays" => HotstatusResponse::formatNumber($processedReplays),
         ]);
     }
 
