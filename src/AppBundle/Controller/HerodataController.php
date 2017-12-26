@@ -129,7 +129,7 @@ class HerodataController extends Controller {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 //Build Response
-                GetPageDataHeroAction::execute($payload, $db, $connected_mysql, $redis, $connected_redis, $pagedata);
+                GetPageDataHeroAction::execute($payload, $db, $connected_mysql, $pagedata);
 
                 //Close connection and set valid response
                 $db->close();
