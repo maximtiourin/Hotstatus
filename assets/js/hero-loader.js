@@ -681,18 +681,29 @@ HeroLoader.data = {
                 '<canvas id="hl-graph-matchlength-winrate-chart"></canvas></div></div>');
 
             //Create chart
+            let keymap = [
+                "0-10",
+                "11-15",
+                "16-20",
+                "21-25",
+                "26-30",
+                "31+"
+            ];
+
+            let ckeys = [];
             let cwinrates = [];
             let cavgwinrate = [];
-            for (let wkey in winrates) {
+            for (let wkey of keymap) {
                 if (winrates.hasOwnProperty(wkey)) {
                     let winrate = winrates[wkey];
+                    ckeys.push(wkey);
                     cwinrates.push(winrate);
                     cavgwinrate.push(avgWinrate);
                 }
             }
 
             let data = {
-                labels: Object.keys(winrates),
+                labels: ckeys,
                 datasets: [
                     {
                         label: "Base Winrate",
@@ -776,18 +787,27 @@ HeroLoader.data = {
                 '<canvas id="hl-graph-herolevel-winrate-chart"></canvas></div></div>');
 
             //Create chart
+            let keymap = [
+                "1-5",
+                "6-10",
+                "11-15",
+                "16+"
+            ];
+
+            let ckeys = [];
             let cwinrates = [];
             let cavgwinrate = [];
-            for (let wkey in winrates) {
+            for (let wkey of keymap) {
                 if (winrates.hasOwnProperty(wkey)) {
                     let winrate = winrates[wkey];
+                    ckeys.push(wkey);
                     cwinrates.push(winrate);
                     cavgwinrate.push(avgWinrate);
                 }
             }
 
             let data = {
-                labels: Object.keys(winrates),
+                labels: ckeys,
                 datasets: [
                     {
                         label: "Base Winrate",
