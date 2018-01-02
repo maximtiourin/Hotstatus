@@ -35,18 +35,30 @@
                             Service Announcement: Hotstatus is currently migrating to a new database and cloud provider, recently uploaded replays will not be processed until after migration is complete.
                         </div>#}
                     <div class="hotstatus-subcontainer contact-container">
-                        Hotstat.us is a web application with which you can view Heroes of the Storm statistics parsed from player-submitted replay files.
+                        <b>Hotstat.us</b> is a web application with which you can view Heroes of the Storm statistics parsed from player-submitted replay files.
                         <br><br>
                         View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero and map statistics.
                         <hr/>
-                        Check back here in the future for any news regarding updates to the site (a blog format is in the works)!
+                        Check back here in the future for any news regarding updates to the site!
                         <hr/>
                         <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,060,000</h5></div> unique players since September 2017!
-                        <br><br>
-                        {% if queuedReplays_raw > 0 %}<div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
+                        {% if queuedReplays_raw > 0 %}<br><br><div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
                         <hr/>
-                        If you find Hotstat.us useful, please consider disabling AdBlock or supporting development through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!
+                        If you find Hotstat.us useful, you can directly support it by sharing it with your friends, disabling Ad-Block, or donating through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!
                         <hr/>
+                        <h5>In the Works:</h5>
+                        <ul>
+                            <li>User accounts and Blizzard OAuth authentication (to allow for claiming of player profiles).</li>
+                            <li>Blog Format for news page.</li>
+                        </ul>
+                        <hr/>
+                        <h5>News (2018-01-01):</h5>
+                        <ul>
+                            <li>Happy New Year!</li>
+                            <li>Replay processing workers have been set to auto-scale again as needed (Replays should be processed much faster during spikes in uploads).</li>
+                            <li>Fixed a tiny visual bug in the Hero Page Stat Matrix graph, where the order of metrics was displaying incorrectly.</li>
+                            <li>2018 Season 1 will remain the Hotstat.us identification for the current season until Blizzard announces the status of 2017 Season 4.</li>
+                        </ul>
                         <h5>News (2017-12-26):</h5>
                         <ul>
                             <li>A lot of behind the scenes work has been done with the cloud infrastructure in order to reduce costs while aiming to deliver the same speed for requests.
@@ -61,6 +73,16 @@
                         <h5>News (2017-12-22):</h5>
                         <ul>
                             <li>All rankings are disabled while new reprocessing technique is worked on.</li>
+                        </ul>
+                        <h5>News (2017-12-21):</h5>
+                        <ul>
+                            <li>Updated date filter to include new 2.29.5 Balance Patch, cycling out oldest 2.27.3 Kel'thuzad patch.</li>
+                            <li>Added social media integration to allow for quick and easy sharing of specific hero and player pages! Share Hotstat.us with your friends!</li>
+                        </ul>
+                        <h5>News (2017-12-20):</h5>
+                        <ul>
+                            <li>Rank displays for 2017 Season 3 had to be temporarily disabled due to a player reprocessing bug.</li>
+                            <li>Implemented Winrate Edge % to Hero Page Matchups.</li>
                         </ul>
                     </div>
                 </div>

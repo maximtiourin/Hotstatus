@@ -871,9 +871,21 @@ HeroLoader.data = {
                 '<canvas id="hl-graph-statmatrix-chart"></canvas></div></div>');
 
             //Get matrix keys
+            let matrixSortMap = [
+                "Healer",
+                "Safety",
+                "Demolition",
+                "Damage",
+                "Tank",
+                "Waveclear",
+                "Exp Contrib",
+                "Merc Camps"
+            ];
+
             let matrixKeys = [];
             let matrixVals = [];
-            for (let smkey in heroStatMatrix) {
+
+            for (let smkey of matrixSortMap) {
                 if (heroStatMatrix.hasOwnProperty(smkey)) {
                     matrixKeys.push(smkey);
                     matrixVals.push(heroStatMatrix[smkey]);
