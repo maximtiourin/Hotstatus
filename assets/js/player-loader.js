@@ -981,7 +981,7 @@ PlayerLoader.data = {
                 let sel = $('#pl-rm-cp-loadmorepane');
 
                 if (self.internal.matchLoaderGenerated) {
-                    let html = '<div style="cursor:pointer;" data-toggle="tooltip" class="cleartip d-inline-block" title="Load More Matches..."><i class="fa fa-chain fa-2x" aria-hidden="true"></i></div>';
+                    let html = '<div style="cursor:pointer;" class="d-inline-block" title="Load More Matches..."><i class="fa fa-chain fa-2x" aria-hidden="true"></i></div>';
 
                     sel.html(html);
 
@@ -1002,8 +1002,6 @@ PlayerLoader.data = {
                     }
                 }
                 else {
-                    $('.tooltip').tooltip('hide');
-
                     sel.html('');
 
                     sel.off('click');
@@ -1066,10 +1064,18 @@ PlayerLoader.data = {
                     let sel = $('#pl-rm-cp-compactpane-inner');
 
                     if (internal.compactView) {
+                        $('.recentmatch-container-compact-collapsable').hide();
+                        $('.recentmatch-container-collapsable').show();
+                        $(window).trigger('hotstatus.compacttoggle');
+
                         sel.html('<i class="fa fa-align-justify fa-2x" aria-hidden="true"></i>');
                         internal.compactView = false;
                     }
                     else {
+                        $('.recentmatch-container-compact-collapsable').show();
+                        $('.recentmatch-container-collapsable').hide();
+                        $(window).trigger('hotstatus.compacttoggle');
+
                         sel.html('<i class="fa fa-th-list fa-2x" aria-hidden="true"></i>');
                         internal.compactView = true;
                     }
@@ -1315,7 +1321,7 @@ PlayerLoader.data = {
                 t++;
             }
 
-            let html = '<div id="recentmatch-container-'+ match.id +'"><div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
+            let html = '<div id="recentmatch-container-'+ match.id +'" class="recentmatch-container-collapsable"><div id="recentmatch-simplewidget-' + match.id + '" class="recentmatch-simplewidget">' +
                 '<div id="recentmatch-simplewidget-outline-container-' + match.id + '" class="recentmatch-simplewidget-outline-container">' + //Hide inner contents container
                 '<div class="recentmatch-simplewidget-leftpane ' + self.color_MatchWonLost(match.player.won) + '" style="background-image: url(' + image_bpath + match.map_image +'.png);">' +
                 '<div class="rm-sw-lp-gameType"><span class="rm-sw-lp-gameType-text" data-toggle="tooltip" data-html="true" title="' + match.map + '">' + match.gameType + '</span></div>' +
@@ -1346,6 +1352,11 @@ PlayerLoader.data = {
                 '</div></div></div>';
 
             $('#pl-recentmatch-container-' + match.id).append(html);
+
+            //Hide base on compact state
+            if (self.internal.compactView) {
+                $('#recentmatch-container-'+ match.id).hide();
+            }
 
             //Generate hidden compact view widget
             self.generateCompactViewMatchWidget(match);
@@ -1435,7 +1446,7 @@ PlayerLoader.data = {
             //Hero
             let hero = match.player.hero;
 
-            let html = '<div id="recentmatch-container-compact-'+ match.id +'"><div id="recentmatch-simplewidget-compact-' + match.id + '" class="recentmatch-simplewidget-compact">' +
+            let html = '<div id="recentmatch-container-compact-'+ match.id +'" class="recentmatch-container-compact-collapsable"><div id="recentmatch-simplewidget-compact-' + match.id + '" class="recentmatch-simplewidget-compact">' +
                 '<div id="recentmatch-simplewidget-outline-container-compact-' + match.id + '" class="recentmatch-simplewidget-outline-container-compact">' + //Hide inner contents container
                 //Victory Pane
                 '<div class="rm-sw-compact-victorypane">' +
@@ -1467,10 +1478,12 @@ PlayerLoader.data = {
                 '</div>' +
                 '</div></div></div>';
 
-            $('#recentmatch-container-' + match.id).append(html);
+            $('#pl-recentmatch-container-' + match.id).append(html);
 
-            //Hide by default
-            //$('#recentmatch-simplewidget-outline-container-compact-' + match.id).hide();
+            //Hide base on compact state
+            if (!self.internal.compactView) {
+                $('#recentmatch-container-compact-'+ match.id).hide();
+            }
 
             //Create click listeners for inspect pane
             $('#recentmatch-simplewidget-inspect-compact-' + match.id).click(function() {
@@ -1529,7 +1542,7 @@ PlayerLoader.data = {
                     ajax.internal.matchloading = true;
 
                     //Generate full match pane
-                    $('#recentmatch-container-' + matchid).append('<div id="recentmatch-fullmatch-' + matchid + '" class="recentmatch-fullmatch"></div>');
+                    $('#pl-recentmatch-container-' + matchid).append('<div id="recentmatch-fullmatch-' + matchid + '" class="recentmatch-fullmatch"></div>');
 
                     //Load data
                     ajax.loadMatch(matchid);
