@@ -414,6 +414,9 @@ PlayerLoader.ajax.matches = {
                  * Process Matches
                  */
                 if (json_matches.length > 0) {
+                    //Ensure disabled default social pane
+                    $('.social-pane').hide();
+
                     //Ensure control panel
                     data_matches.generateRecentMatchesControlPanel();
 
@@ -441,6 +444,9 @@ PlayerLoader.ajax.matches = {
                 }
                 else if (self.internal.offset === 0) {
                     data_matches.generateNoMatchesMessage();
+
+                    //Ensure backup social pane
+                    $('.social-pane').show();
                 }
 
                 //Enable initial tooltips for the page (Paginated tooltips will need to be reinitialized on paginate)
@@ -457,6 +463,9 @@ PlayerLoader.ajax.matches = {
                 else {
                     data_matches.remove_matchLoader();
                 }
+
+                //Control Panel match loader
+                data_matches.generateControlPanelMatchLoader();
 
                 //Remove initial load
                 $('#pl-recentmatches-container').removeClass('initial-load');
@@ -924,6 +933,7 @@ PlayerLoader.data = {
             },
             charts: {}, //Object of all chartjs graphs related to matches
             controlPanelGenerated: false,
+            controlPanelMatchLoaderGenerated: false,
             matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
         },
         empty: function() {
@@ -948,6 +958,7 @@ PlayerLoader.data = {
             $('#pl-recentmatches-container').remove();
             //compactView: leave the setting to whatever it is currently in between filter loads
             self.internal.controlPanelGenerated = false;
+            self.internal.controlPanelMatchLoaderGenerated = false;
             self.internal.matchLoaderGenerated = false;
             self.internal.matchManifest = {};
         },
@@ -962,11 +973,56 @@ PlayerLoader.data = {
         generateNoMatchesMessage: function() {
             $('#pl-recentmatches-container').append('<div class="pl-norecentmatches">No Recent Matches Found...</div>');
         },
+        generateControlPanelMatchLoader: function() {
+            let self = PlayerLoader.data.matches;
+            let ajax = PlayerLoader.ajax.matches;
+
+            if (self.internal.controlPanelGenerated) {
+                let sel = $('#pl-rm-cp-loadmorepane');
+
+                if (self.internal.matchLoaderGenerated) {
+                    let html = '<div style="cursor:pointer;" data-toggle="tooltip" class="cleartip d-inline-block" title="Load More Matches..."><i class="fa fa-chain fa-2x" aria-hidden="true"></i></div>';
+
+                    sel.html(html);
+
+                    if (!self.internal.controlPanelMatchLoaderGenerated) {
+                        sel.click(function () {
+                            if (!ajax.internal.loading) {
+                                ajax.internal.loading = true;
+
+                                let t = $(this);
+
+                                t.html('<i class="fa fa-refresh fa-spin fa-2x fa-fw"></i>');
+
+                                PlayerLoader.ajax.matches.load();
+                            }
+                        });
+
+                        self.internal.controlPanelMatchLoaderGenerated = true;
+                    }
+                }
+                else {
+                    $('.tooltip').tooltip('hide');
+
+                    sel.html('');
+
+                    sel.off('click');
+
+                    self.internal.controlPanelMatchLoaderGenerated = false;
+                }
+            }
+        },
         generateRecentMatchesControlPanel: function() {
             let self = PlayerLoader.data.matches;
 
             if (!self.internal.controlPanelGenerated) {
                 let container = $('#pl-recentmatches-container');
+
+                //Compact Mode
+                let compact = 'fa-align-justify';
+                if (self.internal.compactView) {
+                    compact = 'fa-th-list';
+                }
 
                 let html = '<div class="pl-recentmatch-controlpanel">' +
                 //Winrate Graph
@@ -974,15 +1030,50 @@ PlayerLoader.data = {
                 '<div id="pl-rm-cp-winrate-percent"></div>' +
                 '<canvas id="pl-rm-cp-winrate-chart"></canvas>' +
                 '</div>' +
+                //Recent Matches # + Winrate longtext
                 '<div class="pl-rm-cp-winrate-longtext-container">' +
-                        'testing123' +
+                '<div id="pl-rm-cp-winrate-lt-title"></div>' +
+                '<div id="pl-rm-cp-winrate-lt-numbers"></div>' +
+                '</div>' +
+                //Social pane
+                '<div class="pl-rm-cp-socialpane">' +
+                '<div data-toggle="tooltip" class="d-inline-block social-button st-custom-button" data-network="facebook" title="Share on Facebook"><i class="fa fa-facebook-square fa-3x" aria-hidden="true"></i></div>' +
+                '<div data-toggle="tooltip" class="d-inline-block social-button st-custom-button" data-network="twitter" title="Share on Twitter"><i class="fa fa-twitter-square fa-3x" aria-hidden="true"></i></div>' +
+                '<div data-toggle="tooltip" class="d-inline-block social-button st-custom-button" data-network="reddit" title="Share on Reddit"><i class="fa fa-reddit-square fa-3x" aria-hidden="true"></i></div>' +
+                '<div data-toggle="tooltip" class="d-inline-block social-button st-custom-button" data-network="googleplus" title="Share on Google+"><i class="fa fa-google-plus-square fa-3x" aria-hidden="true"></i></div>' +
+                '</div>' +
+                //Load More pane
+                '<div id="pl-rm-cp-loadmorepane" class="pl-rm-cp-loadmorepane">' +
+                '</div>' +
+                //Compact pane
+                '<div id="pl-rm-cp-compactpane" class="pl-rm-cp-compactpane">' +
+                '<div id="pl-rm-cp-compactpane-inner" style="cursor:pointer;" data-toggle="tooltip" class="d-inline-block" title="Toggle Display Mode"><i class="fa '+ compact +' fa-2x" aria-hidden="true"></i></div>' +
                 '</div>' +
                 '</div>';
 
                 container.append(html);
 
+                //Generate share this after load
+                window.__sharethis__.initialize();
+
                 //Generate graphs
                 self.generateGraphRecentMatchesWinrate();
+
+                //Compact Pane button
+                $('#pl-rm-cp-compactpane').click(function () {
+                    let internal = PlayerLoader.data.matches.internal;
+
+                    let sel = $('#pl-rm-cp-compactpane-inner');
+
+                    if (internal.compactView) {
+                        sel.html('<i class="fa fa-align-justify fa-2x" aria-hidden="true"></i>');
+                        internal.compactView = false;
+                    }
+                    else {
+                        sel.html('<i class="fa fa-th-list fa-2x" aria-hidden="true"></i>');
+                        internal.compactView = true;
+                    }
+                });
 
                 self.internal.controlPanelGenerated = true;
             }
@@ -995,8 +1086,8 @@ PlayerLoader.data = {
                     {
                         data: [1], //Empty initial data
                         backgroundColor: [
-                            "#3be159",
                             "#cd2e2d",
+                            "#3be159",
                         ],
                         borderColor: [
                             "#1c2223",
@@ -1037,6 +1128,7 @@ PlayerLoader.data = {
 
             if (chart) {
                 //Update winrate display
+                let played = chartdata[0] + chartdata[1];
                 let wins = chartdata[0] * 1.0;
                 let losses = chartdata[1] * 1.0;
                 let winrate = 100.0;
@@ -1067,9 +1159,12 @@ PlayerLoader.data = {
                     '</div>';
 
                 $('#pl-rm-cp-winrate-percent').html(winratefield);
+                $('#pl-rm-cp-winrate-lt-title').html('Recent '+ played + ' Matches');
+                $('#pl-rm-cp-winrate-lt-numbers').html('<div class="pl-rm-cp-winrate-lt-number d-inline-block pl-recentmatch-won">'+ wins +'W</div> ' +
+                    '<div class="pl-rm-cp-winrate-lt-number d-inline-block pl-recentmatch-lost">'+ losses +'L</div>');
 
                 //Set new data
-                chart.data.datasets[0].data = chartdata;
+                chart.data.datasets[0].data = [chartdata[1], chartdata[0]]; //Flip wins/losses so that wins appear on the left side of the doughnut
 
                 //Update chart (duration: 0 = means no animation)
                 chart.update();

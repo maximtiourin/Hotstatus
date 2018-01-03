@@ -1249,12 +1249,59 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 }
 
 .pl-rm-cp-winrate-longtext-container {
-    background-color: #c9302c;
     position: absolute;
-    left: 150px;
+    left: 104px;
     top: 4px;
-    width: 78px;
+    width: 196px;
     height: 78px;
+    cursor: default;
+}
+
+#pl-rm-cp-winrate-lt-title {
+    position: relative;
+    color:#FFFFFF;
+    font-size:14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.pl-rm-cp-winrate-lt-numbers {
+    position: relative;
+    text-align: center;
+}
+
+.pl-rm-cp-winrate-lt-number {
+    font-size:36px;
+    font-weight: bold;
+}
+
+.pl-rm-cp-socialpane {
+    position: absolute;
+    left: 319px;
+    top: 4px;
+    width: 196px;
+    height: 78px;
+    line-height: 78px;
+    padding-top: 12px;
+    cursor: default;
+}
+
+.pl-rm-cp-loadmorepane {
+    position: absolute;
+    left: 675px;
+    top: 4px;
+    width: 36px;
+    height: 36px;
+    padding-top:4px;
+}
+
+.pl-rm-cp-compactpane {
+    position: absolute;
+    left: 675px;
+    top: 48px;
+    width: 36px;
+    height: 36px;
+    padding-top:4px;
 }
 
 #pl-recentmatch-matchloader {
