@@ -906,6 +906,7 @@ PlayerLoader.data = {
     },
     matches: {
         internal: {
+            compactView: false, //Whether or not the compact view is enabled for recent matches
             matchLoaderGenerated: false,
             matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
         },
@@ -1095,6 +1096,9 @@ PlayerLoader.data = {
 
             $('#pl-recentmatch-container-' + match.id).append(html);
 
+            //Generate hidden compact view widget
+            self.generateCompactViewMatchWidget(match);
+
             //Create click listeners for inspect pane
             $('#recentmatch-simplewidget-inspect-' + match.id).click(function() {
                 let t = $(this);
@@ -1124,6 +1128,32 @@ PlayerLoader.data = {
                         }
                     }
                 }
+            });
+        },
+        generateCompactViewMatchWidget: function(match) {
+            let timestamp = match.date;
+            let date = (new Date(timestamp * 1000)).toLocaleString();
+            let match_time = Hotstatus.date.getMinuteSecondTime(match.match_length);
+            let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
+            let map = match.map;
+
+            let html = '<div id="recentmatch-container-compact-'+ match.id +'"><div id="recentmatch-simplewidget-compact-' + match.id + '" class="recentmatch-simplewidget-compact">' +
+                '<div id="recentmatch-simplewidget-outline-container-compact-' + match.id + '" class="recentmatch-simplewidget-outline-container-compact">' + //Hide inner contents container
+                '<div id="recentmatch-simplewidget-inspect-compact-' + match.id + '" class="recentmatch-simplewidget-inspect-compact">' +
+                '<i class="fa fa-chevron-down" aria-hidden="true"></i>' +
+                '</div>' +
+                '</div></div></div>';
+
+            $('#recentmatch-container-' + match.id).append(html);
+
+            //Hide by default
+            //$('#recentmatch-simplewidget-outline-container-compact-' + match.id).hide();
+
+            //Create click listeners for inspect pane
+            $('#recentmatch-simplewidget-inspect-compact-' + match.id).click(function() {
+                let t = $(this);
+
+                self.generateFullMatchPane(match.id);
             });
         },
         generateFullMatchPane: function(matchid) {
