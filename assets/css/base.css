@@ -1216,6 +1216,47 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     margin: 2px 2px !important;
 }
 
+.pl-recentmatch-controlpanel {
+    position: relative;
+    width:720px;
+    height:92px;
+    margin: 0 auto;
+    background-color: #384143 !important;
+    border: 2px;
+    border-style: solid;
+    border-color: #1c2223;
+    margin-bottom: 5px;
+}
+
+.pl-rm-cp-winrate-chart-container {
+    position: absolute;
+    left: 10px;
+    top: 4px;
+    width: 78px;
+    height: 78px;
+}
+
+#pl-rm-cp-winrate-percent {
+    position: absolute;
+    left: 20px;
+    top: 30px;
+    width: 40px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+}
+
+.pl-rm-cp-winrate-longtext-container {
+    background-color: #c9302c;
+    position: absolute;
+    left: 150px;
+    top: 4px;
+    width: 78px;
+    height: 78px;
+}
+
 #pl-recentmatch-matchloader {
     position: relative;
     width:720px;
@@ -1599,17 +1640,168 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     cursor:pointer;
 }
 
+.recentmatch-simplewidget-compact {
+    position: relative;
+    width:720px;
+    height:34px;
+    margin: 0 auto;
+    color: #FFFFFF;
+    background-color: #384143 !important;
+    border: 2px;
+    border-style: solid;
+    border-color: #1c2223;
+}
+
 .recentmatch-simplewidget-inspect-compact {
     background-color: #1c2223;
     position: absolute;
     left:676px;
     top:0px;
     width: 40px;
-    height: 38px;
+    height: 30px;
     text-align: center;
-    padding-top: 25px;
+    padding-top: 6px;
     color: #38464b;
     cursor:pointer;
+}
+
+.rm-sw-compact-victorypane {
+    position: absolute;
+    left:0;
+    top:0;
+    width:72px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-vp-victory {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: default;
+    text-shadow: -1px 0 #000000,0 1px #000000,1px 0 #000000,0 -1px #000000;
+}
+
+.rm-sw-compact-gametypepane {
+    position: absolute;
+    left:72px;
+    top:0;
+    width:48px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-gtp-gameType {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: default;
+}
+
+.rm-sw-compact-gtp-gameType-hl {
+    color: #68b0c9;
+}
+
+.rm-sw-compact-gtp-gameType-tl {
+    color: #8067c9;
+}
+
+.rm-sw-compact-gtp-gameType-ud {
+    color: #8ac968;
+}
+
+.rm-sw-compact-gtp-gameType-qm {
+    color: #c95a59;
+}
+
+.rm-sw-compact-heropane {
+    position: absolute;
+    left:120px;
+    top:0;
+    width:118px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-hp-hero {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    color: #FFFFFF;
+    cursor: default;
+}
+
+.rm-sw-compact-mappane {
+    position: absolute;
+    left:238px;
+    top:0;
+    width:148px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-mp-map {
+    position: relative;
+    width: 100%;
+    margin: 2px auto;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #FFFFFF;
+    cursor: default;
+}
+
+.rm-sw-compact-matchlengthpane {
+    position: absolute;
+    left:386px;
+    top:0;
+    width:80px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-mlp-matchlength {
+    position: relative;
+    width: 100%;
+    margin: 2px auto;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #FFFFFF;
+    cursor: default;
+}
+
+.rm-sw-compact-datepane {
+    position: absolute;
+    left:466px;
+    top:0;
+    width:210px;
+    height:30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.rm-sw-compact-dp-date {
+    position: relative;
+    width: 100%;
+    margin: 2px auto;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #FFFFFF;
+    cursor: default;
 }
 
 .fullmatch-processing {

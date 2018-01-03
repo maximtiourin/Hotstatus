@@ -414,6 +414,9 @@ PlayerLoader.ajax.matches = {
                  * Process Matches
                  */
                 if (json_matches.length > 0) {
+                    //Ensure control panel
+                    data_matches.generateRecentMatchesControlPanel();
+
                     //Set new offset
                     self.internal.offset = json_offsets.matches + self.internal.limit;
 
@@ -423,6 +426,13 @@ PlayerLoader.ajax.matches = {
                             data_matches.generateMatch(match);
                         }
                     }
+
+                    //Update Control Panel graphs after match generation
+                    let graphdata_winrate = [
+                        data_matches.internal.chartdata_winrate["W"],
+                        data_matches.internal.chartdata_winrate["L"]
+                    ];
+                    data_matches.updateGraphRecentMatchesWinrate(graphdata_winrate);
 
                     //Set displayMatchLoader if we got as many matches as we asked for
                     if (json_matches.length >= self.internal.limit) {
@@ -908,12 +918,36 @@ PlayerLoader.data = {
         internal: {
             compactView: false, //Whether or not the compact view is enabled for recent matches
             matchLoaderGenerated: false,
+            chartdata_winrate: {
+                "W": 0,
+                "L": 0,
+            },
+            charts: {}, //Object of all chartjs graphs related to matches
+            controlPanelGenerated: false,
             matchManifest: {} //Keeps track of which match ids are currently being displayed, to prevent offset requests from repeating matches over large periods of time
         },
         empty: function() {
             let self = PlayerLoader.data.matches;
 
+            //Reset chartdata
+            self.internal.chartdata_winrate = {
+                "W": 0,
+                "L": 0,
+            };
+
+            //Clear charts object
+            for (let chartkey in self.internal.charts) {
+                if (self.internal.charts.hasOwnProperty(chartkey)) {
+                    let chart = self.internal.charts[chartkey];
+                    chart.destroy();
+                }
+            }
+
+            self.internal.charts = {};
+
             $('#pl-recentmatches-container').remove();
+            //compactView: leave the setting to whatever it is currently in between filter loads
+            self.internal.controlPanelGenerated = false;
             self.internal.matchLoaderGenerated = false;
             self.internal.matchManifest = {};
         },
@@ -927,6 +961,119 @@ PlayerLoader.data = {
         },
         generateNoMatchesMessage: function() {
             $('#pl-recentmatches-container').append('<div class="pl-norecentmatches">No Recent Matches Found...</div>');
+        },
+        generateRecentMatchesControlPanel: function() {
+            let self = PlayerLoader.data.matches;
+
+            if (!self.internal.controlPanelGenerated) {
+                let container = $('#pl-recentmatches-container');
+
+                let html = '<div class="pl-recentmatch-controlpanel">' +
+                //Winrate Graph
+                '<div class="pl-rm-cp-winrate-chart-container">' +
+                '<div id="pl-rm-cp-winrate-percent"></div>' +
+                '<canvas id="pl-rm-cp-winrate-chart"></canvas>' +
+                '</div>' +
+                '<div class="pl-rm-cp-winrate-longtext-container">' +
+                        'testing123' +
+                '</div>' +
+                '</div>';
+
+                container.append(html);
+
+                //Generate graphs
+                self.generateGraphRecentMatchesWinrate();
+
+                self.internal.controlPanelGenerated = true;
+            }
+        },
+        generateGraphRecentMatchesWinrate: function() {
+            let self = PlayerLoader.data.matches;
+
+            let data = {
+                datasets: [
+                    {
+                        data: [1], //Empty initial data
+                        backgroundColor: [
+                            "#3be159",
+                            "#cd2e2d",
+                        ],
+                        borderColor: [
+                            "#1c2223",
+                            "#1c2223",
+                        ],
+                        borderWidth: [
+                            1,
+                            1
+                        ],
+                    }
+                ]
+            };
+
+            let options = {
+                animation: false,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    enabled: false
+                },
+                hover: {
+                    mode: null
+                },
+            };
+
+            self.internal.charts["winrate"] = new Chart($('#pl-rm-cp-winrate-chart'), {
+                type: 'doughnut',
+                data: data,
+                options: options
+            });
+        },
+        updateGraphRecentMatchesWinrate: function(chartdata) {
+            let self = PlayerLoader.data.matches;
+
+            let chart = self.internal.charts.winrate;
+
+            if (chart) {
+                //Update winrate display
+                let wins = chartdata[0] * 1.0;
+                let losses = chartdata[1] * 1.0;
+                let winrate = 100.0;
+                let winrate_display = winrate;
+                if (losses > 0) {
+                    winrate = (wins / (wins + losses)) * 100.0;
+                    winrate_display = winrate;
+                    winrate_display = winrate_display.toFixed(0);
+                }
+
+                let goodwinrate = 'pl-th-wr-winrate';
+                if (winrate <= 49) {
+                    goodwinrate = 'pl-th-wr-winrate-bad'
+                }
+                if (winrate <= 40) {
+                    goodwinrate = 'pl-th-wr-winrate-terrible'
+                }
+                if (winrate >= 51) {
+                    goodwinrate = 'pl-th-wr-winrate-good'
+                }
+                if (winrate >= 60) {
+                    goodwinrate = 'pl-th-wr-winrate-great'
+                }
+
+                let winratefield =
+                    '<div class="'+ goodwinrate +'">' +
+                    winrate_display + '%' +
+                    '</div>';
+
+                $('#pl-rm-cp-winrate-percent').html(winratefield);
+
+                //Set new data
+                chart.data.datasets[0].data = chartdata;
+
+                //Update chart (duration: 0 = means no animation)
+                chart.update();
+            }
         },
         generateMatch: function(match) {
             //Generates all subcomponents of a match display
@@ -948,7 +1095,16 @@ PlayerLoader.data = {
                 matchPlayer: match.player.id, //Id of the match's player for whom the match is being displayed, for use with highlighting inside of fullmatch (while decoupling mainplayer)
                 partiesColors: partiesColors, //Colors to use for the party indexes
                 shown: true, //Whether or not the matchsimplewidget is expected to be shown inside viewport
+                showCompact: true, //Whether or not the compact matchsimplewidget is expected to be shown inside viewport when compact mode is on
             };
+
+            //Track winrate for graphs
+            if (match.player.won) {
+                self.internal.chartdata_winrate["W"]++;
+            }
+            else {
+                self.internal.chartdata_winrate["L"]++;
+            }
 
             //Subcomponents
             self.generateMatchWidget(match);
@@ -1107,7 +1263,7 @@ PlayerLoader.data = {
             });
 
             //Create scroll listener for hiding outside of viewport
-            $(window).on("resize scroll hotstatus.matchtoggle", function(e) {
+            $(window).on("resize scroll hotstatus.matchtoggle hotstatus.compacttoggle", function(e) {
                 let manifest = PlayerLoader.data.matches.internal.matchManifest;
 
                 if (manifest[match.id + ""]) {
@@ -1131,14 +1287,86 @@ PlayerLoader.data = {
             });
         },
         generateCompactViewMatchWidget: function(match) {
+            let self = PlayerLoader.data.matches;
+
             let timestamp = match.date;
             let date = (new Date(timestamp * 1000)).toLocaleString();
             let match_time = Hotstatus.date.getMinuteSecondTime(match.match_length);
             let victoryText = (match.player.won) ? ('<span class="pl-recentmatch-won">Victory</span>') : ('<span class="pl-recentmatch-lost">Defeat</span>');
-            let map = match.map;
+
+            //Silence
+            let silence = function(isSilenced) {
+                let r = '';
+
+                if (isSilenced) {
+                    r = 'rm-sw-link-toxic';
+                }
+                else {
+                    r = 'rm-sw-link';
+                }
+
+                return r;
+            };
+
+            let silence_image = function(isSilenced, size) {
+                let s = '';
+
+                if (isSilenced) {
+                    if (size > 0) {
+                        let path = image_bpath + 'ui/icon_toxic.png';
+                        s += '<span style="cursor: help;" data-toggle="tooltip" data-html="true" title="<span class=\'rm-sw-link-toxic\'>Silenced</span>"><img class="rm-sw-toxic" style="width:' + size + 'px;height:' + size + 'px;" src="' + path + '"></span>';
+                    }
+                }
+
+                return s;
+            };
+
+            //GameType
+            let gameType = match.gameType;
+            let gameType_display = gameType;
+            if (gameType === "Hero League") {
+                gameType_display = '<div class="rm-sw-compact-gtp-gameType rm-sw-compact-gtp-gameType-hl">HL</div>';
+            }
+            else if (gameType === "Team League") {
+                gameType_display = '<div class="rm-sw-compact-gtp-gameType rm-sw-compact-gtp-gameType-tl">TL</div>';
+            }
+            else if (gameType === "Unranked Draft") {
+                gameType_display = '<div class="rm-sw-compact-gtp-gameType rm-sw-compact-gtp-gameType-ud">UD</div>';
+            }
+            else if (gameType === "Quick Match") {
+                gameType_display = '<div class="rm-sw-compact-gtp-gameType rm-sw-compact-gtp-gameType-qm">QM</div>';
+            }
+
+            //Hero
+            let hero = match.player.hero;
 
             let html = '<div id="recentmatch-container-compact-'+ match.id +'"><div id="recentmatch-simplewidget-compact-' + match.id + '" class="recentmatch-simplewidget-compact">' +
                 '<div id="recentmatch-simplewidget-outline-container-compact-' + match.id + '" class="recentmatch-simplewidget-outline-container-compact">' + //Hide inner contents container
+                //Victory Pane
+                '<div class="rm-sw-compact-victorypane">' +
+                '<div class="rm-sw-compact-vp-victory">'+ victoryText +'</div>' +
+                '</div>' +
+                //GameType Pane
+                '<div class="rm-sw-compact-gametypepane">' +
+                gameType_display +
+                '</div>' +
+                //Hero Pane
+                '<div class="rm-sw-compact-heropane">' +
+                '<div class="rm-sw-compact-hp-hero pl-th-hp-heroname">'+silence_image(match.player.silenced, 16)+'<a class="'+silence(match.player.silenced)+'" href="' + Routing.generate("playerhero", {region: match.region, id: player_id, heroProperName: match.player.hero}) + '" target="_blank">' + match.player.hero + '</a></div>' +
+                '</div>' +
+                //Map Pane
+                '<div class="rm-sw-compact-mappane">' +
+                '<div class="rm-sw-compact-mp-map">'+ match.map +'</div>' +
+                '</div>' +
+                //Match Length Pane
+                '<div class="rm-sw-compact-matchlengthpane">' +
+                '<div class="rm-sw-compact-mlp-matchlength">'+ match_time +'</div>' +
+                '</div>' +
+                //Date Pane
+                '<div class="rm-sw-compact-datepane">' +
+                '<div class="rm-sw-compact-dp-date">'+ date +'</div>' +
+                '</div>' +
+                //Inspect
                 '<div id="recentmatch-simplewidget-inspect-compact-' + match.id + '" class="recentmatch-simplewidget-inspect-compact">' +
                 '<i class="fa fa-chevron-down" aria-hidden="true"></i>' +
                 '</div>' +
@@ -1154,6 +1382,31 @@ PlayerLoader.data = {
                 let t = $(this);
 
                 self.generateFullMatchPane(match.id);
+            });
+
+            //Create scroll listener for hiding outside of viewport
+            $(window).on("resize scroll hotstatus.matchtoggle hotstatus.compacttoggle", function(e) {
+                let internal = PlayerLoader.data.matches.internal;
+                let manifest = internal.matchManifest;
+
+                if (internal.compactView && manifest[match.id + ""]) {
+                    if ($('#recentmatch-simplewidget-compact-' + match.id).isOnScreen()) {
+                        let sel = $('#recentmatch-simplewidget-outline-container-compact-' + match.id);
+
+                        if (!manifest[match.id + ""].shownCompact) {
+                            sel.show();
+                            manifest[match.id + ""].shownCompact = true;
+                        }
+                    }
+                    else {
+                        let sel = $('#recentmatch-simplewidget-outline-container-compact-' + match.id);
+
+                        if (manifest[match.id + ""].shownCompact) {
+                            sel.hide();
+                            manifest[match.id + ""].shownCompact = false;
+                        }
+                    }
+                }
             });
         },
         generateFullMatchPane: function(matchid) {
