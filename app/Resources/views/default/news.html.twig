@@ -46,6 +46,13 @@
                         <hr/>
                         If you find Hotstat.us useful, you can directly support it by sharing it with your friends, disabling Ad-Block, or donating through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!
                         <hr/>
+                        {% if outage['exists'] == true %}
+                        <h5><a style="color:#FF0000;">Service Disruption:</a></h5>
+                        <ul>
+                            <li>{{ outage['desc'] }}</li>
+                        </ul>
+                        <hr/>
+                        {% endif %}
                         <h5>In the Works:</h5>
                         <ul>
                             <li>User accounts and Blizzard OAuth authentication (to allow for claiming of player profiles).</li>

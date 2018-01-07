@@ -38,6 +38,11 @@ class DefaultController extends Controller
         $queuedReplays = 0;
         $processedReplays = 0;
 
+        $outage = [
+            "exists" => false,
+            "desc" => "",
+        ];
+
         if ($connected_mysql !== FALSE) {
             $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
@@ -45,6 +50,9 @@ class DefaultController extends Controller
             $db->prepare("GetAnalytics",
                 "SELECT `val_int` AS `value` FROM `pipeline_analytics` WHERE `key_name` = ? LIMIT 1");
             $db->bind("GetAnalytics", "s", $r_key_name);
+            $db->prepare("GetPipelineVariable",
+                "SELECT * FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
+            $db->bind("GetPipelineVariable", "s", $r_key_name);
 
             $r_key_name = "replays_queued_total";
             $result = $db->execute("GetAnalytics");
@@ -60,6 +68,16 @@ class DefaultController extends Controller
             }
             $db->freeResult($result);
 
+            $r_key_name = "news_service_outage";
+            $result = $db->execute("GetPipelineVariable");
+            while ($row = $db->fetchArray($result)) {
+                if (intval($row['val_int']) === 1) {
+                    $outage['exists'] = true;
+                    $outage['desc'] = $row['val_string'];
+                }
+            }
+            $db->freeResult($result);
+
             //Close connection and set valid response
             $db->close();
         }
@@ -68,6 +86,7 @@ class DefaultController extends Controller
             "queuedReplays" => HotstatusResponse::formatNumber($queuedReplays),
             "queuedReplays_raw" => $queuedReplays,
             "processedReplays" => HotstatusResponse::formatNumber($processedReplays),
+            "outage" => $outage,
         ]);
     }
 
