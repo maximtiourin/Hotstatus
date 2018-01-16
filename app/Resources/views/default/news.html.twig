@@ -37,14 +37,14 @@
                     <div class="hotstatus-subcontainer contact-container">
                         <b>Hotstat.us</b> is a web application with which you can view Heroes of the Storm statistics parsed from player-submitted replay files.
                         <br><br>
-                        View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero and map statistics.
+                        View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero, and map statistics.
                         <hr/>
                         Check back here in the future for any news regarding updates to the site!
                         <hr/>
                         <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,060,000</h5></div> unique players since September 2017!
                         {% if queuedReplays_raw > 0 %}<br><br><div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
                         <hr/>
-                        If you find Hotstat.us useful, you can directly support it by sharing it with your friends, disabling Ad-Block, or donating through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!
+                        <span class="news-donation">You can directly support Hotstat.us through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!</span>
                         <hr/>
                         {% if outage['exists'] == true %}
                         <h5><a style="color:#FF0000;">Service Disruption:</a></h5>
@@ -53,30 +53,22 @@
                         </ul>
                         <hr/>
                         {% endif %}
-                        <h5>In the Works:</h5>
-                        <ul>
-                            <li>User accounts and Blizzard OAuth authentication (to allow for claiming of player profiles).</li>
-                            <li>Blog Format for news page.</li>
-                        </ul>
-                        <hr/>
-                        <h5>News (2018-01-09):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">News (2018-01-09):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.7 Blaze Patch, cycling out oldest 2.27.5 Balance patch.</li>
                         </ul>
-                        <h5>News (2018-01-03):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">News (2018-01-03):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Implemented Control Panel to Player Page Recent Matches.</li>
                             <li>Control panel contains: a graphical winrate for currently loaded recent matches, social share buttons, a convenient 'load more matches' button, and a toggle for a compact view mode.</li>
                             <li>Compact view displays the currently loaded recent matches in a much more vertically compacted view with less graphics. (Based on a feature request)</li>
                         </ul>
-                        <h5>News (2018-01-01):</h5>
-                        <ul>
-                            <li>Happy New Year!</li>
+                        <h5 class="news-blog-header">News (2018-01-01):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Replay processing workers have been set to auto-scale again as needed (Replays should be processed much faster during spikes in uploads).</li>
                             <li>Fixed a tiny visual bug in the Hero Page Stat Matrix graph, where the order of metrics was displaying incorrectly.</li>
-                            <li>2018 Season 1 will remain the Hotstat.us identification for the current season until Blizzard announces the status of 2017 Season 4.</li>
                         </ul>
-                        <h5>News (2017-12-26):</h5>
+                        {#<h5>News (2017-12-26):</h5>
                         <ul>
                             <li>A lot of behind the scenes work has been done with the cloud infrastructure in order to reduce costs while aiming to deliver the same speed for requests.
                             <li>Migrated cache generation workers to Google Cloud to reduce data fees.</li>
@@ -100,7 +92,7 @@
                         <ul>
                             <li>Rank displays for 2017 Season 3 had to be temporarily disabled due to a player reprocessing bug.</li>
                             <li>Implemented Winrate Edge % to Hero Page Matchups. (Based on a feature request)</li>
-                        </ul>
+                        </ul>#}
                     </div>
                 </div>
             </div>

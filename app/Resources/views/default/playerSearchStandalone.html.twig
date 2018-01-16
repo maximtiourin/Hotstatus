@@ -2,10 +2,11 @@
 
 {# Include snippets and then alias their blocks so as to order them as needed #}
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+{#% use ':snippets:rankings/rankingsloader.html.twig' with javascripts as rankingsloaderjavascripts %#}
 
 {# Append to title #}
 {% block title %}
-: Contact
+    : Search for Player
 {% endblock %}
 
 {# Inject dynamic content variables #}
@@ -28,23 +29,17 @@
         </div>
         <div class="row">
             <div class="col-xl-2"></div>
-            <div class="col-sm-12 col-md-12 col-xl-8">
-                <div class="hotstatus-container">
-                    <div class="contact-container hotstatus-subcontainer">
-                        <div>
-                            Email: <a class="email" href="mailto:contact@hotstat.us">contact@hotstat.us</a>!
-                        </div>
-                        <br>
-                        <div>
-                            For general questions, please prefix the subject line with "<b>Question:</b>".
-                        </div>
-                        <br>
-                        <div>
-                            For bug reports, please prefix the subject line with "<b>Bug Report:</b>", any amount of details are appreciated!
-                        </div>
-                        <br>
-                        <div>
-                            For feature requests, please prefix the subject line with "<b>Feature Request:</b>".
+            <div class="col-12 col-xl-8">
+                <div class="playerSearch-container">
+                    <div class="hotstatus-container playerSearch-centerAll">
+                        <div class="player-search-inner">
+                            <form class="form-inline my-2 my-lg-0" method="post" action="{{ path('playerSearch') }}">
+                                <input name="search" class="hotstatus-playersearchstandalone-textbox" type="text" placeholder="Enter Player Name..." aria-label="Search by Player Name">
+                                <button class="btn my-2 my-sm-0 player-search-standalone-btn" type="submit"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
+                            </form>
+                            <div class="player-search-help">
+                                Search for a player using their game name (EX: Miller),or a complete battletag (EX: Miller#1212).
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -64,6 +59,7 @@
 {# Javascript #}
 {% block javascripts %}
     {{ block('stdjavascripts') }}
+    {#{ block('rankingsloaderjavascripts') }#}
 {% endblock %}
 
 {# Tail Javascript #}

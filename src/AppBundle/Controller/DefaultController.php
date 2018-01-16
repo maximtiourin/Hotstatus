@@ -132,6 +132,14 @@ class DefaultController extends Controller
     }
 
     /**
+     * @Route("/players", name="playerSearchStandalone")
+     */
+    public function playerSearchStandaloneAction(Request $request) {
+        return $this->render('default/playerSearchStandalone.html.twig', [
+        ]);
+    }
+
+    /**
      * @Route("/players/search", name="playerSearch")
      * @Method("POST")
      */

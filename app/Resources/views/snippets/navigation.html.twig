@@ -16,6 +16,9 @@
                 <a class="nav-link nav-stopwordwrap {{ (route == 'hero') ? 'active' }}" href="{{ path('talents') }}">Talents</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link nav-stopwordwrap {{ route == 'playerSearchStandalone' ? 'active' }}" href="{{ path('playerSearchStandalone') }}">Players</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link nav-stopwordwrap {{ (route == 'rankings') ? 'active' }}" href="{{ path('rankings') }}">Rankings</a>
             </li>
         </ul>
@@ -23,16 +26,16 @@
             <li class="nav-item nav-md-hideitem">
                 <a class="nav-link nav-stopwordwrap {{ route == 'contact' ? 'active' }}" href="{{ path('contact') }}">Contact</a>
             </li>
-            <li class="nav-item nav-md-hideitem">
+            {#<li class="nav-item nav-md-hideitem">
                 <a class="nav-link nav-stopwordwrap {{ route == 'faq' ? 'active' }}" href="{{ path('faq') }}">F.A.Q.</a>
-            </li>
+            </li>#}
             <li class="nav-item">
                 <a class="nav-link nav-stopwordwrap {{ route == 'upload' ? 'active' }}" style="margin-right: 32px;" href="{{ path('upload') }}">Upload Replay</a>
             </li>
         </ul>
         <form class="form-inline my-2 my-lg-0" method="post" action="{{ path('playerSearch') }}">
             <input name="search" class="hotstatus-search-textbox" type="text" placeholder="Enter Player Name..." aria-label="Search by Player Name">
-            <button id="nav-player-search-btn" class="btn my-2 my-sm-0" type="submit"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
+            <button id="nav-player-search-btn" class="btn my-2 my-sm-0 nav-player-search-btn" type="submit"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
         </form>
     </div>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">

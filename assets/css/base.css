@@ -123,7 +123,7 @@ img {
     background-color: #6e87ff;
     color: #FFFFFF;
 }
-#nav-player-search-btn {
+.nav-player-search-btn {
     background-color: #1B0748;
     color: #FFFFFF;
     border: 2px;
@@ -2958,4 +2958,111 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     font-size: 14px;
     position: relative;
     cursor: default;
+}
+
+.news-donation {
+    color: #ffae98;
+}
+
+.news-blog-header {
+    color: #32ceff;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.news-blog-bullet {
+    color: #32ceff;
+}
+
+.playerSearch-container {
+    position: relative;
+    width: 100%;
+    height: 156px;
+}
+
+.playerSearch-centerAll {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 156px;
+}
+
+.hotstatus-playersearchstandalone-textbox {
+    background-color: #444652;
+    color: #FFFFFF;
+    border: 1px;
+    border-radius: 4px;
+    border-style: solid;
+    border-color: #10042B;
+    padding: 4px 8px;
+    margin: 2px 4px;
+    width:185px;
+}
+.hotstatus-playersearchstandalone-textbox::placeholder {
+    color: #9b9eaf;
+    opacity: 255;
+}
+
+.player-search-standalone-btn {
+    background-color: #1B0748;
+    color: #FFFFFF;
+    border: 2px;
+    border-color: #3D12A1;
+    border-style: solid;
+    width:100px;
+    height:36px;
+}
+
+.player-search-inner {
+    position: relative;
+    width:100%;
+    height:100%;
+    padding-top: 12px;
+}
+
+.player-search-help {
+    position: absolute;
+    bottom: 0px;
+    color: #FFFFFF;
+    font-size: 11px;
+    padding: 14px 8px 8px 8px;
+    cursor: default;
+}
+
+@media screen and (min-width: 768px) {
+    .playerSearch-container {
+        position: relative;
+        width: 100%;
+        height: 500px;
+    }
+    .playerSearch-centerAll {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 512px;
+        height: 128px;
+    }
+    .hotstatus-playersearchstandalone-textbox {
+        background-color: #444652;
+        color: #FFFFFF;
+        border: 1px;
+        border-radius: 4px;
+        border-style: solid;
+        border-color: #10042B;
+        padding: 4px 8px;
+        margin: 2px 4px;
+        width:380px;
+    }
+    .player-search-standalone-btn {
+        background-color: #1B0748;
+        color: #FFFFFF;
+        border: 2px;
+        border-color: #3D12A1;
+        border-style: solid;
+        width:116px;
+        height:36px;
+    }
 }
