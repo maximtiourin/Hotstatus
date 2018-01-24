@@ -526,7 +526,7 @@ class PlayerdataController extends Controller {
                     $c_mvp_percentage = round(max(($a_mvp_medals / ($a_matches_played * 1.00)) * 100.0, 100.0), 1);
                 }
 
-                $pagedata['mvp_medals_percentage'] = $a_mvp_medals;
+                $pagedata['mvp_medals_percentage'] = $c_mvp_percentage;
 
                 //Last Updated
                 $pagedata['last_updated'] = time();
