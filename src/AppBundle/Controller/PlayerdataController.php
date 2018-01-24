@@ -523,7 +523,7 @@ class PlayerdataController extends Controller {
 
                 $c_mvp_percentage = 0;
                 if ($a_matches_played > 0) {
-                    $c_mvp_percentage = round(max(($a_mvp_medals / ($a_matches_played * 1.00)) * 100.0, 100.0), 1);
+                    $c_mvp_percentage = round(($a_mvp_medals / ($a_matches_played * 1.00)) * 100.0, 1);
                 }
 
                 $pagedata['mvp_medals_percentage'] = $c_mvp_percentage;
