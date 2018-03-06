@@ -44,7 +44,7 @@
                         <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,060,000</h5></div> unique players since September 2017!
                         {% if queuedReplays_raw > 0 %}<br><br><div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
                         <hr/>
-                        <span class="news-donation">You can directly support Hotstat.us through <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>!</span>
+                        <span style="color:#77ff86;">You can support development through <a class="email" href="https://www.paypal.me/hotstatus/5" target="_blank">Donation</a>, or by disabling your Adblocker!</span>
                         <hr/>
                         {% if outage['exists'] == true %}
                         <h5><a style="color:#FF0000;">Service Disruption:</a></h5>
@@ -53,23 +53,29 @@
                         </ul>
                         <hr/>
                         {% endif %}
-                        <h5 class="news-blog-header">News (2018-02-21):</h5>
+                        <h5 class="news-blog-header">(2018-03-06):</h5>
+                        <ul class="news-blog-bullet">
+                            <li>Updated filters and player tracking for 2018 Season 2.</li>
+                            <li>Updated filters to include new 2.30.4 Rework Patch, cycling out oldest 2.29.2 Balance patch.</li>
+                            <li>Reduced filter caching times to 3 hours, so that frequently requested pages can have fresh data computed more often.</li>
+                        </ul>
+                        <h5 class="news-blog-header">(2018-02-21):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.30.3 Balance Patch, cycling out oldest 2.29.0 Alexstrasza patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-02-09):</h5>
+                        <h5 class="news-blog-header">(2018-02-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.30.1 Balance Patch, cycling out oldest 2.28.5 Balance patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-02-06):</h5>
+                        <h5 class="news-blog-header">(2018-02-06):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.30.0 Maiev Patch, cycling out oldest 2.28.3 Junkrat patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-24):</h5>
+                        <h5 class="news-blog-header">(2018-01-24):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.9 Balance Patch, cycling out oldest 2.28.2 Balance patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-16):</h5>
+                        {#<h5 class="news-blog-header">News (2018-01-16):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.8 Tyrael Patch, cycling out oldest 2.28.0 Ana patch.</li>
                         </ul>
@@ -88,7 +94,7 @@
                             <li>Replay processing workers have been set to auto-scale again as needed (Replays should be processed much faster during spikes in uploads).</li>
                             <li>Fixed a tiny visual bug in the Hero Page Stat Matrix graph, where the order of metrics was displaying incorrectly.</li>
                         </ul>
-                        {#<h5>News (2017-12-26):</h5>
+                        <h5>News (2017-12-26):</h5>
                         <ul>
                             <li>A lot of behind the scenes work has been done with the cloud infrastructure in order to reduce costs while aiming to deliver the same speed for requests.
                             <li>Migrated cache generation workers to Google Cloud to reduce data fees.</li>
