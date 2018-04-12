@@ -982,7 +982,25 @@ HeroLoader.data = {
     },
     matchups: {
         generateMatchupsContainer: function() {
-            $('#hl-matchups-container').append('<div class="hotstatus-subcontainer"><div class="row"><div class="col-lg-6 padding-lg-right-0"><div id="hl-matchups-foes-container"></div></div>' +
+            let searchBar = '<div><div id="" class="d-inline-block float-right">' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Utility">Utility</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Tank">Tank</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Sustained Damage">Sustained Damage</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Siege">Siege</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Healer">Healer</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Burst Damage">Burst Damage</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Bruiser">Bruiser</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Ambusher">Ambusher</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Warrior">Warrior</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Support">Support</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Specialist">Specialist</button>' +
+                '<button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Assassin">Assassin</button>' +
+                '</div>' +
+                '<div id="heroes-statslist-toolbar-container-search" class="d-inline-block float-none">' +
+                '<input id="heroes-statslist-toolbar-search" class="hotstatus-search-textbox" placeholder="Search by Hero/Role...">' +
+                '</div></div>';
+
+            $('#hl-matchups-container').append('<div class="hotstatus-subcontainer"><div class="row">' + searchBar + '<div class="col-lg-6 padding-lg-right-0"><div id="hl-matchups-foes-container"></div></div>' +
                 '<div class="col-lg-6 padding-lg-left-0"><div id="hl-matchups-friends-container"></div></div></div></div>');
         },
         generateTableData: function(hero, matchupData, mainHeroWinrate) {
@@ -1042,7 +1060,7 @@ HeroLoader.data = {
 
             datatable.order = [[7, 'asc']];
 
-            datatable.searching = false;
+            datatable.searching = true;
             datatable.deferRender = false;
             datatable.pageLength = 5; //Controls how many rows per page
             datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
@@ -1079,7 +1097,7 @@ HeroLoader.data = {
 
             datatable.order = [[7, 'desc']];
 
-            datatable.searching = false;
+            datatable.searching = true;
             datatable.deferRender = false;
             datatable.pageLength = 5; //Controls how many rows per page
             datatable.paging = (rowLength > datatable.pageLength); //Controls whether or not the table is allowed to paginate data by page length
@@ -1093,10 +1111,30 @@ HeroLoader.data = {
             return datatable;
         },
         initFoesTable: function(dataTableConfig) {
-            $('#hl-matchups-foes-table').DataTable(dataTableConfig);
+            let table = $('#hl-matchups-foes-table').DataTable(dataTableConfig);
+
+            //Search the table for the new value typed in by user
+            $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
+                table.search($(this).val()).draw();
+            });
+
+            //Search the table for the new value populated by role button
+            $('button.hsl-rolebutton').click(function () {
+                table.search($(this).attr("value")).draw();
+            });
         },
         initFriendsTable: function(dataTableConfig) {
-            $('#hl-matchups-friends-table').DataTable(dataTableConfig);
+            let table = $('#hl-matchups-friends-table').DataTable(dataTableConfig);
+
+            //Search the table for the new value typed in by user
+            $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
+                table.search($(this).val()).draw();
+            });
+
+            //Search the table for the new value populated by role button
+            $('button.hsl-rolebutton').click(function () {
+                table.search($(this).attr("value")).draw();
+            });
         },
         empty: function() {
             $('#hl-matchups-container').empty();

@@ -2,9 +2,11 @@
         data-selected-text-format="values" data-multiple-separator=""
         data-select-all-text="<i class='fa fa-check-square-o fa-2x' style='' aria-hidden='true'></i>" multiple>
     {% for key, gameType in filter_gameTypes %}
+        {% if gameType.aggregate == false %}
         <option {% if gameType.selected == true %}selected="selected"{% endif %}
                 title="<img class='filter-dropdown-image-gameType' src='{{ asset('/ui/gameType_icon_'~gameType.name_sort~'.png', 'images') }}'>"
                 data-content="<img class='filter-dropdown-image-gameType filter-dropdown-image-margin-right-8' src='{{ asset('/ui/gameType_icon_'~gameType.name_sort~'.png', 'images') }}'>{{ key }}"
-                value="{{ key }}">{{ key }}</option>
+                value="{{ gameType.value }}">{{ key }}</option>
+        {% endif %}
     {% endfor %}
 </select>

@@ -44,7 +44,7 @@
                         <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,560,000</h5></div> unique players since September 2017!
                         {% if queuedReplays_raw > 0 %}<br><br><div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
                         <hr/>
-                        <span style="color:#77ff86;">You can support Hotstat.us through <a class="email" href="https://www.paypal.me/hotstatus/2" target="_blank">Donation</a>!</span>
+                        <span style="color:#77ff86;">You can help us keep the lights on via <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>, or by whitelisting Hotstat.us in your Adblocker!</span>
                         <hr/>
                         {% if outage['exists'] == true %}
                         <h5><a style="color:#FF0000;">Service Disruption:</a></h5>
@@ -53,6 +53,12 @@
                         </ul>
                         <hr/>
                         {% endif %}
+                        <h5 class="news-blog-header">(2018-04-12):</h5>
+                        <ul class="news-blog-bullet">
+                            <li>Updated to include new 2.31.2 Balance Patch, cycling out all filter options for patches older than the 3 most recent updates.</li>
+                            <li>Consolidated filters to consist of frequently used options, finally allowing for comprehensive computation of all filter combinations. Previously, all possible combinations used to number in the billions, now that number is reduced to less than 40,000 making full filter-computation coverage feasible. This will remove any possibility of a user being served stale data in the future, even for infrequently visited filter combinations.</li>
+                            <li>Added a search bar to 'talents' page friend/foe matchup tables (much like the one found on the 'heroes' page), allowing you to much more quickly find hero/role counters or synergies!</li>
+                        </ul>
                         <h5 class="news-blog-header">(2018-03-27):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.31.0 Fenix Patch, cycling out oldest 2.29.7 Blaze patch.</li>
