@@ -20,13 +20,13 @@
 {% block body %}
     {# Begin HTML #}
     <div class="container-fluid">
-        <div class="row">
+        {#<div class="row">
             <div class="col">
                 <div class="text-center">
                     {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
                 </div>
             </div>
-        </div>
+        </div>#}
         <div class="row">
             <div class="col-xl-2"></div>
             <div class="col-12 col-xl-8">
@@ -53,6 +53,11 @@
                         </ul>
                         <hr/>
                         {% endif %}
+                        <h5 class="news-blog-header">(2018-04-24):</h5>
+                        <ul class="news-blog-bullet">
+                            <li>Updated to include new 2.32.0 Deckard Patch, cycling out oldest 2.30.6 Balance patch.</li>
+                            <li>Added examples of the Patreon Angel Supporter tier.</li>
+                        </ul>
                         <h5 class="news-blog-header">(2018-04-12):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.31.2 Balance Patch, cycling out all filter options for patches older than the 3 most recent updates.</li>
@@ -63,11 +68,30 @@
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.31.0 Fenix Patch, cycling out oldest 2.29.7 Blaze patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">(2018-03-21):</h5>
+                        <hr/>
+                        <div class="text-center">
+                            <span><a class="email" style="font-size:24px;" href="https://www.patreon.com/hotstatus" target="_blank">Patreon Angel Supporters</a></span>
+                            <br><br>
+                            <div class="d-block">
+                                <div class="d-inline-block">
+                                    <a href="https://www.reddit.com/r/heroesofthestorm/" target="_blank"><img src="{{ asset('/ui/angelsupporter.png', 'images') }}"></a>
+                                </div>
+                                <div class="d-inline-block">
+                                    <a href="https://www.reddit.com/r/heroesofthestorm/" target="_blank"><img src="{{ asset('/ui/angelsupporter.png', 'images') }}"></a>
+                                </div>
+                                <div class="d-inline-block">
+                                    <a href="https://www.reddit.com/r/heroesofthestorm/" target="_blank"><img src="{{ asset('/ui/angelsupporter.png', 'images') }}"></a>
+                                </div>
+                                <div class="d-inline-block">
+                                    <a href="https://www.reddit.com/r/heroesofthestorm/" target="_blank"><img src="{{ asset('/ui/angelsupporter.png', 'images') }}"></a>
+                                </div>
+                            </div>
+                        </div>
+                        {#<h5 class="news-blog-header">(2018-03-21):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.6 Balance Patch, cycling out oldest 2.29.5 Balance patch.</li>
-                        </ul>
-                        <h5 class="news-blog-header">(2018-03-09):</h5>
+                        </ul>#}
+                        {#<h5 class="news-blog-header">(2018-03-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.5 Hotfix Patch, cycling out oldest 2.29.3 Hanzo patch.</li>
                         </ul>
@@ -84,7 +108,7 @@
                         <h5 class="news-blog-header">(2018-02-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.1 Balance Patch, cycling out oldest 2.28.5 Balance patch.</li>
-                        </ul>
+                        </ul>#}
                         {#<<h5 class="news-blog-header">(2018-02-06):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.30.0 Maiev Patch, cycling out oldest 2.28.3 Junkrat patch.</li>
@@ -140,9 +164,9 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-2">
+            {#<div class="col-xl-2">
                 {% include ':snippets:advertising/responsive_vertical.html.twig' %}
-            </div>
+            </div>#}
         </div>
     </div>
 {% endblock %}
