@@ -2405,7 +2405,7 @@ class PlayerdataController extends Controller {
 
         //Get redis cache
         $redis = new RedisDatabase();
-        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
 
         //Try to get cached value
         $cacheval = NULL;
