@@ -768,7 +768,39 @@ class PlayerdataController extends Controller {
                 $minMVPrate = 100.0;
                 $maxMVPherorate = 0.0;
                 $minMVPherorate = 100.0;
+
+                $max_hero_damage = PHP_INT_MIN;
+                $min_hero_damage = PHP_INT_MAX;
+                $max_siege_damage = PHP_INT_MIN;
+                $min_siege_damage = PHP_INT_MAX;
+                $max_structure_damage = PHP_INT_MIN;
+                $min_structure_damage = PHP_INT_MAX;
+                $max_healing = PHP_INT_MIN;
+                $min_healing = PHP_INT_MAX;
+                $max_damage_taken = PHP_INT_MIN;
+                $min_damage_taken = PHP_INT_MAX;
+                $max_merc_camps = PHP_INT_MIN;
+                $min_merc_camps = PHP_INT_MAX;
+                $max_exp_contrib = PHP_INT_MIN;
+                $min_exp_contrib = PHP_INT_MAX;
+                
                 foreach ($heroes as $heroname => &$rhero) {
+                    $a_played = $rhero['played'];
+                    $a_won = $rhero['won'];
+                    $a_kills = $rhero['kills'];
+                    $a_assists = $rhero['assists'];
+                    $a_deaths = $rhero['deaths'];
+                    $a_hero_damage = $rhero['hero_damage'];
+                    $a_siege_damage = $rhero['siege_damage'];
+                    $a_structure_damage = $rhero['structure_damage'];
+                    $a_healing = $rhero['healing'];
+                    $a_damage_taken = $rhero['damage_taken'];
+                    $a_merc_camps = $rhero['merc_camps'];
+                    $a_exp_contrib = $rhero['exp_contrib'];
+                    $a_best_killstreak = $rhero['best_killstreak'];
+                    $a_time_spent_dead = $rhero['time_spent_dead'];
+                    $a_mvp_medals = $rhero['mvp_medals'];
+                    
                     //Popularity
                     if ($spc_total_matches_played > 0) {
                         $dt_popularity = round((($rhero['played'] * 1.00) / (($spc_total_matches_played) * 1.00)) * 100.0, 1);
@@ -815,6 +847,97 @@ class PlayerdataController extends Controller {
                     //Max, mins
                     if ($maxWinrate < $winrate && $rhero['played'] > 0) $maxWinrate = $winrate;
                     if ($minWinrate > $winrate && $rhero['played'] > 0) $minWinrate = $winrate;
+
+                    //Hero Damage
+                    $c_avg_hero_damage = 0;
+                    $c_avg_hero_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_hero_damage_raw = $a_hero_damage / ($a_played * 1.00);
+                        $c_avg_hero_damage = round($c_avg_hero_damage_raw, 0);
+                    }
+                    $rhero['hero_damage_avg'] = HotstatusResponse::formatNumber($c_avg_hero_damage, 0);
+                    $rhero['hero_damage_avg_raw'] = $c_avg_hero_damage;
+
+                    if ($max_hero_damage < $c_avg_hero_damage && $a_played > 0) $max_hero_damage = $c_avg_hero_damage;
+                    if ($min_hero_damage > $c_avg_hero_damage && $a_played > 0) $min_hero_damage = $c_avg_hero_damage;
+
+                    //Siege Damage
+                    $c_avg_siege_damage = 0;
+                    $c_avg_siege_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_siege_damage_raw = $a_siege_damage / ($a_played * 1.00);
+                        $c_avg_siege_damage = round($c_avg_siege_damage_raw, 0);
+                    }
+                    $rhero['siege_damage_avg'] = HotstatusResponse::formatNumber($c_avg_siege_damage, 0);
+                    $rhero['siege_damage_avg_raw'] = $c_avg_siege_damage;
+
+                    if ($max_siege_damage < $c_avg_siege_damage && $a_played > 0) $max_siege_damage = $c_avg_siege_damage;
+                    if ($min_siege_damage > $c_avg_siege_damage && $a_played > 0) $min_siege_damage = $c_avg_siege_damage;
+
+                    //Structure Damage
+                    $c_avg_structure_damage = 0;
+                    $c_avg_structure_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_structure_damage_raw = $a_structure_damage / ($a_played * 1.00);
+                        $c_avg_structure_damage = round($c_avg_structure_damage_raw, 0);
+                    }
+                    $rhero['structure_damage_avg'] = HotstatusResponse::formatNumber($c_avg_structure_damage, 0);
+                    $rhero['structure_damage_avg_raw'] = $c_avg_structure_damage;
+
+                    if ($max_structure_damage < $c_avg_structure_damage && $a_played > 0) $max_structure_damage = $c_avg_structure_damage;
+                    if ($min_structure_damage > $c_avg_structure_damage && $a_played > 0) $min_structure_damage = $c_avg_structure_damage;
+
+                    //Healing
+                    $c_avg_healing = 0;
+                    $c_avg_healing_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_healing_raw = $a_healing / ($a_played * 1.00);
+                        $c_avg_healing = round($c_avg_healing_raw, 0);
+                    }
+                    $rhero['healing_avg'] = HotstatusResponse::formatNumber($c_avg_healing, 0);
+                    $rhero['healing_avg_raw'] = $c_avg_healing;
+
+                    if ($max_healing < $c_avg_healing && $a_played > 0) $max_healing = $c_avg_healing;
+                    if ($min_healing > $c_avg_healing && $a_played > 0) $min_healing = $c_avg_healing;
+
+                    //Damage Taken
+                    $c_avg_damage_taken = 0;
+                    $c_avg_damage_taken_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_damage_taken_raw = $a_damage_taken / ($a_played * 1.00);
+                        $c_avg_damage_taken = round($c_avg_damage_taken_raw, 0);
+                    }
+                    $rhero['damage_taken_avg'] = HotstatusResponse::formatNumber($c_avg_damage_taken, 0);
+                    $rhero['damage_taken_avg_raw'] = $c_avg_damage_taken;
+                    
+                    if ($max_damage_taken < $c_avg_damage_taken && $a_played > 0) $max_damage_taken = $c_avg_damage_taken;
+                    if ($min_damage_taken > $c_avg_damage_taken && $a_played > 0) $min_damage_taken = $c_avg_damage_taken;
+
+                    //Merc Camps
+                    $c_avg_merc_camps = 0;
+                    $c_avg_merc_camps_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_merc_camps_raw = $a_merc_camps / ($a_played * 1.00);
+                        $c_avg_merc_camps = round($c_avg_merc_camps_raw, 2);
+                    }
+                    $rhero['merc_camps_avg'] = HotstatusResponse::formatNumber($c_avg_merc_camps, 2);
+                    $rhero['merc_camps_avg_raw'] = $c_avg_merc_camps;
+
+                    if ($max_merc_camps < $c_avg_merc_camps && $a_played > 0) $max_merc_camps = $c_avg_merc_camps;
+                    if ($min_merc_camps > $c_avg_merc_camps && $a_played > 0) $min_merc_camps = $c_avg_merc_camps;
+
+                    //Exp Contrib
+                    $c_avg_exp_contrib = 0;
+                    $c_avg_exp_contrib_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_exp_contrib_raw = $a_exp_contrib / ($a_played * 1.00);
+                        $c_avg_exp_contrib = round($c_avg_exp_contrib_raw, 0);
+                    }
+                    $rhero['exp_contrib_avg'] = HotstatusResponse::formatNumber($c_avg_exp_contrib, 0);
+                    $rhero['exp_contrib_avg_raw'] = $c_avg_exp_contrib;
+
+                    if ($max_exp_contrib < $c_avg_exp_contrib && $a_played > 0) $max_exp_contrib = $c_avg_exp_contrib;
+                    if ($min_exp_contrib > $c_avg_exp_contrib && $a_played > 0) $min_exp_contrib = $c_avg_exp_contrib;
                 }
 
                 //Calculate Heroes
@@ -902,68 +1025,54 @@ class PlayerdataController extends Controller {
                     $hero['deaths_avg'] = HotstatusResponse::formatNumber($c_avg_deaths, 1);
 
                     //Hero Damage
-                    $c_avg_hero_damage = 0;
-                    $c_avg_hero_damage_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_hero_damage_raw = $a_hero_damage / ($a_played * 1.00);
-                        $c_avg_hero_damage = round($c_avg_hero_damage_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_hero_damage - $min_hero_damage > 0) {
+                        $percentOnRange = ((($hero['hero_damage_avg_raw'] - $min_hero_damage) * 1.00) / (($max_hero_damage - $min_hero_damage) * 1.00)) * 100.0;
                     }
-                    $hero['hero_damage_avg'] = HotstatusResponse::formatNumber($c_avg_hero_damage, 0);
-
+                    $hero['hero_damage_avg_percent'] = $percentOnRange;
+                    
                     //Siege Damage
-                    $c_avg_siege_damage = 0;
-                    $c_avg_siege_damage_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_siege_damage_raw = $a_siege_damage / ($a_played * 1.00);
-                        $c_avg_siege_damage = round($c_avg_siege_damage_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_siege_damage - $min_siege_damage > 0) {
+                        $percentOnRange = ((($hero['siege_damage_avg_raw'] - $min_siege_damage) * 1.00) / (($max_siege_damage - $min_siege_damage) * 1.00)) * 100.0;
                     }
-                    $hero['siege_damage_avg'] = HotstatusResponse::formatNumber($c_avg_siege_damage, 0);
-
+                    $hero['siege_damage_avg_percent'] = $percentOnRange;
+                    
                     //Structure Damage
-                    $c_avg_structure_damage = 0;
-                    $c_avg_structure_damage_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_structure_damage_raw = $a_structure_damage / ($a_played * 1.00);
-                        $c_avg_structure_damage = round($c_avg_structure_damage_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_structure_damage - $min_structure_damage > 0) {
+                        $percentOnRange = ((($hero['structure_damage_avg_raw'] - $min_structure_damage) * 1.00) / (($max_structure_damage - $min_structure_damage) * 1.00)) * 100.0;
                     }
-                    $hero['structure_damage_avg'] = HotstatusResponse::formatNumber($c_avg_structure_damage, 0);
-
+                    $hero['structure_damage_avg_percent'] = $percentOnRange;
+                    
                     //Healing
-                    $c_avg_healing = 0;
-                    $c_avg_healing_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_healing_raw = $a_healing / ($a_played * 1.00);
-                        $c_avg_healing = round($c_avg_healing_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_healing - $min_healing > 0) {
+                        $percentOnRange = ((($hero['healing_avg_raw'] - $min_healing) * 1.00) / (($max_healing - $min_healing) * 1.00)) * 100.0;
                     }
-                    $hero['healing_avg'] = HotstatusResponse::formatNumber($c_avg_healing, 0);
-
+                    $hero['healing_avg_percent'] = $percentOnRange;
+                    
                     //Damage Taken
-                    $c_avg_damage_taken = 0;
-                    $c_avg_damage_taken_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_damage_taken_raw = $a_damage_taken / ($a_played * 1.00);
-                        $c_avg_damage_taken = round($c_avg_damage_taken_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_damage_taken - $min_damage_taken > 0) {
+                        $percentOnRange = ((($hero['damage_taken_avg_raw'] - $min_damage_taken) * 1.00) / (($max_damage_taken - $min_damage_taken) * 1.00)) * 100.0;
                     }
-                    $hero['damage_taken_avg'] = HotstatusResponse::formatNumber($c_avg_damage_taken, 0);
-
+                    $hero['damage_taken_avg_percent'] = $percentOnRange;
+                    
                     //Merc Camps
-                    $c_avg_merc_camps = 0;
-                    $c_avg_merc_camps_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_merc_camps_raw = $a_merc_camps / ($a_played * 1.00);
-                        $c_avg_merc_camps = round($c_avg_merc_camps_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_merc_camps - $min_merc_camps > 0) {
+                        $percentOnRange = ((($hero['merc_camps_avg_raw'] - $min_merc_camps) * 1.00) / (($max_merc_camps - $min_merc_camps) * 1.00)) * 100.0;
                     }
-                    $hero['merc_camps_avg'] = HotstatusResponse::formatNumber($c_avg_merc_camps, 0);
-
+                    $hero['merc_camps_avg_percent'] = $percentOnRange;
+                    
                     //Exp Contrib
-                    $c_avg_exp_contrib = 0;
-                    $c_avg_exp_contrib_raw = 0;
-                    if ($a_played > 0) {
-                        $c_avg_exp_contrib_raw = $a_exp_contrib / ($a_played * 1.00);
-                        $c_avg_exp_contrib = round($c_avg_exp_contrib_raw, 0);
+                    $percentOnRange = 0;
+                    if ($max_exp_contrib - $min_exp_contrib > 0) {
+                        $percentOnRange = ((($hero['exp_contrib_avg_raw'] - $min_exp_contrib) * 1.00) / (($max_exp_contrib - $min_exp_contrib) * 1.00)) * 100.0;
                     }
-                    $hero['exp_contrib_avg'] = HotstatusResponse::formatNumber($c_avg_exp_contrib, 0);
-
+                    $hero['exp_contrib_avg_percent'] = $percentOnRange;
+                    
                     //Best Killstreak
                     $c_best_killstreak = 0;
                     if ($a_played > 0) {

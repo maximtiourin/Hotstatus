@@ -1,5 +1,7 @@
 let StatslistLoader = {};
 
+let dataTableContext = null;
+
 StatslistLoader.ajax = {};
 
 /*
@@ -117,6 +119,301 @@ StatslistLoader.ajax.filter = {
  */
 StatslistLoader.data = {
     statslist: {
+        internal: {
+            cycleColumns: {
+                "Played": {
+                    index: 5
+                },
+                "KDA": {
+                    index: 7
+                },
+                "MVP": {
+                    index: 8
+                },
+                "MVP Medals": {
+                    index: 9
+                },
+                "Popularity": {
+                    index: 10
+                },
+                "Winrate": {
+                    index: 11
+                },
+                "Hero Dmg": {
+                    index: 12
+                },
+                "Siege Dmg": {
+                    index: 13
+                },
+                "Structure Dmg": {
+                    index: 14
+                },
+                "Healing": {
+                    index: 15
+                },
+                "Damage Taken": {
+                    index: 16
+                },
+                "Experience": {
+                    index: 17
+                },
+                "Merc Camps": {
+                    index: 18
+                },
+                "Kills": {
+                    index: 19
+                },
+                "Deaths": {
+                    index: 20
+                },
+                "Assists": {
+                    index: 21
+                },
+                "Best Killstreak": {
+                    index: 22
+                },
+                "Time Dead (Seconds)": {
+                    index: 23
+                }
+            },
+            cycleOptions: [
+                {
+                    name: "Summary",
+                    cols: {
+                        "Played": {
+                            visible: true,
+                        },
+                        "KDA": {
+                            visible: true,
+                        },
+                        "MVP": {
+                            visible: true,
+                        },
+                        "MVP Medals": {
+                            visible: true,
+                        },
+                        "Popularity": {
+                            visible: true,
+                        },
+                        "Winrate": {
+                            visible: true,
+                        },
+                        "Hero Dmg": {
+                            visible: false,
+                        },
+                        "Siege Dmg": {
+                            visible: false,
+                        },
+                        "Structure Dmg": {
+                            visible: false,
+                        },
+                        "Healing": {
+                            visible: false,
+                        },
+                        "Damage Taken": {
+                            visible: false,
+                        },
+                        "Experience": {
+                            visible: false,
+                        },
+                        "Merc Camps": {
+                            visible: false,
+                        },
+                        "Kills": {
+                            visible: false,
+                        },
+                        "Deaths": {
+                            visible: false,
+                        },
+                        "Assists": {
+                            visible: false,
+                        },
+                        "Best Killstreak": {
+                            visible: false,
+                        },
+                        "Time Dead (Seconds)": {
+                            visible: false,
+                        }
+                    }
+                },
+                {
+                    name: "Performance",
+                    cols: {
+                        "Played": {
+                            visible: true,
+                        },
+                        "KDA": {
+                            visible: false,
+                        },
+                        "MVP": {
+                            visible: false,
+                        },
+                        "MVP Medals": {
+                            visible: false,
+                        },
+                        "Popularity": {
+                            visible: false,
+                        },
+                        "Winrate": {
+                            visible: false,
+                        },
+                        "Hero Dmg": {
+                            visible: true,
+                        },
+                        "Siege Dmg": {
+                            visible: true,
+                        },
+                        "Structure Dmg": {
+                            visible: true,
+                        },
+                        "Healing": {
+                            visible: true,
+                        },
+                        "Damage Taken": {
+                            visible: true,
+                        },
+                        "Experience": {
+                            visible: true,
+                        },
+                        "Merc Camps": {
+                            visible: true,
+                        },
+                        "Kills": {
+                            visible: false,
+                        },
+                        "Deaths": {
+                            visible: false,
+                        },
+                        "Assists": {
+                            visible: false,
+                        },
+                        "Best Killstreak": {
+                            visible: false,
+                        },
+                        "Time Dead (Seconds)": {
+                            visible: false,
+                        }
+                    }
+                },
+                {
+                    name: "Miscellaneous",
+                    cols: {
+                        "Played": {
+                            visible: true,
+                        },
+                        "KDA": {
+                            visible: true,
+                        },
+                        "MVP": {
+                            visible: false,
+                        },
+                        "MVP Medals": {
+                            visible: false,
+                        },
+                        "Popularity": {
+                            visible: false,
+                        },
+                        "Winrate": {
+                            visible: false,
+                        },
+                        "Hero Dmg": {
+                            visible: false,
+                        },
+                        "Siege Dmg": {
+                            visible: false,
+                        },
+                        "Structure Dmg": {
+                            visible: false,
+                        },
+                        "Healing": {
+                            visible: false,
+                        },
+                        "Damage Taken": {
+                            visible: false,
+                        },
+                        "Experience": {
+                            visible: false,
+                        },
+                        "Merc Camps": {
+                            visible: false,
+                        },
+                        "Kills": {
+                            visible: true,
+                        },
+                        "Deaths": {
+                            visible: true,
+                        },
+                        "Assists": {
+                            visible: true,
+                        },
+                        "Best Killstreak": {
+                            visible: true,
+                        },
+                        "Time Dead (Seconds)": {
+                            visible: true,
+                        }
+                    }
+                }
+            ],
+            cycleSelected: 0,
+            cycleSet: function(cycleName) {
+                let self = StatslistLoader.data.statslist.internal;
+
+                let cyclesize = self.cycleOptions.length;
+
+                let properCycleName = cycleName.toString();
+
+                let selectedName = self.cycleOptions[self.cycleSelected].name.toString();
+
+                if (properCycleName !== selectedName) {
+                    for (let i = 0; i < cyclesize; i++) {
+                        if (self.cycleOptions[i].name === properCycleName) {
+                            self.cycleSelected = i;
+
+                            self.cycleRenderLabel();
+                            self.cycleRenderTable();
+
+                            break;
+                        }
+                    }
+                }
+            },
+            cycleIncrement: function(direction) {
+                let self = StatslistLoader.data.statslist.internal;
+
+                let cyclesize = self.cycleOptions.length;
+
+                self.cycleSelected = self.cycleSelected + direction;
+
+                if (self.cycleSelected < 0) self.cycleSelected = cyclesize - 1;
+                if (self.cycleSelected >= cyclesize) self.cycleSelected = 0;
+
+                self.cycleRenderLabel();
+                self.cycleRenderTable();
+            },
+            cycleRenderLabel: function() {
+                let self = StatslistLoader.data.statslist.internal;
+
+                $('#statslist-cyclelabel').html(self.cycleOptions[self.cycleSelected].name);
+            },
+            cycleRenderTable: function() {
+                if (dataTableContext !== null) {
+                    let self = StatslistLoader.data.statslist.internal;
+
+                    let cyopt = self.cycleOptions[self.cycleSelected];
+
+                    for (let colkey in self.cycleColumns) {
+                        if (self.cycleColumns.hasOwnProperty(colkey)) {
+                            let col = self.cycleColumns[colkey];
+
+                            dataTableContext.column(col.index).visible(cyopt.cols[colkey].visible);
+                        }
+                    }
+
+                    dataTableContext.draw();
+                }
+            }
+        },
         empty: function() {
             $('#heroes-statslist').remove();
         },
@@ -134,7 +431,7 @@ StatslistLoader.data = {
         generateTableData: function(hero) {
             let heroPortrait = '<img src="'+ image_bpath + hero.image_hero +'.png" class="rounded-circle hsl-portrait">';
 
-            let heroProperName = '<a class="hsl-link" href="'+ Routing.generate("playerhero", {region: player_region, id: player_id, heroProperName: hero.name}) +'">'+ hero.name +'</a>';
+            let heroProperName = '<a class="hsl-link" href="'+ Routing.generate("playerhero", {region: player_region, id: player_id, heroProperName: hero.name}) +'" target="_blank">'+ hero.name +'</a>';
 
             let heroNameSort = hero.name_sort;
 
@@ -163,8 +460,8 @@ StatslistLoader.data = {
                 '<div class="hsl-percentbar hsl-percentbar-mvp" style="width:'+ hero.mvp_herorate_percent +'%;"></div>';
 
             //MVP Total Percent
-            let heroMVP = '<span class="hsl-number-mvp">'+ hero.mvp_rate +'</span>' +
-                '<div class="hsl-percentbar hsl-percentbar-mvp" style="width:'+ hero.mvp_rate_percent +'%;"></div>';
+            let heroMVP = '<span class="hsl-number-mvp-medals">'+ hero.mvp_medals +'</span>' +
+                '<div class="hsl-percentbar hsl-percentbar-mvp-medals" style="width:'+ hero.mvp_rate_percent +'%;"></div>';
 
             //Popularity
             let heroPopularity = '<span class="hsl-number-popularity">'+ hero.popularity +'</span>' +
@@ -179,9 +476,36 @@ StatslistLoader.data = {
                     '<div class="hsl-percentbar hsl-percentbar-winrate" style="width:'+ hero.winrate_percent +'%;"></div>';
             }
 
-            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, hero.kda_raw, heroKDA, heroMVPHero, heroMVP, heroPopularity, heroWinrate];
+            let heroDmg = '<span class="hsl-number-popularity">'+ hero.hero_damage_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-herodamage" style="width:'+ hero.hero_damage_avg_percent +'%;"></div>';
+            let siegeDmg = '<span class="hsl-number-popularity">'+ hero.siege_damage_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-siegedamage" style="width:'+ hero.siege_damage_avg_percent +'%;"></div>';
+            let structureDmg = '<span class="hsl-number-popularity">'+ hero.structure_damage_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-structuredamage" style="width:'+ hero.structure_damage_avg_percent +'%;"></div>';
+            let healing = '<span class="hsl-number-popularity">'+ hero.healing_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-healing" style="width:'+ hero.healing_avg_percent +'%;"></div>';
+            let damageTaken = '<span class="hsl-number-popularity">'+ hero.damage_taken_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-damagetaken" style="width:'+ hero.damage_taken_avg_percent +'%;"></div>';
+            let exp_contrib = '<span class="hsl-number-popularity">'+ hero.exp_contrib_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-expcontrib" style="width:'+ hero.exp_contrib_avg_percent +'%;"></div>';
+            let merc_camps = '<span class="hsl-number-popularity">'+ hero.merc_camps_avg +'</span>' +
+                '<div class="hsl-percentbar rm-fm-r-stats-merccamps" style="width:'+ hero.merc_camps_avg_percent +'%;"></div>';
+            let kills = hero.kills_avg;
+            let deaths = hero.deaths_avg;
+            let assists = hero.assists_avg;
+            let killstreak = hero.best_killstreak;
+            let time_spent_dead = hero.time_spent_dead_avg;
+
+            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, hero.kda_raw, heroKDA, heroMVPHero, heroMVP, heroPopularity, heroWinrate,
+                    heroDmg, siegeDmg, structureDmg, healing, damageTaken, exp_contrib, merc_camps, kills, deaths, assists, killstreak, time_spent_dead];
         },
         getTableConfig: function() {
+            let self = StatslistLoader.data.statslist;
+            let internal = self.internal;
+            let cyopts = internal.cycleOptions;
+
+            let cyopt = cyopts[internal.cycleSelected];
+
             let datatable = {};
 
             datatable.columns = [
@@ -190,16 +514,28 @@ StatslistLoader.data = {
                 {"title": 'Hero_Sort', "visible": false, "responsivePriority": 999},
                 {"title": 'Role', "visible": false, "responsivePriority": 999},
                 {"title": 'Role_Specific', "visible": false, "responsivePriority": 999},
-                {"title": 'Games Played', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Played', "visible": cyopt.cols['Played'].visible, "width": "8%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
                 {"title": 'KDA_Sort', "visible": false, "responsivePriority": 999},
-                {"title": 'KDA', "width": "15%", "sClass": "sortIcon_Number", "iDataSort": 6, "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'MVP', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'MVP Total', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'Popularity', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'Winrate', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'KDA', "visible": cyopt.cols['KDA'].visible, "width": "10%", "sClass": "sortIcon_Number", "iDataSort": 6, "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'MVP', "visible": cyopt.cols['MVP'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'MVP Medals', "visible": cyopt.cols['MVP Medals'].visible, "width": "12%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Popularity', "visible": cyopt.cols['Popularity'].visible, "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Winrate', "visible": cyopt.cols['Winrate'].visible, "width": "20%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Hero Dmg', "visible": cyopt.cols['Hero Dmg'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Siege Dmg', "visible": cyopt.cols['Siege Dmg'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Structure Dmg', "visible": cyopt.cols['Structure Dmg'].visible, "width": "12%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Healing', "visible": cyopt.cols['Healing'].visible, "width": "8%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Damage Taken', "visible": cyopt.cols['Damage Taken'].visible, "width": "12%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Experience', "visible": cyopt.cols['Experience'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Merc Camps', "visible": cyopt.cols['Merc Camps'].visible, "width": "14%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Kills', "visible": cyopt.cols['Kills'].visible, "width": "8%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Deaths', "visible": cyopt.cols['Deaths'].visible, "width": "8%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Assists', "visible": cyopt.cols['Assists'].visible, "width": "8%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Best Killstreak', "visible": cyopt.cols['Best Killstreak'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Time Dead (Seconds)', "visible": cyopt.cols['Time Dead (Seconds)'].visible, "width": "10%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
             ];
 
-            datatable.order = [[10, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
+            datatable.order = [[5, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
             datatable.language = {
                 processing: '', //Change content of processing indicator
                 loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
@@ -226,6 +562,8 @@ StatslistLoader.data = {
         initTable: function(dataTableConfig) {
             let table = $('#hsl-table').DataTable(dataTableConfig);
 
+            dataTableContext = table;
+
             //Search the table for the new value typed in by user
             $('#heroes-statslist-toolbar-search').on("propertychange change click keyup input paste", function() {
                 table.search($(this).val()).draw();
@@ -251,17 +589,35 @@ $(document).ready(function() {
     let filterTypes = ["season", "gameType", "map"];
     let filterAjax = StatslistLoader.ajax.filter;
 
+    let validateCycleSelector = function() {
+        let cycleSelectorVal = HotstatusFilter.getSelectorValues("playerHeroesStatslist");
+        StatslistLoader.data.statslist.internal.cycleSet(cycleSelectorVal);
+    };
+
     //filterAjax.validateLoad(baseUrl);
     HotstatusFilter.validateSelectors(null, filterTypes);
     filterAjax.validateLoad(baseUrl, filterTypes);
+    validateCycleSelector();
 
     //Track filter changes and validate
     $('select.filter-selector').on('change', function(event) {
         HotstatusFilter.validateSelectors(null, filterTypes);
+
+        //Check cycle selector
+        validateCycleSelector();
     });
 
     //Load new data on a select dropdown being closed (Have to use '*' selector workaround due to a 'Bootstrap + Chrome-only' bug)
     $('*').on('hidden.bs.dropdown', function(e) {
         filterAjax.validateLoad(baseUrl, filterTypes);
+    });
+
+    //Statslist Cycle buttons
+    StatslistLoader.data.statslist.internal.cycleRenderLabel();
+    $('.hsl-cycle-back').on('click', function(e) {
+        StatslistLoader.data.statslist.internal.cycleIncrement(-1);
+    });
+    $('.hsl-cycle-forward').on('click', function(e) {
+        StatslistLoader.data.statslist.internal.cycleIncrement(1);
     });
 });

@@ -364,6 +364,10 @@ table.dataTable.fixedHeader-locked {
 
 }
 
+.hsl-number-mvp-medals {
+
+}
+
 .hsl-percentbar {
     height: 4px;
 }
@@ -378,6 +382,10 @@ table.dataTable.fixedHeader-locked {
 
 .hsl-percentbar-mvp {
     background-color: #8ecac9;
+}
+
+.hsl-percentbar-mvp-medals {
+    background-color: #5acac2;
 }
 
 /* DataTable Pagination buttons */
@@ -2258,6 +2266,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .rm-fm-r-stats-siegedamage {
     background-color: #af5800;
+}
+
+.rm-fm-r-stats-structuredamage {
+    background-color: #af6330;
 }
 
 .rm-fm-r-stats-merccamps {
