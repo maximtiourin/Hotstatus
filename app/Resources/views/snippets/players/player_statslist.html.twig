@@ -1,0 +1,27 @@
+{# block javascripts %}
+    <script src="{{ asset('build/player-heroes-statslist.js') }}"></script>
+{% endblock #}
+
+<div id="heroes-statslist-container" style="border-radius: 4px !important;">
+    {% block filter %}{% endblock %}
+    <div id="heroes-statslist-toolbar" class="clearfix text-left initial-load">
+        <div id="" class="d-inline-block float-right">
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Utility">Utility</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Tank">Tank</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Sustained Damage">Sustained Damage</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Siege">Siege</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Healer">Healer</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Burst Damage">Burst Damage</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Bruiser">Bruiser</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Ambusher">Ambusher</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Warrior">Warrior</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Support">Support</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Specialist">Specialist</button>
+            <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-rolebutton hsl-rolebutton" value="Assassin">Assassin</button>
+        </div>
+        <div id="heroes-statslist-toolbar-container-search" class="d-inline-block float-none">
+            <input id="heroes-statslist-toolbar-search" class="hotstatus-search-textbox" placeholder="Search by Hero/Role..."><div id="statslist-lastupdated" class="d-inline-block"></div>
+        </div>
+    </div>
+    {# Heroes Statslist Generated #}
+</div>

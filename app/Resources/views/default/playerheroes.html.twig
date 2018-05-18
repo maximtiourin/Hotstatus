@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{# Include snippets and then alias their blocks so as to order them as needed #}
+{% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
+{# use ':snippets:players/player_statslist.html.twig' with javascripts as hsljavascripts #}
+
+{# Append to title #}
+{% block title %}
+: Hero Statistics ({{ player.name }}#{{ player.tag }})
+{% endblock %}
+
+{# Inject dynamic content variables #}
+{% block dynamicVariables %}
+    let player_id = {{ player.id }};
+    let player_region = {{ player.region_raw }};
+    let player_name = "{{ player.name }}";
+    let player_tag = {{ player.tag }};
+    let image_bpath = "{{ asset('/', 'images')|raw }}";
+{% endblock %}
+
+{# Custom styling that require the use of path generation #}
+{% block style %}
+{% endblock %}
+
+{% block body %}
+    {# Begin HTML #}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    {% include ':snippets:advertising/responsive_horizontal.html.twig' %}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-1 col-xl-2"></div>
+            <div class="col-sm-12 col-md-10 col-xl-8">
+                <div>
+                    {% embed ':snippets:players/player_statslist.html.twig' %}
+                        {% block javascripts %}{% endblock %}
+                        {% block filter %}
+                            <div>
+                                {% include ':snippets:heroes/filter/dropdown/select/gameTypesFull.html.twig' %}
+                                {% include ':snippets:heroes/filter/dropdown/select/maps.html.twig' %}
+                                {% include ':snippets:heroes/filter/dropdown/select/seasons.html.twig' %}
+                            </div>
+                        {% endblock %}
+                    {% endembed %}
+                </div>
+            </div>
+            <div class="col-md-1 col-xl-2">
+                {% include ':snippets:advertising/responsive_vertical.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{# Stylesheets #}
+{% block stylesheets %}
+    {{ block('stdstylesheets') }}
+{% endblock %}
+
+{# Javascript #}
+{% block javascripts %}
+    {{ block('stdjavascripts') }}
+    {# block('hsljavascripts') #}
+{% endblock %}
+
+{# Tail Javascript #}
+{% block tailJavascript %}
+    Hotstatus.advertising.internal.generateByDefault = false;
+{% endblock %}
+

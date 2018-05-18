@@ -391,6 +391,27 @@ class DefaultController extends Controller
     /**
      * @Route("/players/{region}/{id}/heroes", requirements={"region": "\d+", "id": "\d+"}, name="playerheroes")
      */
+    public function playerHeroesAction($region, $id) {
+        $playerresult = self::getPlayer($region, $id);
+
+        if ($playerresult !== FALSE) {
+            HotstatusPipeline::filter_generate_season(false);
+
+            return $this->render("default/playerheroes.html.twig", [
+                "player" => $playerresult,
+                "filter_seasons" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_SEASON],
+                "filter_gameTypes" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
+                "filter_maps" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP]
+            ]);
+        }
+        else {
+            return $this->redirectToRoute("playerError");
+        }
+    }
+
+    /**
+     * @Route("/players/{region}/{id}/talents", requirements={"region": "\d+", "id": "\d+"}, name="playertalents")
+     */
     public function playerHeroDefaultAction($region, $id) {
         return $this->redirectToRoute("playerhero", [
             "region" => $region,
