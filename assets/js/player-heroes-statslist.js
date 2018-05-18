@@ -134,7 +134,7 @@ StatslistLoader.data = {
         generateTableData: function(hero) {
             let heroPortrait = '<img src="'+ image_bpath + hero.image_hero +'.png" class="rounded-circle hsl-portrait">';
 
-            let heroProperName = '<a class="hsl-link" href="'+ Routing.generate('hero', {heroProperName: hero.name}) +'">'+ hero.name +'</a>';
+            let heroProperName = '<a class="hsl-link" href="'+ Routing.generate("playerhero", {region: player_region, id: player_id, heroProperName: hero.name}) +'">'+ hero.name +'</a>';
 
             let heroNameSort = hero.name_sort;
 
@@ -143,8 +143,6 @@ StatslistLoader.data = {
             let heroRoleSpecific = hero.role_specific;
 
             let heroPlayed = hero.played;
-
-            let heroBanned = hero.banned;
 
             let heroPopularity = '<span class="hsl-number-popularity">'+ hero.popularity +'</span>' +
                 '<div class="hsl-percentbar hsl-percentbar-popularity" style="width:'+ hero.popularity_percent +'%;"></div>';
@@ -158,15 +156,7 @@ StatslistLoader.data = {
                     '<div class="hsl-percentbar hsl-percentbar-winrate" style="width:'+ hero.winrate_percent +'%;"></div>';
             }
 
-            //Windelta
-            let heroWindelta = '';
-            if (hero.windelta_exists) {
-                let color = "hsl-number-delta-red";
-                if (hero.windelta_raw >= 0) color = "hsl-number-delta-green";
-                heroWindelta = '<span class="'+ color +'">'+ hero.windelta +'</span>';
-            }
-
-            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, heroBanned, heroPopularity, heroWinrate, heroWindelta];
+            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, heroPopularity, heroWinrate];
         },
         getTableConfig: function() {
             let datatable = {};
@@ -178,13 +168,11 @@ StatslistLoader.data = {
                 {"title": 'Role', "visible": false, "responsivePriority": 999},
                 {"title": 'Role_Specific', "visible": false, "responsivePriority": 999},
                 {"title": 'Games Played', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'Games Banned', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
                 {"title": 'Popularity', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
                 {"title": 'Winrate', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": '% Δ', "width": "5%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1}
             ];
 
-            datatable.order = [[8, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
+            datatable.order = [[7, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
             datatable.language = {
                 processing: '', //Change content of processing indicator
                 loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)

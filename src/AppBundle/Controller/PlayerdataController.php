@@ -660,6 +660,8 @@ class PlayerdataController extends Controller {
                 /*
                  * Get Heroes/Maps Stats
                  */
+                $spc_total_matches_played = 0;
+
                 $heroes = [];
                 $heroesResult = $db->execute("GetHeroes");
                 while ($row = $db->fetchArray($heroesResult)) {
@@ -669,8 +671,13 @@ class PlayerdataController extends Controller {
                     if (!key_exists($heroname, $heroes)) {
                         $heroes[$heroname] = [
                             "name" => $heroname,
+                            "name_sort" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['name_sort'],
+                            "role_blizzard" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['role_blizzard'],
+                            "role_specific" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['role_specific'],
                             "image_hero" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['image_hero'],
                             "played" => 0,
+                            "popularity" => 0,
+                            "popularity_percent" => 0,
                             "won" => 0,
                             "kills" => 0,
                             "assists" => 0,
@@ -722,7 +729,8 @@ class PlayerdataController extends Controller {
                     $a_time_spent_dead = &$hero['time_spent_dead'];
                     $a_mvp_medals = &$hero['mvp_medals'];
 
-                    $a_played += intval($row['played']));
+                    $a_played += intval($row['played']);
+                    $spc_total_matches_played += intval($row['played']);
                     $a_won += intval($row['won']);
                     $a_kills += intval($row['stats_kills']);
                     $a_assists += intval($row['stats_assists']);
@@ -749,6 +757,40 @@ class PlayerdataController extends Controller {
                  * Get Heroes
                  */
                 $topheroes = [];
+
+                //Calculate popularities and their min/max, as well as Max/Min winrates
+                $maxPopularity = PHP_INT_MIN;
+                $minPopularity = PHP_INT_MAX;
+                $maxWinrate = 0.0;
+                $minWinrate = 100.0;
+                foreach ($heroes as $heroname => &$rhero) {
+                    //Popularity
+                    if ($spc_total_matches_played > 0) {
+                        $dt_popularity = round((($rhero['played'] * 1.00) / (($spc_total_matches_played) * 1.00)) * 100.0, 1);
+                    }
+                    else {
+                        $dt_popularity = 0;
+                    }
+
+                    //Max, mins
+                    if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
+                    if ($minPopularity > $dt_popularity) $minPopularity = $dt_popularity;
+
+                    $rhero['popularity'] = $dt_popularity;
+
+                    //Winrate
+                    $winrate = 0.0;
+                    if ($rhero['played'] > 0) {
+                        $winrate = round(($rhero['won'] / ($rhero['played'] * 1.00)) * 100.0, 1);
+                    }
+                    $rhero['winrate_raw'] = $winrate;
+
+                    //Max, mins
+                    if ($maxWinrate < $winrate && $rhero['played'] > 0) $maxWinrate = $winrate;
+                    if ($minWinrate > $winrate && $rhero['played'] > 0) $minWinrate = $winrate;
+                }
+
+                //Calculate Heroes
                 foreach ($heroes as $heroname => &$hero) {
                     $a_played = &$hero['played'];
                     $a_won = &$hero['won'];
@@ -766,13 +808,28 @@ class PlayerdataController extends Controller {
                     $a_time_spent_dead = &$hero['time_spent_dead'];
                     $a_mvp_medals = &$hero['mvp_medals'];
 
-                    //Winrate
-                    $c_winrate = 0;
-                    if ($a_played > 0) {
-                        $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
+                    //Popularity
+                    $percentOnRange = 0;
+                    if ($maxPopularity - $minPopularity > 0) {
+                        $percentOnRange = ((($hero['popularity'] - $minPopularity) * 1.00) / (($maxPopularity - $minPopularity) * 1.00)) * 100.0;
                     }
-                    $hero['winrate'] = sprintf("%03.1f", $c_winrate);
-                    $hero['winrate_raw'] = $c_winrate;
+                    $hero['popularity'] = sprintf("%03.1f %%", $hero['popularity']);
+                    $hero['popularity_percent'] = $percentOnRange;
+
+                    //Winrate
+                    if ($hero['played'] > 0) {
+                        $percentOnRange = 0;
+                        if ($maxWinrate - $minWinrate > 0) {
+                            $percentOnRange = ((($hero['winrate_raw'] - $minWinrate) * 1.00) / (($maxWinrate - $minWinrate) * 1.00)) * 100.0;
+                        }
+                        $hero['winrate'] = sprintf("%03.1f %%", $hero['winrate_raw']);
+                        $hero['winrate_percent'] = $percentOnRange;
+                        $hero['winrate_exists'] = true;
+                    }
+                    else {
+                        $hero['winrate'] = '';
+                        $hero['winrate_exists'] = false;
+                    }
 
                     //Kills
                     $c_avg_kills = 0;
