@@ -707,6 +707,7 @@ class PlayerdataController extends Controller {
                             "winrate" => 0,
                             "winrate_raw" => 0,
                             "mvp_medals" => 0,
+                            "mvp_rate" => 0,
                         ];
                     }
 
@@ -758,11 +759,15 @@ class PlayerdataController extends Controller {
                  */
                 $topheroes = [];
 
-                //Calculate popularities and their min/max, as well as Max/Min winrates
+                //Calculate popularities and their min/max, mvprate and its min/max, as well as Max/Min winrates
                 $maxPopularity = PHP_INT_MIN;
                 $minPopularity = PHP_INT_MAX;
                 $maxWinrate = 0.0;
                 $minWinrate = 100.0;
+                $maxMVPrate = 0.0;
+                $minMVPrate = 100.0;
+                $maxMVPherorate = 0.0;
+                $minMVPherorate = 100.0;
                 foreach ($heroes as $heroname => &$rhero) {
                     //Popularity
                     if ($spc_total_matches_played > 0) {
@@ -772,11 +777,33 @@ class PlayerdataController extends Controller {
                         $dt_popularity = 0;
                     }
 
+                    $rhero['popularity'] = $dt_popularity;
+
                     //Max, mins
                     if ($maxPopularity < $dt_popularity) $maxPopularity = $dt_popularity;
                     if ($minPopularity > $dt_popularity) $minPopularity = $dt_popularity;
 
-                    $rhero['popularity'] = $dt_popularity;
+                    //MVP Total
+                    $c_mvp_rate = 0;
+                    if ($spc_total_matches_played > 0) {
+                        $c_mvp_rate = round((($rhero['mvp_medals'] * 1.00)) / ($spc_total_matches_played * 1.00) * 100.0, 1);
+                    }
+
+                    $rhero['mvp_rate'] = $c_mvp_rate;
+
+                    //MVP Hero
+                    $c_mvp_herorate = 0;
+                    if ($rhero['played'] > 0) {
+                        $c_mvp_herorate = round((($rhero['mvp_medals'] * 1.00)) / ($rhero['played'] * 1.00) * 100.0, 1);
+                    }
+
+                    $rhero['mvp_herorate'] = $c_mvp_herorate;
+
+                    //Max, mins
+                    if ($maxMVPrate < $c_mvp_rate) $maxMVPrate = $c_mvp_rate;
+                    if ($minMVPrate > $c_mvp_rate) $minMVPrate = $c_mvp_rate;
+                    if ($maxMVPherorate < $c_mvp_herorate) $maxMVPherorate = $c_mvp_herorate;
+                    if ($minMVPherorate > $c_mvp_herorate) $minMVPherorate = $c_mvp_herorate;
 
                     //Winrate
                     $winrate = 0.0;
@@ -815,6 +842,22 @@ class PlayerdataController extends Controller {
                     }
                     $hero['popularity'] = sprintf("%03.1f %%", $hero['popularity']);
                     $hero['popularity_percent'] = $percentOnRange;
+
+                    //MVP Total
+                    $percentOnRange = 0;
+                    if ($maxMVPrate - $minMVPrate > 0) {
+                        $percentOnRange = ((($hero['mvp_rate'] - $minMVPrate) * 1.00) / (($maxMVPrate - $minMVPrate) * 1.00)) * 100.0;
+                    }
+                    $hero['mvp_rate'] = sprintf("%03.1f %%", $hero['mvp_rate']);
+                    $hero['mvp_rate_percent'] = $percentOnRange;
+
+                    //MVP Hero
+                    $percentOnRange = 0;
+                    if ($maxMVPherorate - $minMVPherorate > 0) {
+                        $percentOnRange = ((($hero['mvp_herorate'] - $minMVPherorate) * 1.00) / (($maxMVPherorate - $minMVPherorate) * 1.00)) * 100.0;
+                    }
+                    $hero['mvp_herorate'] = sprintf("%03.1f %%", $hero['mvp_herorate']);
+                    $hero['mvp_herorate_percent'] = $percentOnRange;
 
                     //Winrate
                     if ($hero['played'] > 0) {
@@ -949,14 +992,6 @@ class PlayerdataController extends Controller {
                         $c_avg_kda_raw = 999999999;
                     }
                     $hero['kda_raw'] = $c_avg_kda_raw;
-
-                    //MVP Medal Percentage
-                    $c_mvp_medal_percentage = 0;
-                    if ($a_played > 0) {
-                        $c_mvp_medal_percentage = round(($a_mvp_medals / ($a_played * 1.00)) * 100.0, 1);
-                    }
-                    $hero['mvp_medals_percentage'] = sprintf("%03.1f", $c_mvp_medal_percentage);
-                    $hero['mvp_medals_percentage_raw'] = $c_mvp_medal_percentage;
 
                     $topheroes[] = $hero;
                 }

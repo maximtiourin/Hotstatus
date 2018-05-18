@@ -1,10 +1,13 @@
-{# block javascripts %}
+{% block javascripts %}
     <script src="{{ asset('build/player-heroes-statslist.js') }}"></script>
-{% endblock #}
+{% endblock %}
 
 {% block player_tab_index %}{% endblock %}
-<div id="heroes-statslist-container" class="hotstatus-container padding-top-7 padding-horizontal-15">
+<div id="heroes-statslist-container" class="hotstatus-container padding-top-7">
     {% block filter %}{% endblock %}
+    <div class="hotstatus-subcontainer">
+        {% block player_summary %}{% endblock %}
+    </div>
     <div id="heroes-statslist-toolbar" class="clearfix text-left initial-load">
         <div id="" class="d-inline-block float-right">
             <button class="btn btn-sm d-inline float-right heroes-statslist-toolbar-subrolebutton hsl-rolebutton" value="Utility">Utility</button>

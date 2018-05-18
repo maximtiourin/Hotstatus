@@ -2,7 +2,7 @@
 
 {# Include snippets and then alias their blocks so as to order them as needed #}
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
-{# use ':snippets:players/player_statslist.html.twig' with javascripts as hsljavascripts #}
+{% use ':snippets:players/player_statslist.html.twig' with javascripts as hsljavascripts %}
 
 {% set route = app.request.attributes.get('_route') %}
 
@@ -50,6 +50,25 @@
                                 {% include ':snippets:heroes/filter/dropdown/select/maps.html.twig' %}
                             </div>
                         {% endblock %}
+                        {% block player_summary %}
+                            <div class="playersummary-container">
+                                <div class="playersummary-player">
+                                    <div class="playersummary-player-region">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Region">
+                                        {{  player.region }}
+                                    </span>
+                                    </div>
+                                    <div class="playersummary-player-battletag">
+                                        {{ player.name }}
+                                    </div>
+                                    <div class="playersummary-player-level">
+                                    <span style="cursor: help;" data-toggle="tooltip" data-html="true" title="Battletag">
+                                        #{{ player.tag }}
+                                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endblock %}
                     {% endembed %}
                 </div>
             </div>
@@ -68,7 +87,7 @@
 {# Javascript #}
 {% block javascripts %}
     {{ block('stdjavascripts') }}
-    {# block('hsljavascripts') #}
+    {{ block('hsljavascripts') }}
 {% endblock %}
 
 {# Tail Javascript #}

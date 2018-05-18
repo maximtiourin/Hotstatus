@@ -360,6 +360,10 @@ table.dataTable.fixedHeader-locked {
 
 }
 
+.hsl-number-mvp {
+
+}
+
 .hsl-percentbar {
     height: 4px;
 }
@@ -370,6 +374,10 @@ table.dataTable.fixedHeader-locked {
 
 .hsl-percentbar-popularity {
     background-color: #4da7ca;
+}
+
+.hsl-percentbar-mvp {
+    background-color: #8ecac9;
 }
 
 /* DataTable Pagination buttons */
@@ -1016,6 +1024,10 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
 
 .padding-left-0 {
     padding-left: 0px!important;
+}
+
+.max-width-576 {
+    max-width: 576px;
 }
 
 /* Small and up */

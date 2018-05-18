@@ -1,0 +1,10 @@
+{% set selectOnce = true %}
+<select class="selectpicker filter-selector filter-selector-map" data-width="305px" title="No Maps Selected"
+        data-max-options="1" data-max-options-text="Max 1 Selection" multiple>
+    {% for key, map in filter_maps %}
+        <option {% if map.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
+                title="<img class='filter-dropdown-image-map filter-dropdown-image-map-title' src='{{ asset('/ui/map_icon_'~map.name_sort~'.png', 'images') }}'>"
+                data-content="<img class='filter-dropdown-image-map filter-dropdown-image-margin-right-8' src='{{ asset('/ui/map_icon_'~map.name_sort~'.png', 'images') }}'>{{ key }}"
+                value="{{ map.value }}">{{ key }}</option>
+    {% endfor %}
+</select>

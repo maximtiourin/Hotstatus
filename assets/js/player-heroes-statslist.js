@@ -144,6 +144,29 @@ StatslistLoader.data = {
 
             let heroPlayed = hero.played;
 
+            /*
+             * KDA
+             */
+            //Good kda
+            let goodkda = 'rm-sw-sp-kda-num';
+            if (hero.kda_raw >= 3) {
+                goodkda = 'rm-sw-sp-kda-num-good'
+            }
+            if (hero.kda_raw >= 6) {
+                goodkda = 'rm-sw-sp-kda-num-great'
+            }
+
+            let heroKDA = '<span class="'+ goodkda +'">' + hero.kda_avg + '</span>';
+
+            //MVP Hero Percent
+            let heroMVPHero = '<span class="hsl-number-mvp">'+ hero.mvp_herorate +'</span>' +
+                '<div class="hsl-percentbar hsl-percentbar-mvp" style="width:'+ hero.mvp_herorate_percent +'%;"></div>';
+
+            //MVP Total Percent
+            let heroMVP = '<span class="hsl-number-mvp">'+ hero.mvp_rate +'</span>' +
+                '<div class="hsl-percentbar hsl-percentbar-mvp" style="width:'+ hero.mvp_rate_percent +'%;"></div>';
+
+            //Popularity
             let heroPopularity = '<span class="hsl-number-popularity">'+ hero.popularity +'</span>' +
                 '<div class="hsl-percentbar hsl-percentbar-popularity" style="width:'+ hero.popularity_percent +'%;"></div>';
 
@@ -156,23 +179,27 @@ StatslistLoader.data = {
                     '<div class="hsl-percentbar hsl-percentbar-winrate" style="width:'+ hero.winrate_percent +'%;"></div>';
             }
 
-            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, heroPopularity, heroWinrate];
+            return [heroPortrait, heroProperName, heroNameSort, heroRoleBlizzard, heroRoleSpecific, heroPlayed, hero.kda_raw, heroKDA, heroMVPHero, heroMVP, heroPopularity, heroWinrate];
         },
         getTableConfig: function() {
             let datatable = {};
 
             datatable.columns = [
                 {"width": "10%", "sClass": "hsl-table-portrait-td", "bSortable": false, "searchable": false, "responsivePriority": 1},
-                {"title": 'Hero', "width": "17%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc'], "responsivePriority": 1}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
+                {"title": 'Hero', "width": "15%", "sClass": "sortIcon_Text", "iDataSort": 2, "orderSequence": ['asc', 'desc'], "responsivePriority": 1}, //iDataSort tells which column should be used as the sort value, in this case Hero_Sort
                 {"title": 'Hero_Sort', "visible": false, "responsivePriority": 999},
                 {"title": 'Role', "visible": false, "responsivePriority": 999},
                 {"title": 'Role_Specific', "visible": false, "responsivePriority": 999},
-                {"title": 'Games Played', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'Popularity', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
-                {"title": 'Winrate', "width": "17%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Games Played', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'KDA_Sort', "visible": false, "responsivePriority": 999},
+                {"title": 'KDA', "width": "15%", "sClass": "sortIcon_Number", "iDataSort": 6, "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'MVP', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'MVP Total', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Popularity', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
+                {"title": 'Winrate', "width": "15%", "sClass": "sortIcon_Number", "searchable": false, "orderSequence": ['desc', 'asc'], "responsivePriority": 1},
             ];
 
-            datatable.order = [[7, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
+            datatable.order = [[10, 'desc']]; //The default ordering of the table on load => column 9 at index 8 descending
             datatable.language = {
                 processing: '', //Change content of processing indicator
                 loadingRecords: ' ', //Message displayed inside of table while loading records in client side ajax requests (not used for server side)
