@@ -2,7 +2,8 @@
     <script src="{{ asset('build/player-heroes-statslist.js') }}"></script>
 {% endblock #}
 
-<div id="heroes-statslist-container" style="border-radius: 4px !important;">
+{% block player_tab_index %}{% endblock %}
+<div id="heroes-statslist-container" class="hotstatus-container padding-top-7 padding-horizontal-15">
     {% block filter %}{% endblock %}
     <div id="heroes-statslist-toolbar" class="clearfix text-left initial-load">
         <div id="" class="d-inline-block float-right">

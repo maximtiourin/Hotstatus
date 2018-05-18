@@ -4,6 +4,8 @@
 {% use ':snippets:stdassets.html.twig' with javascripts as stdjavascripts, stylesheets as stdstylesheets %}
 {# use ':snippets:players/player_statslist.html.twig' with javascripts as hsljavascripts #}
 
+{% set route = app.request.attributes.get('_route') %}
+
 {# Append to title #}
 {% block title %}
 : Hero Statistics ({{ player.name }}#{{ player.tag }})
@@ -38,11 +40,14 @@
                 <div>
                     {% embed ':snippets:players/player_statslist.html.twig' %}
                         {% block javascripts %}{% endblock %}
+                        {% block player_tab_index %}
+                            {% include ':snippets:players/player_tab_index.html.twig' %}
+                        {% endblock %}
                         {% block filter %}
                             <div>
-                                {% include ':snippets:heroes/filter/dropdown/select/gameTypesFull.html.twig' %}
-                                {% include ':snippets:heroes/filter/dropdown/select/maps.html.twig' %}
                                 {% include ':snippets:heroes/filter/dropdown/select/seasons.html.twig' %}
+                                {% include ':snippets:heroes/filter/dropdown/multiselect/gameTypes.html.twig' %}
+                                {% include ':snippets:heroes/filter/dropdown/select/maps.html.twig' %}
                             </div>
                         {% endblock %}
                     {% endembed %}

@@ -1000,6 +1000,11 @@ https://github.com/silviomoreto/bootstrap-select/issues/1135
     border-color: #1B0748;
 }
 
+.padding-horizontal-15 {
+    padding-left: 15px!important;
+    padding-right: 15px!important;
+}
+
 .padding-horizontal-0 {
     padding-left: 0px!important;
     padding-right: 0px!important;

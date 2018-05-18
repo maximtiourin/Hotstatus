@@ -25,6 +25,7 @@ Encore
     .addEntry('hero-loader', './assets/js/hero-loader.js')
     .addEntry('player-loader', './assets/js/player-loader.js')
     .addEntry('player-hero-loader', './assets/js/player-hero-loader.js')
+    .addEntry('player-heroes-statslist', './assets/js/player-heroes-statslist.js')
     .addEntry('rankings-loader', './assets/js/rankings-loader.js')
 
     // will output as web/build/global.css

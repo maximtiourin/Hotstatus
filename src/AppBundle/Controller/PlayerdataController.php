@@ -560,6 +560,384 @@ class PlayerdataController extends Controller {
     }
 
     /**
+     * Returns heroes statslist for player
+     *
+     * @Route("/playerdata/datatable/{region}/{player}/heroes/statslist", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_datatable_heroes_statslist")
+     */
+    public function getDataTablePlayerHeroesStatsListAction(Request $request, $region, $player) {
+        $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_DATATABLE;
+        $_ID = "getDataTablePlayerHeroesStatsListAction";
+        $_VERSION = 1;
+
+        /*
+         * Process Query Parameters
+         */
+        $query = self::heroes_initQueries();
+        $queryCacheValues = [];
+        $querySqlValues = [];
+
+        //Collect WhereOr strings from all query parameters for cache key
+        foreach ($query as $qkey => &$qobj) {
+            if ($request->query->has($qkey)) {
+                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $request->query->get($qkey);
+                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+            }
+        }
+
+        $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
+
+        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+        foreach ($query as $qkey => &$qobj) {
+            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+            }
+        }
+
+        //Build WhereAnd string from collected WhereOr strings
+        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, true);
+
+        /*
+         * Begin building response
+         */
+        //Main vars
+        $responsedata = [];
+        $pagedata = [];
+        $validResponse = FALSE;
+
+        //Determine Cache Id
+        $CACHE_ID = "$_ID:$region:$player".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+        //Get credentials
+        $creds = Credentials::getCredentialsForUser(Credentials::USER_HOTSTATUSWEB);
+
+        //Get redis cache
+        $redis = new RedisDatabase();
+        $connected_redis = $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+
+        //Try to get cached value
+        $cacheval = NULL;
+        if ($connected_redis !== FALSE) {
+            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
+        }
+
+        if ($connected_redis !== FALSE && $cacheval !== NULL) {
+            //Use cached value
+            $pagedata = json_decode($cacheval, true);
+
+            $validResponse = TRUE;
+        }
+        else {
+            //Try to get Mysql value
+            $db = new MysqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                //Get season date range
+                date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+                $seasonobj = HotstatusPipeline::$SEASONS[$querySeason];
+                $date_start = $seasonobj['start'];
+                $date_end = $seasonobj['end'];
+
+                //Prepare Statements
+                $t_players_matches_recent_granular = HotstatusPipeline::$table_pointers['players_matches_recent_granular'];
+
+                $db->prepare("GetHeroes",
+                    "SELECT `map`, `hero`, `played`, `won`, `stats_kills`, `stats_assists`, `stats_deaths`, `stats_siege_damage`, `stats_hero_damage`, `stats_structure_damage`, `stats_healing`, `stats_damage_taken`, `stats_merc_camps`, `stats_exp_contrib`, `stats_best_killstreak`, `stats_time_spent_dead`, `medals` FROM `$t_players_matches_recent_granular` 
+                    WHERE `id` = ? AND `region` = ? AND `date_end` >= ? AND `date_end` <= ? $querySql");
+                $db->bind("GetHeroes", "iiss", $r_player_id, $r_region, $r_date_start, $r_date_end);
+
+                $r_player_id = $player;
+                $r_region = $region;
+                $r_date_start = $date_start;
+                $r_date_end = $date_end;
+
+                /*
+                 * Get Heroes/Maps Stats
+                 */
+                $heroes = [];
+                $heroesResult = $db->execute("GetHeroes");
+                while ($row = $db->fetchArray($heroesResult)) {
+                    $heroname = $row['hero'];
+
+                    //Hero Exists
+                    if (!key_exists($heroname, $heroes)) {
+                        $heroes[$heroname] = [
+                            "name" => $heroname,
+                            "image_hero" => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO][$heroname]['image_hero'],
+                            "played" => 0,
+                            "won" => 0,
+                            "kills" => 0,
+                            "assists" => 0,
+                            "deaths" => 0,
+                            "hero_damage" => 0,
+                            "siege_damage" => 0,
+                            "structure_damage" => 0,
+                            "healing" => 0,
+                            "damage_taken" => 0,
+                            "merc_camps" => 0,
+                            "exp_contrib" => 0,
+                            "best_killstreak" => 0,
+                            "time_spent_dead" => 0,
+                            "kills_avg" => 0,
+                            "assists_avg" => 0,
+                            "deaths_avg" => 0,
+                            "hero_damage_avg" => 0,
+                            "siege_damage_avg" => 0,
+                            "structure_damage_avg" => 0,
+                            "healing_avg" => 0,
+                            "damage_taken_avg" => 0,
+                            "merc_camps_avg" => 0,
+                            "exp_contrib_avg" => 0,
+                            "time_spent_dead_avg" => 0,
+                            "kda_avg" => 0,
+                            "kda_raw" => 0,
+                            "winrate" => 0,
+                            "winrate_raw" => 0,
+                            "mvp_medals" => 0,
+                        ];
+                    }
+
+                    //Hero
+                    $hero = &$heroes[$heroname];
+
+                    $a_played = &$hero['played'];
+                    $a_won = &$hero['won'];
+                    $a_kills = &$hero['kills'];
+                    $a_assists = &$hero['assists'];
+                    $a_deaths = &$hero['deaths'];
+                    $a_hero_damage = &$hero['hero_damage'];
+                    $a_siege_damage = &$hero['siege_damage'];
+                    $a_structure_damage = &$hero['structure_damage'];
+                    $a_healing = &$hero['healing'];
+                    $a_damage_taken = &$hero['damage_taken'];
+                    $a_merc_camps = &$hero['merc_camps'];
+                    $a_exp_contrib = &$hero['exp_contrib'];
+                    $a_best_killstreak = &$hero['best_killstreak'];
+                    $a_time_spent_dead = &$hero['time_spent_dead'];
+                    $a_mvp_medals = &$hero['mvp_medals'];
+
+                    $a_played += intval($row['played']));
+                    $a_won += intval($row['won']);
+                    $a_kills += intval($row['stats_kills']);
+                    $a_assists += intval($row['stats_assists']);
+                    $a_deaths += intval($row['stats_deaths']);
+                    $a_hero_damage += intval($row['stats_hero_damage']);
+                    $a_siege_damage += intval($row['stats_siege_damage']);
+                    $a_structure_damage += intval($row['stats_structure_damage']);
+                    $a_healing += intval($row['stats_healing']);
+                    $a_damage_taken += intval($row['stats_damage_taken']);
+                    $a_merc_camps += intval($row['stats_merc_camps']);
+                    $a_exp_contrib += intval($row['stats_exp_contrib']);
+                    $a_best_killstreak = max(intval($row['stats_best_killstreak']), $a_best_killstreak);
+                    $a_time_spent_dead += $row['stats_time_spent_dead'];
+
+                    $row_medals = json_decode($row['medals'], true);
+                    if (key_exists('MVP', $row_medals)) {
+                        $a_mvp_medals += $row_medals['MVP']['count'];
+                    }
+                }
+
+                $db->freeResult($heroesResult);
+
+                /*
+                 * Get Heroes
+                 */
+                $topheroes = [];
+                foreach ($heroes as $heroname => &$hero) {
+                    $a_played = &$hero['played'];
+                    $a_won = &$hero['won'];
+                    $a_kills = &$hero['kills'];
+                    $a_assists = &$hero['assists'];
+                    $a_deaths = &$hero['deaths'];
+                    $a_hero_damage = &$hero['hero_damage'];
+                    $a_siege_damage = &$hero['siege_damage'];
+                    $a_structure_damage = &$hero['structure_damage'];
+                    $a_healing = &$hero['healing'];
+                    $a_damage_taken = &$hero['damage_taken'];
+                    $a_merc_camps = &$hero['merc_camps'];
+                    $a_exp_contrib = &$hero['exp_contrib'];
+                    $a_best_killstreak = &$hero['best_killstreak'];
+                    $a_time_spent_dead = &$hero['time_spent_dead'];
+                    $a_mvp_medals = &$hero['mvp_medals'];
+
+                    //Winrate
+                    $c_winrate = 0;
+                    if ($a_played > 0) {
+                        $c_winrate = round(($a_won / ($a_played * 1.00)) * 100.0, 1);
+                    }
+                    $hero['winrate'] = sprintf("%03.1f", $c_winrate);
+                    $hero['winrate_raw'] = $c_winrate;
+
+                    //Kills
+                    $c_avg_kills = 0;
+                    $c_avg_kills_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_kills_raw = $a_kills / ($a_played * 1.00);
+                        $c_avg_kills = round($c_avg_kills_raw, 1);
+                    }
+                    $hero['kills_avg'] = HotstatusResponse::formatNumber($c_avg_kills, 1);
+
+                    //Assists
+                    $c_avg_assists = 0;
+                    $c_avg_assists_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_assists_raw = $a_assists / ($a_played * 1.00);
+                        $c_avg_assists = round($c_avg_assists_raw, 1);
+                    }
+                    $hero['assists_avg'] = HotstatusResponse::formatNumber($c_avg_assists, 1);
+
+                    //Deaths
+                    $c_avg_deaths = 0;
+                    $c_avg_deaths_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_deaths_raw = $a_deaths / ($a_played * 1.00);
+                        $c_avg_deaths = round($c_avg_deaths_raw, 1);
+                    }
+                    $hero['deaths_avg'] = HotstatusResponse::formatNumber($c_avg_deaths, 1);
+
+                    //Hero Damage
+                    $c_avg_hero_damage = 0;
+                    $c_avg_hero_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_hero_damage_raw = $a_hero_damage / ($a_played * 1.00);
+                        $c_avg_hero_damage = round($c_avg_hero_damage_raw, 0);
+                    }
+                    $hero['hero_damage_avg'] = HotstatusResponse::formatNumber($c_avg_hero_damage, 0);
+
+                    //Siege Damage
+                    $c_avg_siege_damage = 0;
+                    $c_avg_siege_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_siege_damage_raw = $a_siege_damage / ($a_played * 1.00);
+                        $c_avg_siege_damage = round($c_avg_siege_damage_raw, 0);
+                    }
+                    $hero['siege_damage_avg'] = HotstatusResponse::formatNumber($c_avg_siege_damage, 0);
+
+                    //Structure Damage
+                    $c_avg_structure_damage = 0;
+                    $c_avg_structure_damage_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_structure_damage_raw = $a_structure_damage / ($a_played * 1.00);
+                        $c_avg_structure_damage = round($c_avg_structure_damage_raw, 0);
+                    }
+                    $hero['structure_damage_avg'] = HotstatusResponse::formatNumber($c_avg_structure_damage, 0);
+
+                    //Healing
+                    $c_avg_healing = 0;
+                    $c_avg_healing_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_healing_raw = $a_healing / ($a_played * 1.00);
+                        $c_avg_healing = round($c_avg_healing_raw, 0);
+                    }
+                    $hero['healing_avg'] = HotstatusResponse::formatNumber($c_avg_healing, 0);
+
+                    //Damage Taken
+                    $c_avg_damage_taken = 0;
+                    $c_avg_damage_taken_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_damage_taken_raw = $a_damage_taken / ($a_played * 1.00);
+                        $c_avg_damage_taken = round($c_avg_damage_taken_raw, 0);
+                    }
+                    $hero['damage_taken_avg'] = HotstatusResponse::formatNumber($c_avg_damage_taken, 0);
+
+                    //Merc Camps
+                    $c_avg_merc_camps = 0;
+                    $c_avg_merc_camps_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_merc_camps_raw = $a_merc_camps / ($a_played * 1.00);
+                        $c_avg_merc_camps = round($c_avg_merc_camps_raw, 0);
+                    }
+                    $hero['merc_camps_avg'] = HotstatusResponse::formatNumber($c_avg_merc_camps, 0);
+
+                    //Exp Contrib
+                    $c_avg_exp_contrib = 0;
+                    $c_avg_exp_contrib_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_exp_contrib_raw = $a_exp_contrib / ($a_played * 1.00);
+                        $c_avg_exp_contrib = round($c_avg_exp_contrib_raw, 0);
+                    }
+                    $hero['exp_contrib_avg'] = HotstatusResponse::formatNumber($c_avg_exp_contrib, 0);
+
+                    //Best Killstreak
+                    $c_best_killstreak = 0;
+                    if ($a_played > 0) {
+                        $c_best_killstreak = $a_best_killstreak;
+                    }
+                    $hero['best_killstreak'] = HotstatusResponse::formatNumber($c_best_killstreak, 0);
+
+                    //Time Spent Dead
+                    $c_avg_time_spent_dead = 0;
+                    $c_avg_time_spent_dead_raw = 0;
+                    if ($a_played > 0) {
+                        $c_avg_time_spent_dead_raw = $a_time_spent_dead / ($a_played * 1.00);
+                        $c_avg_time_spent_dead = round($c_avg_time_spent_dead_raw, 0);
+                    }
+                    $hero['time_spent_dead_avg'] = HotstatusResponse::formatNumber($c_avg_time_spent_dead, 0);
+
+                    //KDA
+                    $c_avg_kda = $c_avg_kills_raw + $c_avg_assists_raw;
+                    if ($c_avg_deaths_raw > 0) {
+                        $c_avg_kda_raw = ($c_avg_kda / ($c_avg_deaths_raw * 1.00));
+                        $c_avg_kda = round($c_avg_kda_raw, 2);
+                        $hero['kda_avg'] = HotstatusResponse::formatNumber($c_avg_kda, 2);
+                    }
+                    else {
+                        $hero['kda_avg'] = "Perfect";
+                        $c_avg_kda_raw = 999999999;
+                    }
+                    $hero['kda_raw'] = $c_avg_kda_raw;
+
+                    //MVP Medal Percentage
+                    $c_mvp_medal_percentage = 0;
+                    if ($a_played > 0) {
+                        $c_mvp_medal_percentage = round(($a_mvp_medals / ($a_played * 1.00)) * 100.0, 1);
+                    }
+                    $hero['mvp_medals_percentage'] = sprintf("%03.1f", $c_mvp_medal_percentage);
+                    $hero['mvp_medals_percentage_raw'] = $c_mvp_medal_percentage;
+
+                    $topheroes[] = $hero;
+                }
+
+                $pagedata['heroes'] = $topheroes;
+
+                //Last Updated
+                $pagedata['last_updated'] = time();
+
+                //Close connection and set valid response
+                $db->close();
+
+                $validResponse = TRUE;
+            }
+
+            //Store mysql value in cache
+            if ($validResponse && $connected_redis) {
+                $encoded = json_encode($pagedata);
+                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+            }
+        }
+
+        $redis->close();
+
+        $responsedata['data'] = $pagedata;
+
+        $response = $this->json($responsedata);
+        $response->setPublic();
+
+        //Determine expire date on valid response
+        if ($validResponse) {
+            $response->setMaxAge(HotstatusCache::CACHE_PLAYER_UPDATE_TTL);
+        }
+
+        return $response;
+    }
+
+    /**
      * Returns recent parties for player, as well as party statistics
      *
      * @Route("/playerdata/pagedata/{region}/{player}/parties", requirements={"region": "\d+", "player": "\d+"}, options={"expose"=true}, condition="request.isXmlHttpRequest()", name="playerdata_pagedata_player_parties")
@@ -2506,6 +2884,37 @@ class PlayerdataController extends Controller {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+        ];
+
+        return $q;
+    }
+
+    private static function heroes_initQueries() {
+        $q = [
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "map",
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
         ];
