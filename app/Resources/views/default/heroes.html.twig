@@ -35,6 +35,7 @@
                     {% embed ':snippets:heroes/statslist.html.twig' %}
                         {% block javascripts %}{% endblock %}
                         {% block filter %}
+                            {% set rankMode = 'Heroes' %}
                             <div>
                                 {% include ':snippets:heroes/filter/dropdown/select/gameTypesFull.html.twig' %}
                                 {% include ':snippets:heroes/filter/dropdown/select/maps.html.twig' %}

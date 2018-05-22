@@ -3,10 +3,12 @@
         data-max-options="1" data-max-options-text="Max 1 Selection" multiple>
     {% for key, rank in filter_ranks %}
         {% if rank.selectable %}
+            {% if ((rankMode == 'All') or (rankMode == 'Heroes' and rank.enableHeroes) or (rankMode == 'Hero' and rank.enableHero)) %}
         <option {% if rank.selected == true and selectOnce %}{% set selectOnce = false %}selected="selected"{% endif %}
                 title="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('/ui/ranked_icon_'~rank.image_key~'.png', 'images') }}'>"
                 data-content="<img class='filter-dropdown-image-rank filter-dropdown-image-margin-right-4' src='{{ asset('/ui/ranked_icon_'~rank.image_key~'.png', 'images') }}'>{{ key }}"
                 value="{{ rank.value }}">{{ key }}</option>
+            {% endif %}
         {% endif %}
     {% endfor %}
 </select>
