@@ -29,9 +29,9 @@
             {#<li class="nav-item nav-md-hideitem">
                 <a class="nav-link nav-stopwordwrap {{ route == 'faq' ? 'active' }}" href="{{ path('faq') }}">F.A.Q.</a>
             </li>#}
-            <li class="nav-item">
+            {#<li class="nav-item">
                 <a class="nav-link nav-stopwordwrap {{ route == 'upload' ? 'active' }}" style="margin-right: 32px;" href="{{ path('upload') }}">Upload Replay</a>
-            </li>
+            </li>#}
         </ul>
         <form class="form-inline my-2 my-lg-0" method="post" action="{{ path('playerSearch') }}">
             <input name="search" class="hotstatus-search-textbox" type="text" placeholder="Enter Player Name..." aria-label="Search by Player Name">

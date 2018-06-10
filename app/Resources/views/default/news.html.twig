@@ -39,13 +39,13 @@
                         <br><br>
                         View your favorite hero's stats, or visit your own personal player page to see your recent matches, hero, and map statistics.
                         <hr/>
-                        Check back here in the future for any news regarding updates to the site!
-                        <hr/>
+                        {#Check back here in the future for any news regarding updates to the site!
+                        <hr/>#}
                         <div class="d-inline-block"><h5>{{ processedReplays }}</h5></div> replays have been processed for over <div class="d-inline-block"><h5>1,560,000</h5></div> unique players since September 2017!
                         {% if queuedReplays_raw > 0 %}<br><br><div class="d-inline-block"><h5>{{ queuedReplays }}</h5></div> replays currently queued for processing.{% endif %}
                         <hr/>
-                        <span style="color:#77ff86;">You can help us keep the lights on via <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>{#, or by whitelisting Hotstat.us in your Adblocker#}!</span>
-                        <hr/>
+                        {#<span style="color:#77ff86;">You can help us keep the lights on via <a class="email" href="https://www.patreon.com/hotstatus" target="_blank">Patreon</a>, or by whitelisting Hotstat.us in your Adblocker!</span>
+                        <hr/>#}
                         {% if outage['exists'] == true %}
                         <h5><a style="color:#FF0000;">Service Disruption:</a></h5>
                         <ul>
@@ -53,6 +53,10 @@
                         </ul>
                         <hr/>
                         {% endif %}
+                        <h5 class="news-blog-header">(2018-06-10):</h5>
+                        <ul class="news-blog-bullet">
+                            <li>Hotstat.us service is being spun down to reduce costs, thank you everyone for giving us a shot!</li>
+                        </ul>
                         <h5 class="news-blog-header">(2018-06-06):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.33.1 Balance patch, cycling out oldest 2.32.2 Balance patch.</li>
@@ -75,16 +79,16 @@
                             <li>Updated to include new 2.32.0 Deckard patch, cycling out oldest 2.30.6 Balance patch.</li>
                             <li>Added 'Angel Supporter' Patreon tier.</li>
                         </ul>
-                        {#<h5 class="news-blog-header">(2018-04-12):</h5>
+                        <h5 class="news-blog-header">(2018-04-12):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.31.2 Balance patch, cycling out all filter options for patches older than the 3 most recent updates.</li>
                             <li>Consolidated filters to consist of frequently used options, finally allowing for comprehensive computation of all filter combinations. Previously, all possible combinations used to number in the billions, now that number is reduced to less than 40,000 making full filter-computation coverage feasible. This will remove any possibility of a user being served stale data in the future, even for infrequently visited filter combinations.</li>
                             <li>Added a search bar to 'talents' page friend/foe matchup tables (much like the one found on the 'heroes' page), allowing you to much more quickly find hero/role counters or synergies!</li>
-                        </ul>#}
-                        {#<h5 class="news-blog-header">(2018-03-27):</h5>
+                        </ul>
+                        <h5 class="news-blog-header">(2018-03-27):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.31.0 Fenix Patch, cycling out oldest 2.29.7 Blaze patch.</li>
-                        </ul>#}
+                        </ul>
                         {#<hr/>
                         <div class="text-center">
                             <span><a class="email" style="font-size:24px;" href="https://www.patreon.com/hotstatus" target="_blank">Patreon Angel Supporters</a></span>
@@ -104,11 +108,11 @@
                                 </div>
                             </div>
                         </div>#}
-                        {#<h5 class="news-blog-header">(2018-03-21):</h5>
+                        <h5 class="news-blog-header">(2018-03-21):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.6 Balance Patch, cycling out oldest 2.29.5 Balance patch.</li>
-                        </ul>#}
-                        {#<h5 class="news-blog-header">(2018-03-09):</h5>
+                        </ul>
+                        <h5 class="news-blog-header">(2018-03-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.5 Hotfix Patch, cycling out oldest 2.29.3 Hanzo patch.</li>
                         </ul>
@@ -125,8 +129,8 @@
                         <h5 class="news-blog-header">(2018-02-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated to include new 2.30.1 Balance Patch, cycling out oldest 2.28.5 Balance patch.</li>
-                        </ul>#}
-                        {#<<h5 class="news-blog-header">(2018-02-06):</h5>
+                        </ul>
+                        <h5 class="news-blog-header">(2018-02-06):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.30.0 Maiev Patch, cycling out oldest 2.28.3 Junkrat patch.</li>
                         </ul>
@@ -134,50 +138,50 @@
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.9 Balance Patch, cycling out oldest 2.28.2 Balance patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-16):</h5>
+                        <h5 class="news-blog-header">(2018-01-16):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.8 Tyrael Patch, cycling out oldest 2.28.0 Ana patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-09):</h5>
+                        <h5 class="news-blog-header">(2018-01-09):</h5>
                         <ul class="news-blog-bullet">
                             <li>Updated filters to include new 2.29.7 Blaze Patch, cycling out oldest 2.27.5 Balance patch.</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-03):</h5>
+                        <h5 class="news-blog-header">(2018-01-03):</h5>
                         <ul class="news-blog-bullet">
                             <li>Implemented Control Panel to Player Page Recent Matches.</li>
                             <li>Control panel contains: a graphical winrate for currently loaded recent matches, social share buttons, a convenient 'load more matches' button, and a toggle for a compact view mode.</li>
                             <li>Compact view displays the currently loaded recent matches in a much more vertically compacted view with less graphics. (Based on a feature request)</li>
                         </ul>
-                        <h5 class="news-blog-header">News (2018-01-01):</h5>
+                        <h5 class="news-blog-header">(2018-01-01):</h5>
                         <ul class="news-blog-bullet">
                             <li>Replay processing workers have been set to auto-scale again as needed (Replays should be processed much faster during spikes in uploads).</li>
                             <li>Fixed a tiny visual bug in the Hero Page Stat Matrix graph, where the order of metrics was displaying incorrectly.</li>
                         </ul>
-                        <h5>News (2017-12-26):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">(2017-12-26):</h5>
+                        <ul class="news-blog-bullet">
                             <li>A lot of behind the scenes work has been done with the cloud infrastructure in order to reduce costs while aiming to deliver the same speed for requests.
                             <li>Migrated cache generation workers to Google Cloud to reduce data fees.</li>
                             <li>Switched to using fixed replay processing rates. (Temporary)</li>
                             <li>Added replay processed and queued counters displayed on news page to let people know when there is a backlog of replays to process. Queued count is updated every minute.</li>
                         </ul>
-                        <h5>News (2017-12-23):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">(2017-12-23):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Rankings have been reprocessed, rank displays have been re-enabled and will continue to be adjusted.</li>
                         </ul>
-                        <h5>News (2017-12-22):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">(2017-12-22):</h5>
+                        <ul class="news-blog-bullet">
                             <li>All rankings are disabled while new reprocessing technique is worked on.</li>
                         </ul>
-                        <h5>News (2017-12-21):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">(2017-12-21):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Updated date filter to include new 2.29.5 Balance Patch, cycling out oldest 2.27.3 Kel'thuzad patch.</li>
                             <li>Added social media integration to allow for quick and easy sharing of specific hero and player pages! Share Hotstat.us with your friends!</li>
                         </ul>
-                        <h5>News (2017-12-20):</h5>
-                        <ul>
+                        <h5 class="news-blog-header">(2017-12-20):</h5>
+                        <ul class="news-blog-bullet">
                             <li>Rank displays for 2017 Season 3 had to be temporarily disabled due to a player reprocessing bug.</li>
                             <li>Implemented Winrate Edge % to Hero Page Matchups. (Based on a feature request)</li>
-                        </ul>#}
+                        </ul>
                     </div>
                 </div>
             </div>
